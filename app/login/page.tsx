@@ -1,243 +1,158 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { motion } from "framer-motion";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { StarsBackground } from "@/components/ui/stars-background";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { useAuth } from '@/hooks/useAuth'; // Import your existing auth hook
+import { useMockAuth } from "@/hooks/useMockAuth";
+import { LogIn, UserPlus, Zap } from "lucide-react";
+import { FormSection } from "@/components/registration/form-section";
+import { FormInput } from "@/components/registration/form-input";
+import { Button } from "@/components/registration/button";
+import { StickyAlert } from "@/components/registration/sticky-alert";
+import { DotPattern } from "@/components/registration/dot-pattern";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
-import NavButtons from "@/components/navbar";
 
-// Add CSS for shake animation
-const shakeAnimation = {
-  x: [-10, 10, -10, 10, -5, 5, -2, 2, 0],
-  transition: { duration: 0.5 }
-};
+// DEBUG MODE - Set to false before production push
+const DEBUG_MODE = true;
 
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function LoginPage() {
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [loginData, setLoginData] = useState({
+    email: "",
+    password: "",
+  });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const [showPassword, setshowPassword] = useState(false);
-  
-  // Get the login function from your auth hook
-  const { login } = useAuth();
-  
-  // Add validation states
-  const [emailError, setEmailError] = useState(false);
-  const [passwordError, setPasswordError] = useState(false);
+  const { login } = useMockAuth();
 
-  const validateForm = () => {
-    let isValid = true;
-    
-    // Reset error states
-    setEmailError(false);
-    setPasswordError(false);
-    
-    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
-      setEmailError(true);
-      isValid = false;
-    }
-    
-    if (!password) {
-      setPasswordError(true);
-      isValid = false;
-    }
-    
-    return isValid;
+  // DEBUG: Auto-fill function
+  const handleAutoFill = () => {
+    setLoginData({
+      email: "testuser@example.com",
+      password: "password123",
+    });
+    setError("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
 
-    if (!validateForm()) {
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
-      // Use the login function from your auth hook
-      await login(email, password);
-      
-      // Display success toast
-      toast.success(`Successfully logged in as ${email}!`, {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "dark",
-        style: {
-          background: "#1a1a2e",
-          borderLeft: "4px solid #2ad8db",
-          color: "#fff",
-        },
-      });
-      
-      // Give time for the user to see the toast before redirecting
-      setTimeout(() => {
-        router.push('/');
-      }, 2000);
+      await login(loginData.email, loginData.password);
+      router.push("/dashboard");
     } catch (err: any) {
-      console.error('Login error:', err);
-      const errorMessage = err?.message || 'An unexpected error occurred';
-      setError(errorMessage);
-      
-      toast.error(errorMessage, {
-        position: "top-center",
-        autoClose: 3000,
-        theme: "dark",
-        style: {
-          background: "#1a1a2e",
-          borderLeft: "4px solid #ff4757",
-          color: "#fff",
-        },
-      });
+      setError(err?.message || "An error occurred during login");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
+    <div
+      className="min-h-screen w-full flex flex-col items-start relative"
+      style={{
+        backgroundImage: "linear-gradient(90deg, rgb(23, 23, 23) 0%, rgb(23, 23, 23) 100%)",
+      }}
     >
-      <div className="min-h-screen flex flex-col items-center justify-center relative p-4">
-        <div className="fixed top-4 w-full  justify-end z-50">
-          <NavButtons disableFixedPositioning={true} />
-        </div>
-        {/* <Link href="/" className="absolute top-6 left-6 text-gray-400 hover:text-white transition-colors flex items-center gap-2 py-2 px-4 rounded-md hover:bg-gray-800/50 z-50">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-          Back to Home
-        </Link> */}
-        
-        <StarsBackground starDensity={0.0002} allStarsTwinkle={true} />
-        {/* Add ToastContainer for notifications */}
-        <ToastContainer
-          position="top-center"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-          toastStyle={{
-            background: "#1a1a2e",
-            color: "#fff",
-            borderLeft: "4px solid #2ad8db",
+      <div className="bg-[#171717] w-full relative flex-1">
+        <div
+          className="flex flex-col items-center justify-center w-full min-h-screen pb-[80px] pt-[60px] px-[40px] relative"
+          style={{
+            backgroundImage:
+              "url('data:image/svg+xml;utf8,<svg viewBox=\\'0 0 1440 652\\' xmlns=\\'http://www.w3.org/2000/svg\\' preserveAspectRatio=\\'none\\'><rect x=\\'0\\' y=\\'0\\' height=\\'100%\\' width=\\'100%\\' fill=\\'url(%23grad)\\' opacity=\\'1\\'/><defs><radialGradient id=\\'grad\\' gradientUnits=\\'userSpaceOnUse\\' cx=\\'0\\' cy=\\'0\\' r=\\'10\\' gradientTransform=\\'matrix(31.68 0 0 22.168 0 174.74)\\'><stop stop-color=\\'rgba(62,32,19,1)\\' offset=\\'0.10445\\'/><stop stop-color=\\'rgba(62,32,19,0)\\' offset=\\'1\\'/></radialGradient></defs></svg>')",
           }}
-        />
-        <div className="relative w-full max-w-md p-8 space-y-6 rounded-lg shadow-lg border">
-          <div className="absolute -inset-4 bg-gradient-to-r from-[#2ad8db33] to-[#113341ad] blur-3xl rounded-lg"></div>
-          <motion.div
-            initial={{ opacity: 0, scale: .95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: .3 }}
-            className="relative"
-          >
-            <div className="relative space-y-2 text-center">
-              <h1 className="text-3xl font-bold mb-1">Welcome Back</h1>
-              <p className="text-muted-foreground">
-                Login to your account
+        >
+          <div className="max-w-[600px] w-full z-10 flex flex-col gap-[32px] items-center">
+            <div className="flex flex-col gap-[12px] items-center text-center">
+              <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(255,255,255,0)] flex items-center justify-center px-[12px] py-[7px] rounded-[15px] shadow-[0px_3px_10px_0px_rgba(209,63,0,0.5)] relative">
+                <p className="text-[14px] text-white leading-[16.8px]" style={{ fontFamily: 'var(--font-body)' }}>
+                  Welcome Back
+                </p>
+                <div className="absolute inset-0 rounded-[15px]">
+                  <div className="absolute border border-[#b85c00] border-solid inset-0 pointer-events-none rounded-[15px]" />
+                </div>
+              </div>
+
+              <h1 className="text-[48px] text-white leading-[52px] tracking-[-1px]" style={{ fontFamily: 'var(--font-heading)' }}>
+                Welcome to Zenith
+              </h1>
+
+              <p className="text-[15.9px] text-white opacity-90 leading-[23.8px]" style={{ fontFamily: 'var(--font-body)' }}>
+                Login to your account to continue
               </p>
-              <br />
             </div>
 
-            {error && (
-              <div className="text-red-500 text-center">
-                {error}
+            <div className="flex gap-[12px] items-center justify-center flex-wrap">
+              <Button
+                onClick={() => setAuthMode("login")}
+                variant={authMode === "login" ? "primary" : "secondary"}
+              >
+                <LogIn className="w-4 h-4" />
+                Login
+              </Button>
+              <Link href="/register">
+                <Button variant={authMode === "register" ? "primary" : "secondary"}>
+                  <UserPlus className="w-4 h-4" />
+                  Register
+                </Button>
+              </Link>
+              {DEBUG_MODE && (
+                <Button
+                  onClick={handleAutoFill}
+                  variant="secondary"
+                >
+                  <Zap className="w-4 h-4" />
+                  Auto-Fill (Debug)
+                </Button>
+              )}
+            </div>
+
+            {error && <StickyAlert type="error" message={error} onClose={() => setError("")} />}
+
+            {DEBUG_MODE && (
+              <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(255,165,0,0.2)] border border-orange-500 rounded-[15px] p-[12px] flex items-center gap-[12px]">
+                <Zap className="w-5 h-5 text-orange-400" />
+                <div className="flex flex-col gap-[4px]">
+                  <span className="text-[13px] text-white font-semibold" style={{ fontFamily: 'var(--font-body)' }}>
+                    Debug Mode Active
+                  </span>
+                  <span className="text-[12px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                    Set DEBUG_MODE = false in login/page.tsx before production
+                  </span>
+                </div>
               </div>
             )}
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className='relative'
-                  animate={emailError ? shakeAnimation : undefined}
-                >
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="Enter Email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (emailError) setEmailError(false);
-                    }}
-                    className={`bg-transparent border ${emailError ? 'border-red-500' : 'border-gray-300'}`}
-                    required
-                  />
-                </motion.div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className='relative'
-                  animate={passwordError ? shakeAnimation : undefined}
-                >
-                  <Input 
-                    id="password" 
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter Password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (passwordError) {
-                        setPasswordError(false);
-                        setError("");
-                      }
-                    }}
-                    className={`bg-transparent border ${passwordError ? 'border-red-500' : 'border-gray-300'}`}
-                    required
-                  />
-                  <motion.button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
-                    onClick={() => setshowPassword(!showPassword)}
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </motion.button>
-                </motion.div>
-              </div>
-              <br />
-              <Button 
-                type="submit" 
-                className="w-full my-1" 
-                size="lg" 
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Logging in...' : 'Login'}
-              </Button>
-              
-            </form>
-          </motion.div>
+            <FormSection title="Login to Your Account">
+              <form onSubmit={handleLogin} className="flex flex-col gap-[20px]">
+                <FormInput
+                  label="Email Address"
+                  type="email"
+                  placeholder="your.email@example.com"
+                  required
+                  value={loginData.email}
+                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                />
+                <FormInput
+                  label="Password"
+                  type="password"
+                  placeholder="Enter your password"
+                  required
+                  value={loginData.password}
+                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                />
+                <Button type="submit" variant="primary" disabled={isSubmitting}>
+                  {isSubmitting ? "Logging in..." : "Login"}
+                </Button>
+              </form>
+            </FormSection>
+          </div>
         </div>
+
+        <DotPattern />
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -1,0 +1,316 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useMockAuth } from "@/hooks/useMockAuth";
+import {
+  Home,
+  UserCircle,
+  Users,
+  FileText,
+  Upload,
+  Edit,
+  CheckCircle,
+  Clock,
+  Award,
+  AlertCircle,
+  X,
+  Check,
+} from "lucide-react";
+import { FormSection } from "./form-section";
+import { Button } from "./button";
+import { StatusBadge } from "./status-badge";
+import { AlertBanner } from "./alert-banner";
+
+interface Team {
+  id: string;
+  name: string;
+  code: string;
+  leadId: string;
+  members: string[];
+  problemStatement: string;
+  lookingForMembers: boolean;
+  status: "none" | "in-team" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined";
+  submissionUrl?: string;
+  videoUrl?: string;
+  projectLink?: string;
+}
+
+interface DashboardContainerProps {
+  onNavigate: (view: "dashboard" | "profile" | "team" | "submission") => void;
+}
+
+export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
+  const { user, isAuthenticated } = useMockAuth();
+  const router = useRouter();
+  const [team, setTeam] = useState<Team | null>(null);
+  const [profileCompleteness, setProfileCompleteness] = useState(0);
+  const [rsvpStatus, setRsvpStatus] = useState<"pending" | "confirmed" | "declined">("pending");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      router.push("/login");
+      return;
+    }
+
+    // Use mock data - NO API calls
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Simulate loading delay
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Calculate profile completeness from user context
+        const fields = ['name', 'email', 'phone', 'age', 'organisation', 'bio', 'resume_link'];
+        let completed = 0;
+        fields.forEach((field) => {
+          if (user[field as keyof typeof user]) completed++;
+        });
+        setProfileCompleteness(Math.round((completed / fields.length) * 100));
+
+        // Load team data from localStorage
+        const storedTeams = localStorage.getItem('mockTeams');
+        if (storedTeams && user.teamId) {
+          const teams = JSON.parse(storedTeams);
+          const userTeam = teams.find((t: any) => t.id === user.teamId);
+          setTeam(userTeam || null);
+        } else {
+          setTeam(null);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user, isAuthenticated, router]);
+
+  const getTeamStatus = (): "none" | "in-team" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined" => {
+    if (!team) return "none";
+    return team.status;
+  };
+
+  const handleRSVP = (status: "confirmed" | "declined") => {
+    setRsvpStatus(status);
+    // TODO: Call API to update RSVP status
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-white" style={{ fontFamily: 'var(--font-body)' }}>Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const teamStatus = getTeamStatus();
+
+  return (
+    <div className="flex flex-col gap-[24px] max-w-[900px] w-full">
+      <div className="flex flex-col gap-[12px] items-center text-center">
+        <h1 className="text-[48px] text-white leading-[52px] tracking-[-1px]" style={{ fontFamily: 'var(--font-heading)' }}>
+          Welcome back, {user.name}!
+        </h1>
+        <p className="text-[15.9px] text-white opacity-90 leading-[23.8px]" style={{ fontFamily: 'var(--font-body)' }}>
+          Manage your profile, team, and submissions from your dashboard.
+        </p>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex flex-wrap gap-[12px] justify-center">
+        <Button onClick={() => onNavigate("dashboard")} variant="primary">
+          <Home className="w-4 h-4" />
+          Dashboard
+        </Button>
+        <Button onClick={() => onNavigate("profile")} variant="secondary">
+          <UserCircle className="w-4 h-4" />
+          Profile
+        </Button>
+        <Button onClick={() => onNavigate("team")} variant="secondary">
+          <Users className="w-4 h-4" />
+          Team
+        </Button>
+        {team && team.leadId === user.uid && team.status === "in-team" && (
+          <Button onClick={() => onNavigate("submission")} variant="secondary">
+            <FileText className="w-4 h-4" />
+            Submit Project
+          </Button>
+        )}
+      </div>
+
+      {/* Profile Completeness */}
+      <FormSection
+        title="Profile Status"
+        status={
+          <StatusBadge
+            status={profileCompleteness === 100 ? "Completed" : "Pending"}
+            icon={profileCompleteness === 100 ? CheckCircle : Clock}
+          />
+        }
+      >
+        <div className="flex flex-col gap-[12px]">
+          <div className="flex justify-between items-center">
+            <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+              Profile Completeness
+            </span>
+            <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+              {profileCompleteness}%
+            </span>
+          </div>
+          <div className="w-full bg-[rgba(138,138,138,0.2)] rounded-full h-[8px] overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-[#ff4d00] to-[#ff8800] h-full transition-all duration-500"
+              style={{ width: `${profileCompleteness}%` }}
+            />
+          </div>
+          {profileCompleteness < 100 && (
+            <Button onClick={() => onNavigate("profile")} variant="secondary">
+              Complete Profile
+            </Button>
+          )}
+        </div>
+      </FormSection>
+
+      {/* Team Status */}
+      <FormSection
+        title="Team Status"
+        status={
+          <StatusBadge
+            status={teamStatus}
+            icon={
+              teamStatus === "none"
+                ? AlertCircle
+                : teamStatus === "shortlisted" || teamStatus === "confirmed"
+                ? Award
+                : Users
+            }
+          />
+        }
+      >
+        <div className="flex flex-col gap-[16px]">
+          {teamStatus === "none" ? (
+            <>
+              <p className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                You're not part of a team yet. Create or join a team to participate in the hackathon.
+              </p>
+              <div className="flex gap-[12px]">
+                <Button onClick={() => onNavigate("team")} variant="primary">
+                  <Users className="w-4 h-4" />
+                  Create / Join Team
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-col gap-[8px]">
+                <div className="flex justify-between">
+                  <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                    Team Name
+                  </span>
+                  <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+                    {team?.name}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                    Team Code
+                  </span>
+                  <span className="text-[14px] text-white font-mono" style={{ fontFamily: 'var(--font-body)' }}>
+                    {team?.code}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                    Members
+                  </span>
+                  <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+                    {team?.members.length}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                    Your Role
+                  </span>
+                  <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+                    {team?.leadId === user.uid ? "Team Lead" : "Member"}
+                  </span>
+                </div>
+              </div>
+
+              {teamStatus === "in-team" && team?.leadId === user.uid && (
+                <Button onClick={() => onNavigate("submission")} variant="primary">
+                  <FileText className="w-4 h-4" />
+                  Submit Project
+                </Button>
+              )}
+
+              {teamStatus === "submitted" && (
+                <AlertBanner type="success" message="Project submitted! Waiting for evaluation." />
+              )}
+
+              {teamStatus === "under-review" && (
+                <AlertBanner type="warning" message="Your project is under review by evaluators." />
+              )}
+
+              {teamStatus === "shortlisted" && rsvpStatus === "pending" && (
+                <div className="flex flex-col gap-[12px]">
+                  <AlertBanner type="success" message="🎉 Congratulations! Your team has been shortlisted!" />
+                  <p className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+                    Please confirm your participation:
+                  </p>
+                  <div className="flex gap-[12px]">
+                    <Button onClick={() => handleRSVP("confirmed")} variant="primary">
+                      <Check className="w-4 h-4" />
+                      Confirm Participation
+                    </Button>
+                    <Button onClick={() => handleRSVP("declined")} variant="danger">
+                      <X className="w-4 h-4" />
+                      Decline
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {teamStatus === "confirmed" && (
+                <AlertBanner type="success" message="✅ RSVP Confirmed! See you at the event!" />
+              )}
+
+              <Button onClick={() => onNavigate("team")} variant="secondary">
+                View Team Details
+              </Button>
+            </>
+          )}
+        </div>
+      </FormSection>
+
+      {/* Quick Actions */}
+      <FormSection title="Quick Actions">
+        <div className="grid grid-cols-2 gap-[12px]">
+          <Button onClick={() => onNavigate("profile")} variant="secondary">
+            <Edit className="w-4 h-4" />
+            Edit Profile
+          </Button>
+          {!team && (
+            <Button onClick={() => onNavigate("team")} variant="secondary">
+              <Users className="w-4 h-4" />
+              Team Management
+            </Button>
+          )}
+          {team && team.leadId === user.uid && (
+            <Button onClick={() => onNavigate("submission")} variant="secondary">
+              <Upload className="w-4 h-4" />
+              {team.status === "submitted" ? "Update Submission" : "Submit Project"}
+            </Button>
+          )}
+        </div>
+      </FormSection>
+    </div>
+  );
+}
+
