@@ -47,7 +47,7 @@ export function ProfileContainer({ onNavigate }: ProfileContainerProps) {
       try {
         const token = localStorage.getItem('authToken');
         
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/api/users/${user.uid}`, {
+        const response = await fetch(`/api/users/${user.uid}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -103,8 +103,8 @@ export function ProfileContainer({ onNavigate }: ProfileContainerProps) {
 
       const token = localStorage.getItem('authToken');
 
-      // Call real API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/api/users/${user?.uid}`, {
+      // Call Next.js API route
+      const response = await fetch(`/api/users/${user?.uid}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

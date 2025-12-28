@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { API_ENDPOINTS, getApiUrl } from '@/lib/api-config';
+import { API_ENDPOINTS } from '@/lib/api-config';
+import { getAuthToken, signIn as firebaseSignIn, signOutUser, getCurrentUser, onAuthStateChanged } from '@/lib/firebase-client';
 
 interface AuthUser {
   uid: string;
@@ -17,8 +18,9 @@ interface AuthUser {
   resume_link?: string;
   profile_picture?: string;
   isAdmin?: boolean;
-  teamId?: string;
+  teamCode?: string;  // Added from API response
   isLooking?: boolean;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -29,6 +31,7 @@ interface AuthContextType {
   register: (formData: FormData) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  getToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,31 +40,42 @@ export function RealAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth state from localStorage
+  // Initialize auth state from Firebase
   useEffect(() => {
-    const initAuth = () => {
-      try {
-        const storedUser = localStorage.getItem('authUser');
-        const storedToken = localStorage.getItem('authToken');
-        
-        if (storedUser && storedToken) {
-          setUser(JSON.parse(storedUser));
-        }
-      } catch (error) {
-        console.error('Failed to initialize auth:', error);
-        localStorage.removeItem('authUser');
-        localStorage.removeItem('authToken');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        // Fetch user profile from backend
+        try {
+          const token = await firebaseUser.getIdToken();
+          const response = await fetch(API_ENDPOINTS.userProfile, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
 
-    initAuth();
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+              setUser(data.data);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch user profile:', error);
+        }
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(getApiUrl(API_ENDPOINTS.login), {
+      // Call backend login endpoint
+      const response = await fetch(API_ENDPOINTS.login, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +86,6 @@ export function RealAuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
 
       if (!response.ok) {
-        // Handle different error status codes
         if (response.status === 401) {
           throw new Error(data.message || 'Invalid email or password.');
         } else if (response.status === 404) {
@@ -84,15 +97,14 @@ export function RealAuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      if (data.status !== 'success') {
+      if (data.status !== 'success' || !data.token) {
         throw new Error(data.message || 'Login failed. Please try again.');
       }
 
-      // Store token and user data
-      localStorage.setItem('authToken', data.token);
-      localStorage.setItem('authUser', JSON.stringify(data.user));
+      // Now sign in to Firebase with email/password
+      // This will trigger onAuthStateChanged which will fetch the profile
+      await firebaseSignIn(email, password);
       
-      setUser(data.user);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -101,15 +113,14 @@ export function RealAuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (formData: FormData) => {
     try {
-      const response = await fetch(getApiUrl(API_ENDPOINTS.register), {
+      const response = await fetch(API_ENDPOINTS.register, {
         method: 'POST',
-        body: formData, // Send as FormData for file uploads
+        body: formData,
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        // Handle different error status codes
         if (response.status === 400) {
           throw new Error(data.message || 'Invalid registration data. Please check all fields.');
         } else if (response.status === 409) {
@@ -121,24 +132,25 @@ export function RealAuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Backend returns: { message, uid, status: "pending_verification", user }
-      // Handle successful registration (even if status is pending_verification)
+      // Registration successful
       if (data.message && data.message.toLowerCase().includes('success')) {
-        // Store user data (no token yet - will get it on email verification or login)
-        if (data.user) {
-          localStorage.setItem('authUser', JSON.stringify(data.user));
-          setUser(data.user);
+        // Now log the user in to Firebase with the credentials from formData
+        const email = formData.get('email') as string;
+        const password = formData.get('password') as string;
+        
+        if (email && password) {
+          // Sign in to Firebase - this will trigger onAuthStateChanged
+          await firebaseSignIn(email, password);
+        } else {
+          // If we don't have credentials, just set the user data
+          if (data.user) {
+            setUser(data.user);
+          }
         }
         
-        // Check if token is provided (for auto-login)
-        if (data.token) {
-          localStorage.setItem('authToken', data.token);
-        }
-        
-        return; // Success
+        return;
       }
 
-      // If we got here, registration wasn't successful
       throw new Error(data.message || 'Registration failed. Please try again.');
     } catch (error) {
       console.error('Registration error:', error);
@@ -146,33 +158,41 @@ export function RealAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('authUser');
-    setUser(null);
+  const logout = async () => {
+    try {
+      await signOutUser();
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const refreshUser = async () => {
     if (!user) return;
 
     try {
-      const token = localStorage.getItem('authToken');
+      const token = await getAuthToken();
+      if (!token) return;
       
-      const response = await fetch(getApiUrl(API_ENDPOINTS.getUser(user.uid)), {
+      const response = await fetch(API_ENDPOINTS.userProfile, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
       });
 
       const data = await response.json();
 
-      if (response.ok && data.status === 'success') {
-        localStorage.setItem('authUser', JSON.stringify(data.user));
-        setUser(data.user);
+      if (response.ok && data.success && data.data) {
+        setUser(data.data);
       }
     } catch (error) {
       console.error('Failed to refresh user:', error);
     }
+  };
+
+  const getToken = async (): Promise<string | null> => {
+    return await getAuthToken();
   };
 
   return (
@@ -185,6 +205,7 @@ export function RealAuthProvider({ children }: { children: ReactNode }) {
         register,
         logout,
         refreshUser,
+        getToken,
       }}
     >
       {children}

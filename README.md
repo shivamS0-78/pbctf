@@ -1,74 +1,34 @@
-# 🚀 Zenith - Production Ready
+# ✅ CORRECTED - Next.js API Routes
 
-## ✅ Status: PRODUCTION MODE
+The backend APIs are **Next.js API routes** in `/app/api/` - they run in the **same application**!
 
-All mock code **completely removed**. Application uses **real backend APIs only**.
+No external backend needed. Everything works out of the box.
 
----
+## API Routes Location
 
-## 🔧 Backend Configuration
-
-Create/edit `.env.local`:
-
-```bash
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+```
+/app/api/
+  ├── auth/login/          → POST /api/auth/login
+  ├── registration/        → POST /api/registration
+  ├── users/[id]/         → GET/PUT /api/users/:id
+  ├── team/               → Team endpoints
+  ├── admin/              → Admin endpoints
+  └── evaluator/          → Evaluator endpoints
 ```
 
-For production:
-```bash
-NEXT_PUBLIC_API_BASE_URL=https://api.yourdomain.com
-```
+## Configuration
 
----
+All APIs use **relative paths** (no base URL needed):
+- ✅ `/api/registration`
+- ✅ `/api/auth/login`
+- ✅ `/api/users/:id`
 
-## 🌐 API Endpoints
-
-Configured in `/lib/api-config.ts`:
-
-- `POST /api/registration` - Register user
-- `POST /api/auth/login` - Login  
-- `GET /api/users/:userId` - Get user details
-- `PUT /api/users/:userId` - Update user profile
-- `POST /api/teams` - Create team
-- `POST /api/teams/join` - Join team
-- `POST /api/teams/:teamId/submission` - Submit project
-
-Full documentation: [Notion API Docs](https://www.notion.so/Zenith-Event-Management-System-API-Documentation-2d481956342f80cb8ccbf196e427de6c)
-
----
-
-## 🏃 Run
+## Run Application
 
 ```bash
 npm run dev
 ```
 
-Visit: http://localhost:3000
+That's it! Frontend and backend run together on `http://localhost:3000`
 
----
-
-## ✅ Production Checklist
-
-- ✅ Mock code deleted
-- ✅ Real API integration active
-- ✅ Token authentication enabled
-- ✅ FormData file uploads
-- ✅ Error handling
-- ✅ Debug features disabled
-
----
-
-## 🐛 Troubleshooting
-
-### Failed to fetch
-- Backend not running
-- Wrong URL in `.env.local`
-- CORS not enabled on backend
-
-### 401 Unauthorized
-- Token invalid/expired
-- Backend token validation issues
-
----
-
-**Ready for deployment!** 🎉
+No separate backend server needed! 🎉

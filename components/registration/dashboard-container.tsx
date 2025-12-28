@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { API_ENDPOINTS } from "@/lib/api-config";
 import {
   Home,
   UserCircle,
@@ -41,7 +42,7 @@ interface DashboardContainerProps {
 }
 
 export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, getToken } = useAuth();
   const router = useRouter();
   const [team, setTeam] = useState<Team | null>(null);
   const [profileCompleteness, setProfileCompleteness] = useState(0);
@@ -59,10 +60,15 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
       try {
         setIsLoading(true);
         
-        const token = localStorage.getItem('authToken');
+        // Get Firebase auth token (automatically refreshed by Firebase SDK)
+        const token = await getToken();
+        if (!token) {
+          router.push("/login");
+          return;
+        }
         
-        // Fetch user data from API
-        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/api/users/${user.uid}`, {
+        // Fetch user profile from authenticated endpoint
+        const userResponse = await fetch(API_ENDPOINTS.userProfile, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -71,7 +77,7 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
 
         if (userResponse.ok) {
           const userData = await userResponse.json();
-          if (userData.status === "success" && userData.user) {
+          if (userData.success && userData.data) {
             // Calculate profile completeness based on required fields
             const requiredFields = [
               'name',           // Required
@@ -87,7 +93,7 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
             
             let completed = 0;
             requiredFields.forEach((field) => {
-              const value = userData.user[field];
+              const value = userData.data[field];
               // Check if field exists and is not null/empty
               if (value && value !== null && value !== '') {
                 completed++;
@@ -101,12 +107,12 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
               completed,
               total: requiredFields.length,
               percentage,
-              userData: userData.user
+              userData: userData.data
             });
 
-            // Fetch team data if user has a teamId
-            if (userData.user.teamId) {
-              const teamResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/api/teams/${userData.user.teamId}`, {
+            // Fetch team data if user has a teamCode
+            if (userData.data.teamCode) {
+              const teamResponse = await fetch(API_ENDPOINTS.getTeam(userData.data.teamCode), {
                 headers: {
                   'Authorization': `Bearer ${token}`,
                   'Content-Type': 'application/json'
@@ -115,8 +121,8 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
 
               if (teamResponse.ok) {
                 const teamData = await teamResponse.json();
-                if (teamData.status === 'success') {
-                  setTeam(teamData.team);
+                if (teamData.success && teamData.data) {
+                  setTeam(teamData.data);
                 }
               }
             }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { API_ENDPOINTS } from "@/lib/api-config";
 import { Home, Users, Upload, X, Award } from "lucide-react";
 import { FormSection } from "./form-section";
 import { FormInput } from "./form-input";
@@ -27,7 +28,7 @@ interface TeamContainerProps {
 }
 
 export function TeamContainer({ onNavigate }: TeamContainerProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, getToken } = useAuth();
   const router = useRouter();
   const [team, setTeam] = useState<Team | null>(null);
   const [teamFormData, setTeamFormData] = useState({
@@ -45,10 +46,32 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
       return;
     }
 
-    // TODO: Fetch team data from API
-    // For now, set to null
-    setTeam(null);
-  }, [user, isAuthenticated, router]);
+    // Fetch team data if user has teamCode
+    const fetchTeam = async () => {
+      try {
+        if (user.teamCode) {
+          const token = await getToken();
+          const response = await fetch(API_ENDPOINTS.getTeam(user.teamCode), {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+              setTeam(data.data);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching team:", error);
+      }
+    };
+
+    fetchTeam();
+  }, [user, isAuthenticated, router, getToken]);
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,24 +79,36 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
     setAlert(null);
 
     try {
-      // TODO: Call API to create team
-      const newTeam: Team = {
-        id: Date.now().toString(),
-        name: teamFormData.teamName,
-        code: Math.random().toString(36).substring(2, 8).toUpperCase(),
-        leadId: user!.uid,
-        members: [user!.uid],
-        problemStatement: teamFormData.problemStatement,
-        lookingForMembers: teamFormData.lookingForMembers,
-        status: "in-team",
-      };
-
-      setTeam(newTeam);
-      setAlert({
-        type: "success",
-        message: `Team "${newTeam.name}" created! Team code: ${newTeam.code}`,
+      const token = await getToken();
+      
+      // Call API to create team
+      const response = await fetch(API_ENDPOINTS.createTeam, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          teamName: teamFormData.teamName,
+          appliedFor: teamFormData.problemStatement,
+          isLooking: teamFormData.lookingForMembers
+        })
       });
-      setTimeout(() => setAlert(null), 5000);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create team');
+      }
+
+      if (data.success && data.data) {
+        setTeam(data.data);
+        setAlert({
+          type: "success",
+          message: `Team "${data.data.teamName}" created! Team code: ${data.data.teamCode}`,
+        });
+        setTimeout(() => setAlert(null), 5000);
+      }
     } catch (error) {
       setAlert({
         type: "error",
@@ -90,24 +125,34 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
     setAlert(null);
 
     try {
-      // TODO: Call API to join team
-      const mockTeam: Team = {
-        id: "2",
-        name: "Existing Team",
-        code: teamFormData.joinCode,
-        leadId: "other-user",
-        members: ["other-user", user!.uid],
-        problemStatement: "AI-powered solution",
-        lookingForMembers: true,
-        status: "in-team",
-      };
-
-      setTeam(mockTeam);
-      setAlert({
-        type: "success",
-        message: `Joined team "${mockTeam.name}"!`,
+      const token = await getToken();
+      
+      // Call API to join team
+      const response = await fetch(API_ENDPOINTS.joinTeam, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          teamCode: teamFormData.joinCode
+        })
       });
-      setTimeout(() => setAlert(null), 3000);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to join team');
+      }
+
+      if (data.success && data.data) {
+        setTeam(data.data);
+        setAlert({
+          type: "success",
+          message: `Joined team "${data.data.teamName}"!`,
+        });
+        setTimeout(() => setAlert(null), 3000);
+      }
     } catch (error) {
       setAlert({
         type: "error",
