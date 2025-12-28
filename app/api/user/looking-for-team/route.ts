@@ -31,28 +31,39 @@ export async function GET(request: NextRequest) {
   try {
     const authResult = await authenticateUser(request);
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult);
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
     const organisation = searchParams.get('organisation');
+    const skills = searchParams.get('skills');
 
     await dbConnect();
 
-    const query: any = { isLooking: true, teamCode: { $exists: false } };
+    const query: any = { isLooking: true };
     
     // Add organisation filter if provided
     if (organisation) {
-      query.organisation = { $regex: organisation, $options: 'i' };
+      query.organisation = organisation;
+    }
+    
+    if (skills) {
+      const skillsArray = skills.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      if (skillsArray.length > 0) {
+        query.bio = { $regex: skillsArray.join('|'), $options: 'i' };
+      }
     }
 
     const skip = (page - 1) * limit;
     
     const [users, totalUsers] = await Promise.all([
       User.find(query)
-        .select('name email organisation bio profile_picture github_link linkedin_link leetcode_profile')
+        .select('uid name email organisation bio profile_picture github_link linkedin_link leetcode_profile')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 }),
@@ -60,7 +71,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const formattedUsers = users.map(user => ({
-      id: user._id.toString(),
+      id: user.uid,
       name: user.name,
       email: user.email,
       organisation: user.organisation || null,
@@ -71,18 +82,24 @@ export async function GET(request: NextRequest) {
       leetcode_profile: user.leetcode_profile || null,
     }));
 
-    return createSuccessResponse("Users retrieved successfully", {
-      users: formattedUsers,
-      pagination: {
-        currentPage: page,
-        totalPages: Math.ceil(totalUsers / limit),
-        totalUsers,
-        limit,
+    return NextResponse.json({
+      success: true,
+      data: {
+        users: formattedUsers,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(totalUsers / limit),
+          totalUsers,
+          limit,
+        },
       },
     });
   } catch (error: any) {
     console.error("Get looking-for-team error:", error);
-    return createErrorResponse("Failed to retrieve users", "SERVER_ERROR", 500);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -94,7 +111,10 @@ export async function PUT(request: NextRequest) {
   try {
     const authResult = await authenticateUser(request);
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult);
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
     }
 
     const body = await request.json();
