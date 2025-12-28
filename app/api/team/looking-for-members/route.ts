@@ -33,12 +33,15 @@ export async function GET(request: NextRequest) {
   try {
     const authResult = await authenticateUser(request);
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult);
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
     const appliedFor = searchParams.get('appliedFor');
 
     await dbConnect();
@@ -60,30 +63,39 @@ export async function GET(request: NextRequest) {
       Team.countDocuments(query),
     ]);
 
-    // Get team lead info and problem statement info
+    // Get team lead info, team members info, and problem statement info
     const teamLeadUids = teams.map(t => t.teamLead);
+    const allMemberUids = teams.flatMap(t => t.teamMembers.map((m: any) => m.uid));
+    const uniqueMemberUids = [...new Set(allMemberUids)];
     const problemStatementIds = teams.map(t => t.appliedFor).filter(Boolean);
     
-    const [teamLeads, problemStatements] = await Promise.all([
+    const [teamLeads, teamMembers, problemStatements] = await Promise.all([
       User.find({ uid: { $in: teamLeadUids } }).select('uid name'),
-      ProblemStatement.find({ _id: { $in: problemStatementIds } }).select('title'),
+      User.find({ uid: { $in: uniqueMemberUids } }).select('uid name organisation'),
+      ProblemStatement.find({ _id: { $in: problemStatementIds } }).select('_id title'),
     ]);
 
     const formattedTeams = teams.map(team => {
       const lead = teamLeads.find(u => u.uid === team.teamLead);
       const ps = problemStatements.find(p => p._id.toString() === team.appliedFor);
       
+      const formattedMembers = team.teamMembers.map((m: any) => {
+        const member = teamMembers.find(u => u.uid === m.uid);
+        return {
+          id: m.uid,
+          name: member?.name || 'Unknown',
+          organisation: member?.organisation || null,
+        };
+      });
+      
       return {
         teamCode: team.teamCode,
         teamName: team.teamName,
         teamLead: {
-          id: lead?._id?.toString(),
+          id: lead?.uid || team.teamLead,
           name: lead?.name || 'Unknown',
         },
-        teamMembers: team.teamMembers.map((m: any) => ({
-          uid: m.uid,
-          role: m.role,
-        })),
+        teamMembers: formattedMembers,
         currentMemberCount: team.memberCount,
         maxMembers: 4,
         appliedFor: ps ? { id: ps._id.toString(), title: ps.title } : null,
@@ -91,18 +103,24 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return createSuccessResponse("Teams retrieved successfully", {
-      teams: formattedTeams,
-      pagination: {
-        currentPage: page,
-        totalPages: Math.ceil(totalTeams / limit),
-        totalTeams,
-        limit,
+    return NextResponse.json({
+      success: true,
+      data: {
+        teams: formattedTeams,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(totalTeams / limit),
+          totalTeams,
+          limit,
+        },
       },
     });
   } catch (error: any) {
     console.error("Get looking-for-members error:", error);
-    return createErrorResponse("Failed to retrieve teams", "SERVER_ERROR", 500);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -114,7 +132,10 @@ export async function PUT(request: NextRequest) {
   try {
     const authResult = await authenticateUser(request);
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult);
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
     }
 
     const body = await request.json();
