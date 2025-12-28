@@ -22,6 +22,8 @@ export interface IUser extends Document {
     isLooking: boolean;
     role: 'user' | 'admin' | 'evaluator';
     teamCode?: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 const UserSchema: Schema = new Schema({
