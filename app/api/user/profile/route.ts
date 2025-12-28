@@ -81,17 +81,23 @@ export async function GET(request: NextRequest) {
     const authResult = await authenticateUser(request);
     
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult);
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
     }
 
     await dbConnect();
     const user = await User.findOne({ uid: authResult.user.uid }).select('-__v');
 
     if (!user) {
-      return createErrorResponse("User not found", "NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
     }
 
-    return createSuccessResponse("Profile retrieved successfully", {
+    return NextResponse.json({
       uid: user.uid,
       name: user.name,
       email: user.email,
@@ -111,11 +117,13 @@ export async function GET(request: NextRequest) {
       organisation: user.organisation || null,
       role: user.role,
       isLooking: user.isLooking,
-      teamCode: user.teamCode || null,
     });
   } catch (error: any) {
     console.error("Get profile error:", error);
-    return createErrorResponse("Failed to retrieve profile", "SERVER_ERROR", 500);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -128,7 +136,10 @@ export async function PUT(request: NextRequest) {
     const authResult = await authenticateUser(request);
     
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult);
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
     }
 
     const body = await request.json();
@@ -157,7 +168,10 @@ export async function PUT(request: NextRequest) {
     const user = await User.findOne({ uid: authResult.user.uid });
 
     if (!user) {
-      return createErrorResponse("User not found", "NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
     }
 
     // Build update object with only provided fields
@@ -210,12 +224,24 @@ export async function PUT(request: NextRequest) {
       { new: true }
     );
 
-    return createSuccessResponse("Profile updated successfully", {
+    if (!updatedUser) {
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      message: "User updated successfully",
       id: updatedUser._id.toString(),
       uid: updatedUser.uid,
+      status: "success"
     });
   } catch (error: any) {
     console.error("Update profile error:", error);
-    return createErrorResponse("Failed to update profile", "SERVER_ERROR", 500);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
   }
 }
