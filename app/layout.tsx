@@ -38,7 +38,7 @@ export default function RootLayout({
       </head>
       <body className={instrumentSerif.variable} style={{ fontFamily: 'var(--font-body)', background: '#171717' }}>
         <AuthProvider>
-          {children}
+        {children}
         </AuthProvider>
       </body>
     </html>

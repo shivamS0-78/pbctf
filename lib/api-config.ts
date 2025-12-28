@@ -1,35 +1,61 @@
 /**
- * API Configuration - PRODUCTION ONLY
+ * API Configuration for Zenith Event Management System
+ * 
+ * All endpoints are relative to the Next.js app (no external backend)
  */
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+export const API_BASE_URL = '';
 
 export const API_ENDPOINTS = {
-  // Auth
-  register: '/api/registration',
-  login: '/api/auth/login',
+  // ===== AUTHENTICATION =====
+  register: '/api/registration',              // POST (FormData)
+  login: '/api/user/login',                   // POST (JSON)
   
-  // Users
-  getUser: (userId: string) => `/api/users/${userId}`,
-  updateUser: (userId: string) => `/api/users/${userId}`,
-  updateUserStatus: (userId: string) => `/api/users/${userId}/status`,
+  // ===== USER ENDPOINTS =====
+  userProfile: '/api/user/profile',                    // GET, PUT
+  lookingForTeam: '/api/user/looking-for-team',        // GET, PUT
+  userRsvp: '/api/user/rsvp',                          // PUT
+  userRsvpStatus: '/api/user/rsvp-status',             // GET
   
-  // Teams
-  createTeam: '/api/teams',
-  getTeam: (teamId: string) => `/api/teams/${teamId}`,
-  joinTeam: '/api/teams/join',
-  leaveTeam: (teamId: string) => `/api/teams/${teamId}/leave`,
-  removeTeamMember: (teamId: string, memberId: string) => `/api/teams/${teamId}/members/${memberId}`,
+  // ===== TEAM ENDPOINTS =====
+  createTeam: '/api/team/create',                      // POST
+  lookingForMembers: '/api/team/looking-for-members',  // GET, PUT
+  joinTeam: '/api/team/join',                          // PUT
+  leaveTeam: '/api/team/leave',                        // PUT
+  removeMember: '/api/team/remove-member',             // PUT
+  uploadSubmission: '/api/team/upload-submission',     // POST
+  submitApplication: '/api/team/submit-application',   // POST
+  updateSubmission: '/api/team/update-submission',     // PUT
+  getTeam: (teamCode: string) => `/api/team/${teamCode}`,  // GET
   
-  // Submissions
-  submitProject: (teamId: string) => `/api/teams/${teamId}/submission`,
+  // ===== ADMIN ENDPOINTS =====
+  adminParticipants: '/api/admin/participants',        // GET
+  adminParticipantDetails: (id: string) => `/api/admin/participants/${id}`,  // GET
+  adminTeams: '/api/admin/teams',                      // GET
+  adminTeamDetails: (teamCode: string) => `/api/admin/teams/${teamCode}`,    // GET
+  adminUpdateTeam: (teamCode: string) => `/api/admin/teams/${teamCode}`,     // PUT
+  adminEvaluators: '/api/admin/evaluators',            // GET
+  adminAssignEvaluators: '/api/admin/evaluators/assign',  // PUT
+  adminFinalizeTeams: '/api/admin/finalize-teams',     // PUT
+  adminExport: '/api/admin/export',                    // GET
+  adminProblemStatements: '/api/admin/problem-statements',  // POST
+  adminUpdateProblemStatement: (id: string) => `/api/admin/problem-statements/${id}`,  // PUT
   
-  // Validation
-  validateStep: '/api/validate-step'
+  // ===== EVALUATOR ENDPOINTS =====
+  evaluatorTeams: '/api/evaluator/teams',              // GET
+  evaluatorTeamDetails: (teamCode: string) => `/api/evaluator/teams/${teamCode}`,  // GET
+  evaluatorEvaluate: '/api/evaluator/evaluate',        // PUT
+  evaluatorUpdateEvaluation: (teamCode: string) => `/api/evaluator/evaluate/${teamCode}/update`,  // PUT
+  
+  // ===== PROBLEM STATEMENT ENDPOINTS =====
+  problemStatements: '/api/problem-statements',        // GET
+  problemStatementDetails: (id: string) => `/api/problem-statements/${id}`,  // GET
 };
 
-// Helper function to build full API URL
+/**
+ * Helper function to build full API URL
+ * (Not needed since we're using relative paths in same Next.js app)
+ */
 export function getApiUrl(endpoint: string): string {
-  return `${API_BASE_URL}${endpoint}`;
+  return endpoint;
 }
-
