@@ -8,25 +8,6 @@ import User from "@/models/User";
 const ADMIN_EMAIL_DOMAIN = process.env.ADMIN_EMAIL_DOMAIN;
 const SECRET_CODE = process.env.SECRET_CODE;
 
-// Helper to create success response
-function createSuccessResponse(message: string, data: any, status = 200) {
-  return NextResponse.json({
-    success: true,
-    message,
-    ...data,
-    timestamp: new Date().toISOString(),
-  }, { status });
-}
-
-// Helper to create error response
-function createErrorResponse(message: string, code: string, status: number) {
-  return NextResponse.json({
-    success: false,
-    message,
-    error: { code, message },
-    timestamp: new Date().toISOString(),
-  }, { status });
-}
 
 // Handle authentication with Firebase  
 async function authenticateUser(email: string, password: string, isAdminAttempt: boolean) {
@@ -48,7 +29,10 @@ export async function POST(request: Request) {
     const { email, password } = await request.json();
 
     if (!email || !password) {
-      return createErrorResponse("Email and password are required", "VALIDATION_ERROR", 400);
+      return NextResponse.json(
+        { message: "Email and password are required" },
+        { status: 400 }
+      );
     }
     
     const isAdminAttempt = ADMIN_EMAIL_DOMAIN && SECRET_CODE && 
@@ -75,7 +59,9 @@ export async function POST(request: Request) {
           user.role = 'admin';
         }
         
-        return createSuccessResponse("Login successful", {
+        return NextResponse.json({
+          message: "Login successful",
+          status: "success",
           user: {
             uid: user.uid,
             email: user.email,
@@ -100,7 +86,9 @@ export async function POST(request: Request) {
           isLooking: false
         }).save();
         
-        return createSuccessResponse("Login successful. Admin privileges granted.", {
+        return NextResponse.json({
+          message: "Login successful",
+          status: "success",
           user: {
             uid: newAdminUser.uid,
             email: newAdminUser.email,
@@ -115,10 +103,15 @@ export async function POST(request: Request) {
     } else {
       // Regular user login
       if (!user) {
-        return createErrorResponse("User record not found", "USER_NOT_FOUND", 404);
+        return NextResponse.json(
+          { message: "User not found" },
+          { status: 404 }
+        );
       }
       
-      return createSuccessResponse("Login successful", {
+      return NextResponse.json({
+        message: "Login successful",
+        status: "success",
         user: {
           uid: user.uid,
           email: user.email,
@@ -134,7 +127,7 @@ export async function POST(request: Request) {
     console.error("Login error:", error);
     
     const errorCode = error instanceof FirebaseError ? error.code : undefined;
-    let errorMessage = "Login failed";
+    let errorMessage = "Server error";
     let statusCode = 500;
 
     switch (errorCode) {
@@ -151,11 +144,11 @@ export async function POST(request: Request) {
         statusCode = 403;
         break;
       case 'auth/user-not-found':
-        errorMessage = "No account found with this email";
+        errorMessage = "User not found";
         statusCode = 404;
         break;
       case 'auth/wrong-password':
-        errorMessage = "Incorrect password";
+        errorMessage = "Invalid credentials";
         statusCode = 401;
         break;
       case 'auth/too-many-requests':
@@ -164,6 +157,9 @@ export async function POST(request: Request) {
         break;
     }
 
-    return createErrorResponse(errorMessage, errorCode || 'AUTH_ERROR', statusCode);
+    return NextResponse.json(
+      { message: errorMessage },
+      { status: statusCode }
+    );
   }
 }
