@@ -13,24 +13,6 @@ cloudinaryV2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-function createSuccessResponse(message: string, data: any, status = 200) {
-  return NextResponse.json({
-    success: true,
-    message,
-    data,
-    timestamp: new Date().toISOString(),
-  }, { status });
-}
-
-function createErrorResponse(message: string, code: string, status: number) {
-  return NextResponse.json({
-    success: false,
-    message,
-    error: { code, message },
-    timestamp: new Date().toISOString(),
-  }, { status });
-}
-
 function isValidYouTubeURL(url: string): boolean {
   const patterns = [
     /^(https?:\/\/)?(www\.)?youtube\.com\/watch\?v=[\w-]+/,
@@ -56,41 +38,68 @@ export async function PUT(request: NextRequest) {
   try {
     const authResult = await authenticateUser(request);
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult);
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
     }
 
     const body = await request.json();
     const { teamCode, videoURL, submissionPDF, anyOtherLink } = body;
 
     if (!teamCode) {
-      return createErrorResponse("Team code is required", "VALIDATION_ERROR", 400);
+      return NextResponse.json(
+        { message: "Team code is required" },
+        { status: 400 }
+      );
     }
 
     await dbConnect();
 
     const team = await Team.findOne({ teamCode });
     if (!team) {
-      return createErrorResponse("Team not found", "NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "Team not found" },
+        { status: 404 }
+      );
     }
 
     if (team.teamLead !== authResult.user.uid) {
-      return createErrorResponse("Only team lead can update submission", "NOT_TEAM_LEAD", 403);
+      return NextResponse.json(
+        { message: "User is not team lead" },
+        { status: 403 }
+      );
     }
+
     if (team.teamStatus !== 'submitted') {
-      return createErrorResponse("Team must be submitted before updating", "INVALID_STATUS", 400);
+      return NextResponse.json(
+        { message: "Invalid status for update" },
+        { status: 400 }
+      );
     }
+
     if (team.isEvaluated) {
-      return createErrorResponse("Cannot update after evaluation", "ALREADY_EVALUATED", 403);
+      return NextResponse.json(
+        { message: "Team already evaluated" },
+        { status: 403 }
+      );
     }
+
     const deadline = process.env.SUBMISSION_DEADLINE 
       ? new Date(process.env.SUBMISSION_DEADLINE) 
       : null;
     
     if (deadline && new Date() > deadline) {
-      return createErrorResponse(
-        "Submission deadline has passed. No updates allowed.",
-        "DEADLINE_PASSED",
-        403
+      return NextResponse.json(
+        {
+          message: "Deadline has passed",
+          error: {
+            code: 'DEADLINE_PASSED',
+            message: 'Submission deadline has passed. No updates allowed.',
+            deadline: deadline.toISOString()
+          }
+        },
+        { status: 403 }
       );
     }
 
@@ -98,7 +107,10 @@ export async function PUT(request: NextRequest) {
 
     if (videoURL !== undefined) {
       if (videoURL && !isValidYouTubeURL(videoURL)) {
-        return createErrorResponse("Invalid YouTube URL format", "INVALID_VIDEO_URL", 400);
+        return NextResponse.json(
+          { message: "Invalid YouTube URL format" },
+          { status: 400 }
+        );
       }
       updateData.videoURL = videoURL || null;
     }
@@ -112,7 +124,10 @@ export async function PUT(request: NextRequest) {
         );
       } catch (uploadError) {
         console.error('PDF upload error:', uploadError);
-        return createErrorResponse("Failed to upload PDF", "UPLOAD_ERROR", 500);
+        return NextResponse.json(
+          { message: "Failed to upload PDF" },
+          { status: 500 }
+        );
       }
     }
 
@@ -125,16 +140,27 @@ export async function PUT(request: NextRequest) {
       { new: true }
     );
 
-    return createSuccessResponse("Submission updated successfully", {
-      teamCode,
-      videoURL: updatedTeam!.videoURL || null,
-      submissionPDF: updatedTeam!.submissionPDF || null,
-      anyOtherLink: updatedTeam!.anyOtherLink || null,
-      updatedAt: updatedTeam!.updatedAt,
-      deadline: deadline?.toISOString() || null,
+    if (!updatedTeam) {
+      return NextResponse.json(
+        { message: "Failed to update team" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Submission updated successfully",
+      data: {
+        teamCode: updatedTeam.teamCode,
+        updatedAt: updatedTeam.updatedAt || new Date().toISOString(),
+        deadline: deadline?.toISOString() || null,
+      },
     });
   } catch (error: any) {
     console.error("Update submission error:", error);
-    return createErrorResponse("Failed to update submission", "SERVER_ERROR", 500);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
   }
 }
