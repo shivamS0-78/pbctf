@@ -121,29 +121,55 @@ export async function PUT(request: NextRequest) {
     const { isLooking } = body;
 
     if (typeof isLooking !== 'boolean') {
-      return createErrorResponse("isLooking must be a boolean", "VALIDATION_ERROR", 400);
+      return NextResponse.json(
+        { message: "isLooking must be a boolean" },
+        { status: 400 }
+      );
     }
 
     await dbConnect();
 
     const user = await User.findOne({ uid: authResult.user.uid });
     if (!user) {
-      return createErrorResponse("User not found", "NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
     }
 
     // Cannot set isLooking to true if already in a team
     if (isLooking && user.teamCode) {
-      return createErrorResponse("Cannot set looking status while in a team", "ALREADY_IN_TEAM", 400);
+      return NextResponse.json(
+        { message: "Cannot set isLooking to true while part of a team" },
+        { status: 400 }
+      );
     }
 
-    await User.findOneAndUpdate(
+    const updatedUser = await User.findOneAndUpdate(
       { uid: authResult.user.uid },
-      { isLooking }
+      { $set: { isLooking } },
+      { new: true }
     );
 
-    return createSuccessResponse("Status updated successfully", { isLooking });
+    if (!updatedUser) {
+      return NextResponse.json(
+        { message: "Failed to update status" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Status updated successfully",
+      data: {
+        isLooking: updatedUser.isLooking
+      }
+    });
   } catch (error: any) {
     console.error("Update looking-for-team error:", error);
-    return createErrorResponse("Failed to update status", "SERVER_ERROR", 500);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
   }
 }
