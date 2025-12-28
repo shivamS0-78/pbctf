@@ -32,42 +32,63 @@ export async function PUT(request: NextRequest) {
   try {
     const authResult = await authenticateUser(request);
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult);
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
     }
 
     const body = await request.json();
     const { teamCode, memberId, setTheirLookingStatus = true } = body;
 
     if (!teamCode || !memberId) {
-      return createErrorResponse("Team code and member ID are required", "VALIDATION_ERROR", 400);
+      return NextResponse.json(
+        { message: "Team code and member ID are required" },
+        { status: 400 }
+      );
     }
 
     await dbConnect();
 
     const team = await Team.findOne({ teamCode });
     if (!team) {
-      return createErrorResponse("Team not found", "NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "Team not found" },
+        { status: 404 }
+      );
     }
 
     // Check if user is team lead
     if (team.teamLead !== authResult.user.uid) {
-      return createErrorResponse("Only team lead can remove members", "NOT_TEAM_LEAD", 403);
+      return NextResponse.json(
+        { message: "User is not team lead" },
+        { status: 403 }
+      );
     }
 
     // Cannot remove self
     if (memberId === authResult.user.uid) {
-      return createErrorResponse("Cannot remove yourself. Use leave team instead.", "CANNOT_REMOVE_SELF", 400);
+      return NextResponse.json(
+        { message: "Cannot remove yourself. Use leave team instead." },
+        { status: 400 }
+      );
     }
 
     // Cannot remove after submission
-    if (team.teamStatus === 'submitted' || team.teamStatus === 'shortlisted') {
-      return createErrorResponse("Cannot remove members after submission", "TEAM_SUBMITTED", 400);
+    if (team.teamStatus === 'submitted' || team.teamStatus === 'shortlisted' || team.teamStatus === 'rsvped') {
+      return NextResponse.json(
+        { message: "Cannot remove after submission" },
+        { status: 400 }
+      );
     }
 
     // Find the member to remove
     const memberIndex = team.teamMembers.findIndex((m: any) => m.uid === memberId);
     if (memberIndex === -1) {
-      return createErrorResponse("Member not found in team", "MEMBER_NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "Member not found in team" },
+        { status: 404 }
+      );
     }
 
     // Get member info before removing
@@ -84,16 +105,23 @@ export async function PUT(request: NextRequest) {
       { teamCode: null, isLooking: Boolean(setTheirLookingStatus) }
     );
 
-    return createSuccessResponse("Member removed successfully", {
-      teamCode,
-      removedMember: {
-        id: memberId,
-        name: memberName,
+    return NextResponse.json({
+      success: true,
+      message: "Member removed successfully",
+      data: {
+        teamCode,
+        removedMember: {
+          id: memberId,
+          name: memberName,
+        },
+        currentMemberCount: team.memberCount,
       },
-      currentMemberCount: team.memberCount,
     });
   } catch (error: any) {
     console.error("Remove member error:", error);
-    return createErrorResponse("Failed to remove member", "SERVER_ERROR", 500);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
   }
 }

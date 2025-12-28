@@ -30,7 +30,10 @@ export async function PUT(request: NextRequest) {
     const authResult = await authenticateUser(request);
     
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult);
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
     }
 
     const body = await request.json();
@@ -40,21 +43,33 @@ export async function PUT(request: NextRequest) {
 
     const user = await User.findOne({ uid: authResult.user.uid });
     if (!user) {
-      return createErrorResponse("User not found", "NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
     }
 
     if (!user.teamCode) {
-      return createErrorResponse("You are not part of any team", "NOT_IN_TEAM", 400);
+      return NextResponse.json(
+        { message: "User not part of any team" },
+        { status: 400 }
+      );
     }
 
     const team = await Team.findOne({ teamCode: user.teamCode });
     if (!team) {
       await User.findOneAndUpdate({ uid: authResult.user.uid }, { teamCode: null });
-      return createErrorResponse("Team not found", "TEAM_NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "Team not found" },
+        { status: 404 }
+      );
     }
 
     if (team.teamStatus === 'submitted' || team.teamStatus === 'shortlisted' || team.teamStatus === 'rsvped') {
-      return createErrorResponse("Cannot leave team after submission", "CANNOT_LEAVE_AFTER_SUBMISSION", 403);
+      return NextResponse.json(
+        { message: "Cannot leave after submission" },
+        { status: 403 }
+      );
     }
 
     const isTeamLead = team.teamLead === authResult.user.uid;
@@ -93,15 +108,26 @@ export async function PUT(request: NextRequest) {
       }
     );
 
-    return createSuccessResponse("Successfully left team", {
+    const responseData: any = {
       formerTeam: formerTeamName,
       isLooking: Boolean(setLookingStatus),
-      newTeamLead: newTeamLead,
-      teamDeleted: isTeamLead && team.teamMembers.filter((m: any) => m.uid !== authResult.user.uid).length === 0,
+    };
+    
+    if (newTeamLead) {
+      responseData.newTeamLead = newTeamLead;
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Successfully left team",
+      data: responseData,
     });
 
   } catch (error: any) {
     console.error("Leave team error:", error);
-    return createErrorResponse("Failed to leave team", "SERVER_ERROR", 500, error.message);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
   }
 }

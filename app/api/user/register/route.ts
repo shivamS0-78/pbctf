@@ -18,8 +18,16 @@ cloudinaryV2.config({
 
 // Validation functions
 const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const validatePhone = (phone: string) => /^\+?\d{10,15}$/.test(phone.replace(/[\s-]/g, ''));
+const validatePhone = (phone: string) => /^\+?[1-9]\d{9,14}$/.test(phone.replace(/[\s-]/g, ''));
 const validateAge = (age: number) => age >= 13 && age <= 100;
+const validatePassword = (password: string) => {
+  if (password.length < 8) return false;
+  if (!/[A-Z]/.test(password)) return false;
+  if (!/[a-z]/.test(password)) return false;
+  if (!/[0-9]/.test(password)) return false;
+  if (!/[^A-Za-z0-9]/.test(password)) return false;
+  return true;
+};
 const validateURL = (url: string) => {
   try {
     new URL(url);
@@ -28,26 +36,6 @@ const validateURL = (url: string) => {
     return false;
   }
 };
-
-// Helper to create success response
-function createSuccessResponse(message: string, data: any, status = 200) {
-  return NextResponse.json({
-    success: true,
-    message,
-    data,
-    timestamp: new Date().toISOString(),
-  }, { status });
-}
-
-// Helper to create error response
-function createErrorResponse(message: string, code: string, status: number, details?: string) {
-  return NextResponse.json({
-    success: false,
-    message,
-    error: { code, message, details },
-    timestamp: new Date().toISOString(),
-  }, { status });
-}
 
 // Upload base64 file to Cloudinary
 async function uploadBase64ToCloudinary(base64Data: string, folder: string, resourceType: 'image' | 'raw'): Promise<string> {
@@ -105,8 +93,8 @@ export async function POST(request: Request) {
       errors.email = "Invalid email format";
     }
 
-    if (!password || password.length < 6) {
-      errors.password = "Password must be at least 6 characters";
+    if (!password || !validatePassword(password)) {
+      errors.password = "Password must be at least 8 characters and contain uppercase, lowercase, number, and special character";
     }
 
     if (!phone?.trim()) {
@@ -140,11 +128,9 @@ export async function POST(request: Request) {
     }
 
     if (Object.keys(errors).length > 0) {
-      return createErrorResponse(
-        "Validation failed",
-        "VALIDATION_ERROR",
-        400,
-        JSON.stringify(errors)
+      return NextResponse.json(
+        { message: "Validation error", errors },
+        { status: 400 }
       );
     }
 
@@ -154,20 +140,18 @@ export async function POST(request: Request) {
     // Check if email already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
-      return createErrorResponse(
-        "Email already registered",
-        "EMAIL_EXISTS",
-        409
+      return NextResponse.json(
+        { message: "Email already exists" },
+        { status: 409 }
       );
     }
 
     // Check if phone already exists
     const existingPhone = await User.findOne({ phone });
     if (existingPhone) {
-      return createErrorResponse(
-        "Phone number already registered",
-        "PHONE_EXISTS",
-        409
+      return NextResponse.json(
+        { message: "Phone number already exists" },
+        { status: 409 }
       );
     }
 
@@ -181,17 +165,15 @@ export async function POST(request: Request) {
       await sendEmailVerification(firebaseUser);
     } catch (firebaseError: any) {
       if (firebaseError.code === 'auth/email-already-in-use') {
-        return createErrorResponse(
-          "Email already in use",
-          "EMAIL_EXISTS",
-          409
+        return NextResponse.json(
+          { message: "Email already exists" },
+          { status: 409 }
         );
       }
       if (firebaseError.code === 'auth/weak-password') {
-        return createErrorResponse(
-          "Password is too weak",
-          "WEAK_PASSWORD",
-          400
+        return NextResponse.json(
+          { message: "Password is too weak" },
+          { status: 400 }
         );
       }
       throw firebaseError;
@@ -245,24 +227,24 @@ export async function POST(request: Request) {
 
     await newUser.save();
 
-    return createSuccessResponse(
-      "Registration successful",
-      {
+    return NextResponse.json({
+      message: "Registration successful",
+      uid: firebaseUser.uid,
+      status: "pending_verification",
+      user: {
         uid: firebaseUser.uid,
         email: newUser.email,
         name: newUser.name,
-        status: "pending_verification",
-      },
-      201
-    );
+        isAdmin: false,
+        profile_picture: newUser.profile_picture || null,
+      }
+    }, { status: 201 });
 
   } catch (error: any) {
     console.error("Registration error:", error);
-    return createErrorResponse(
-      "Registration failed",
-      "SERVER_ERROR",
-      500,
-      error.message
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
     );
   }
 }

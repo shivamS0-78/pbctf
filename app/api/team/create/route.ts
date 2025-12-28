@@ -70,7 +70,10 @@ export async function POST(request: NextRequest) {
     const authResult = await authenticateUser(request);
     
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult);
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
     }
 
     const body = await request.json();
@@ -78,11 +81,17 @@ export async function POST(request: NextRequest) {
 
     // Validation
     if (!teamName?.trim()) {
-      return createErrorResponse("Team name is required", "VALIDATION_ERROR", 400);
+      return NextResponse.json(
+        { message: "Team name is required" },
+        { status: 400 }
+      );
     }
 
     if (teamName.length < 2 || teamName.length > 50) {
-      return createErrorResponse("Team name must be 2-50 characters", "VALIDATION_ERROR", 400);
+      return NextResponse.json(
+        { message: "Team name must be 2-50 characters" },
+        { status: 400 }
+      );
     }
 
     await dbConnect();
@@ -90,27 +99,42 @@ export async function POST(request: NextRequest) {
     // Check if user is already in a team
     const user = await User.findOne({ uid: authResult.user.uid });
     if (!user) {
-      return createErrorResponse("User not found", "NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
     }
 
     if (user.teamCode) {
-      return createErrorResponse("You are already part of a team", "ALREADY_IN_TEAM", 400);
+      return NextResponse.json(
+        { message: "User already in a team" },
+        { status: 400 }
+      );
     }
 
     // Check team name uniqueness
     const isUnique = await isTeamNameUnique(teamName);
     if (!isUnique) {
-      return createErrorResponse("Team name already exists", "TEAM_NAME_EXISTS", 409);
+      return NextResponse.json(
+        { message: "Team name already exists" },
+        { status: 409 }
+      );
     }
 
     // Validate problem statement if provided
     if (appliedFor) {
       const problemStatement = await ProblemStatement.findById(appliedFor);
       if (!problemStatement) {
-        return createErrorResponse("Problem statement not found", "PROBLEM_NOT_FOUND", 404);
+        return NextResponse.json(
+          { message: "Problem statement not found" },
+          { status: 404 }
+        );
       }
       if (!problemStatement.isActive) {
-        return createErrorResponse("Problem statement is not active", "PROBLEM_INACTIVE", 400);
+        return NextResponse.json(
+          { message: "Problem statement is not active" },
+          { status: 400 }
+        );
       }
     }
 
@@ -146,21 +170,28 @@ export async function POST(request: NextRequest) {
       await ProblemStatement.findByIdAndUpdate(appliedFor, { $inc: { teamCount: 1 } });
     }
 
-    return createSuccessResponse("Team created successfully", {
-      teamCode,
-      teamName: newTeam.teamName,
-      teamLead: authResult.user.uid,
-      teamMembers: [{
-        id: user._id.toString(),
-        name: user.name,
-        role: 'Team Lead',
-      }],
-      appliedFor: appliedFor || null,
-      isLooking: newTeam.isLooking,
-    }, 201);
+    return NextResponse.json({
+      success: true,
+      message: "Team created successfully",
+      data: {
+        teamCode,
+        teamName: newTeam.teamName,
+        teamLead: authResult.user.uid,
+        teamMembers: [{
+          id: authResult.user.uid,
+          name: user.name,
+          role: 'Team Lead',
+        }],
+        appliedFor: appliedFor || null,
+        isLooking: newTeam.isLooking,
+      },
+    }, { status: 201 });
 
   } catch (error: any) {
     console.error("Create team error:", error);
-    return createErrorResponse("Failed to create team", "SERVER_ERROR", 500, error.message);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
   }
 }

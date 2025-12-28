@@ -39,7 +39,10 @@ export async function PUT(request: NextRequest) {
     const authResult = await authenticateUser(request);
     
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult);
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
     }
 
     const body = await request.json();
@@ -47,7 +50,10 @@ export async function PUT(request: NextRequest) {
 
     // Validation
     if (!teamCode?.trim()) {
-      return createErrorResponse("Team code is required", "VALIDATION_ERROR", 400);
+      return NextResponse.json(
+        { message: "Team code is required" },
+        { status: 400 }
+      );
     }
 
     await dbConnect();
@@ -55,27 +61,42 @@ export async function PUT(request: NextRequest) {
     // Check if user is already in a team
     const user = await User.findOne({ uid: authResult.user.uid });
     if (!user) {
-      return createErrorResponse("User not found", "NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
     }
 
     if (user.teamCode) {
-      return createErrorResponse("You are already part of a team", "ALREADY_IN_TEAM", 400);
+      return NextResponse.json(
+        { message: "User already in a team" },
+        { status: 400 }
+      );
     }
 
     // Find the team
     const team = await Team.findOne({ teamCode: teamCode.trim().toUpperCase() });
     if (!team) {
-      return createErrorResponse("Invalid team code", "TEAM_NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "Invalid team code" },
+        { status: 404 }
+      );
     }
 
     // Check if team is full
     if (team.teamMembers.length >= MAX_TEAM_MEMBERS) {
-      return createErrorResponse("Team is full", "TEAM_FULL", 409);
+      return NextResponse.json(
+        { message: "Team is full" },
+        { status: 409 }
+      );
     }
 
     // Check if team has already submitted
     if (team.teamStatus === 'submitted') {
-      return createErrorResponse("Cannot join a team that has already submitted", "TEAM_SUBMITTED", 409);
+      return NextResponse.json(
+        { message: "Team already submitted" },
+        { status: 409 }
+      );
     }
 
     // Add user to team
@@ -100,21 +121,28 @@ export async function PUT(request: NextRequest) {
     const formattedMembers = team.teamMembers.map((member: any) => {
       const userInfo = members.find((u: any) => u.uid === member.uid);
       return {
-        id: userInfo?._id?.toString() || member.uid,
+        id: member.uid,
         name: userInfo?.name || 'Unknown',
         role: member.role,
       };
     });
 
-    return createSuccessResponse("Successfully joined team", {
-      teamCode: team.teamCode,
-      teamName: team.teamName,
-      teamMembers: formattedMembers,
-      memberCount: team.memberCount,
+    return NextResponse.json({
+      success: true,
+      message: "Successfully joined team",
+      data: {
+        teamCode: team.teamCode,
+        teamName: team.teamName,
+        teamMembers: formattedMembers,
+        memberCount: team.memberCount,
+      },
     });
 
   } catch (error: any) {
     console.error("Join team error:", error);
-    return createErrorResponse("Failed to join team", "SERVER_ERROR", 500, error.message);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
   }
 }
