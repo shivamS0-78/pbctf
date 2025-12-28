@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useMockAuth } from "@/hooks/useMockAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { Home, Upload, CheckCircle } from "lucide-react";
 import { FormSection } from "./form-section";
 import { FormInput } from "./form-input";
@@ -25,7 +25,7 @@ interface SubmissionContainerProps {
 }
 
 export function SubmissionContainer({ onNavigate }: SubmissionContainerProps) {
-  const { user, isAuthenticated } = useMockAuth();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const [team, setTeam] = useState<Team | null>(null);
   const [submissionData, setSubmissionData] = useState({

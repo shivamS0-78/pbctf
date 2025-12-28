@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMockAuth } from "@/hooks/useMockAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { LogIn, UserPlus, Zap } from "lucide-react";
 import { FormSection } from "@/components/registration/form-section";
 import { FormInput } from "@/components/registration/form-input";
@@ -11,10 +11,11 @@ import { StickyAlert } from "@/components/registration/sticky-alert";
 import { DotPattern } from "@/components/registration/dot-pattern";
 import Link from "next/link";
 
-// DEBUG MODE - Set to false before production push
-const DEBUG_MODE = true;
+// PRODUCTION MODE - Debug features disabled
+const DEBUG_MODE = false;
 
 export default function LoginPage() {
+  const { login } = useAuth();
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [loginData, setLoginData] = useState({
     email: "",
@@ -23,8 +24,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const { login } = useMockAuth();
-
+  
   // DEBUG: Auto-fill function
   const handleAutoFill = () => {
     setLoginData({
@@ -41,9 +41,10 @@ export default function LoginPage() {
 
     try {
       await login(loginData.email, loginData.password);
+      // Successful login - redirect to dashboard
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err?.message || "An error occurred during login");
+      setError(err?.message || "Login failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -129,9 +130,9 @@ export default function LoginPage() {
               <form onSubmit={handleLogin} className="flex flex-col gap-[20px]">
                 <FormInput
                   label="Email Address"
-                  type="email"
+                    type="email" 
                   placeholder="your.email@example.com"
-                  required
+                    required
                   value={loginData.email}
                   onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                 />
@@ -139,14 +140,14 @@ export default function LoginPage() {
                   label="Password"
                   type="password"
                   placeholder="Enter your password"
-                  required
+                    required
                   value={loginData.password}
                   onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                 />
                 <Button type="submit" variant="primary" disabled={isSubmitting}>
                   {isSubmitting ? "Logging in..." : "Login"}
-                </Button>
-              </form>
+              </Button>
+            </form>
             </FormSection>
           </div>
         </div>

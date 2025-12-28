@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useMockAuth } from "@/hooks/useMockAuth";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Home,
   UserCircle,
@@ -41,7 +41,7 @@ interface DashboardContainerProps {
 }
 
 export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
-  const { user, isAuthenticated } = useMockAuth();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const [team, setTeam] = useState<Team | null>(null);
   const [profileCompleteness, setProfileCompleteness] = useState(0);
@@ -54,36 +54,112 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
       return;
     }
 
-    // Use mock data - NO API calls
+    // Fetch real data from API
     const fetchData = async () => {
       try {
         setIsLoading(true);
         
-        // Simulate loading delay
-        await new Promise(resolve => setTimeout(resolve, 300));
+        const token = localStorage.getItem('authToken');
         
-        // Calculate profile completeness from user context
-        const fields = ['name', 'email', 'phone', 'age', 'organisation', 'bio', 'resume_link'];
-        let completed = 0;
-        fields.forEach((field) => {
-          if (user[field as keyof typeof user]) completed++;
+        // Fetch user data from API
+        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/api/users/${user.uid}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
-        setProfileCompleteness(Math.round((completed / fields.length) * 100));
 
-        // Load team data from localStorage
-        const storedTeams = localStorage.getItem('mockTeams');
-        if (storedTeams && user.teamId) {
-          const teams = JSON.parse(storedTeams);
-          const userTeam = teams.find((t: any) => t.id === user.teamId);
-          setTeam(userTeam || null);
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          if (userData.status === "success" && userData.user) {
+            // Calculate profile completeness based on required fields
+            const requiredFields = [
+              'name',           // Required
+              'email',          // Required
+              'phone',          // Required
+              'age',            // Required
+              'organisation',   // Required
+              'bio',            // Required
+              'github_link',    // Required
+              'linkedin_link',  // Required
+              'resume_link'     // Required (file upload)
+            ];
+            
+            let completed = 0;
+            requiredFields.forEach((field) => {
+              const value = userData.user[field];
+              // Check if field exists and is not null/empty
+              if (value && value !== null && value !== '') {
+                completed++;
+              }
+            });
+            
+            const percentage = Math.round((completed / requiredFields.length) * 100);
+            setProfileCompleteness(percentage);
+            
+            console.log('Profile completeness:', {
+              completed,
+              total: requiredFields.length,
+              percentage,
+              userData: userData.user
+            });
+
+            // Fetch team data if user has a teamId
+            if (userData.user.teamId) {
+              const teamResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/api/teams/${userData.user.teamId}`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+
+              if (teamResponse.ok) {
+                const teamData = await teamResponse.json();
+                if (teamData.status === 'success') {
+                  setTeam(teamData.team);
+                }
+              }
+            }
+          } else {
+            // If API doesn't return expected format, calculate from context user
+            calculateProfileFromContext();
+          }
         } else {
-          setTeam(null);
+          // If API fails, calculate from context user
+          calculateProfileFromContext();
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        // Calculate from context user as fallback
+        calculateProfileFromContext();
       } finally {
         setIsLoading(false);
       }
+    };
+
+    // Fallback: Calculate from user context if API fails
+    const calculateProfileFromContext = () => {
+      const requiredFields = [
+        'name',
+        'email',
+        'phone',
+        'age',
+        'organisation',
+        'bio',
+        'github_link',
+        'linkedin_link',
+        'resume_link'
+      ];
+      
+      let completed = 0;
+      requiredFields.forEach((field) => {
+        const value = user[field as keyof typeof user];
+        if (value && value !== null && value !== '') {
+          completed++;
+        }
+      });
+      
+      setProfileCompleteness(Math.round((completed / requiredFields.length) * 100));
     };
 
     fetchData();

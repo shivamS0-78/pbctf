@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useMockAuth } from "@/hooks/useMockAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { NavBar } from "./navbar";
 import { DotPattern } from "./dot-pattern";
 import { AlertBanner } from "./alert-banner";
@@ -16,7 +16,7 @@ import { SubmissionContainer } from "./submission-container";
 type View = "landing" | "dashboard" | "profile" | "team" | "submission";
 
 export function AppContainer() {
-  const { user, isAuthenticated, isLoading, logout } = useMockAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
   const [currentView, setCurrentView] = useState<View>("landing");
   const [alert, setAlert] = useState<{

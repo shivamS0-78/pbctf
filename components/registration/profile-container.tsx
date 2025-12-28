@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useMockAuth } from "@/hooks/useMockAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { Home } from "lucide-react";
 import { FormSection } from "./form-section";
 import { FormInput } from "./form-input";
@@ -16,7 +16,7 @@ interface ProfileContainerProps {
 }
 
 export function ProfileContainer({ onNavigate }: ProfileContainerProps) {
-  const { user, isAuthenticated, refreshUser } = useMockAuth();
+  const { user, isAuthenticated, refreshUser } = useAuth();
   const router = useRouter();
   const [profileData, setProfileData] = useState({
     name: "",
@@ -42,27 +42,37 @@ export function ProfileContainer({ onNavigate }: ProfileContainerProps) {
       return;
     }
 
-    // Load data from user context - NO API calls
+    // Load data from API
     const fetchProfile = async () => {
       try {
-        // Simulate loading delay
-        await new Promise(resolve => setTimeout(resolve, 200));
+        const token = localStorage.getItem('authToken');
         
-        // Populate from user context
-        setProfileData({
-          name: user.name || "",
-          email: user.email || "",
-          phone: user.phone || "",
-          age: user.age?.toString() || "",
-          organisation: user.organisation || "",
-          bio: user.bio || "",
-          github: user.github_link || "",
-          linkedin: user.linkedin_link || "",
-          portfolio: user.portfolio_link || "",
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/api/users/${user.uid}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
-        
-        if (user.resume_link) setResumeFileName("resume.pdf");
-        if (user.profile_picture) setProfilePhotoFileName("profile.jpg");
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status === "success" && data.user) {
+            setProfileData({
+              name: data.user.name || "",
+              email: data.user.email || "",
+              phone: data.user.phone || "",
+              age: data.user.age?.toString() || "",
+              organisation: data.user.organisation || "",
+              bio: data.user.bio || "",
+              github: data.user.github_link || "",
+              linkedin: data.user.linkedin_link || "",
+              portfolio: data.user.portfolio_link || "",
+            });
+            
+            if (data.user.resume_link) setResumeFileName("resume.pdf");
+            if (data.user.profile_picture) setProfilePhotoFileName("profile.jpg");
+          }
+        }
       } catch (error) {
         console.error("Error loading profile:", error);
       }
@@ -77,36 +87,39 @@ export function ProfileContainer({ onNavigate }: ProfileContainerProps) {
     setAlert(null);
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const formData = new FormData();
+      formData.append('name', profileData.name);
+      formData.append('email', profileData.email);
+      formData.append('phone', profileData.phone);
+      formData.append('age', profileData.age);
+      formData.append('organisation', profileData.organisation);
+      formData.append('bio', profileData.bio);
+      formData.append('github_link', profileData.github);
+      formData.append('linkedin_link', profileData.linkedin);
+      formData.append('portfolio_link', profileData.portfolio);
+      
+      if (resumeFile) formData.append('resume', resumeFile);
+      if (profilePhoto) formData.append('profile_picture', profilePhoto);
 
-      // Update user in localStorage - NO API call
-      const updatedUser = {
-        ...user,
-        name: profileData.name,
-        email: profileData.email,
-        phone: profileData.phone,
-        age: parseInt(profileData.age),
-        organisation: profileData.organisation,
-        bio: profileData.bio,
-        github_link: profileData.github,
-        linkedin_link: profileData.linkedin,
-        portfolio_link: profileData.portfolio,
-      };
+      const token = localStorage.getItem('authToken');
 
-      // Update in mock database (all users)
-      const storedUsers = localStorage.getItem('mockUsers');
-      if (storedUsers) {
-        const users = JSON.parse(storedUsers);
-        const userIndex = users.findIndex((u: any) => u.uid === user?.uid);
-        if (userIndex !== -1) {
-          users[userIndex] = { ...users[userIndex], ...updatedUser };
-          localStorage.setItem('mockUsers', JSON.stringify(users));
-        }
+      // Call real API
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/api/users/${user?.uid}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.status !== 'success') {
+        throw new Error(data.message || 'Failed to update profile');
       }
 
-      // Update current user
-      localStorage.setItem('mockUser', JSON.stringify(updatedUser));
+      // Update local storage
+      localStorage.setItem('authUser', JSON.stringify(data.user));
 
       setAlert({
         type: "success",

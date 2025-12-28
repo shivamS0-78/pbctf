@@ -92,8 +92,8 @@
     font-family: var(--font-body);
     background: var(--background);
     color: var(--foreground);
-  }
-  
+}
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
   }
@@ -110,7 +110,7 @@
   backdrop-filter: blur(var(--blur-sm));
   background: var(--glass-bg-light);
   border: 1px solid var(--glass-border-light);
-}
+  }
 
 /* Remove scrollbar styles */
 @layer utilities {

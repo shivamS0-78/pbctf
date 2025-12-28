@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMockAuth } from "@/hooks/useMockAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { LogIn, UserPlus, Zap } from "lucide-react";
 import { FormInput } from "./form-input";
 import { FormTextarea } from "./form-textarea";
@@ -12,8 +12,8 @@ import { FormSection } from "./form-section";
 import { Button } from "./button";
 import { StickyAlert } from "./sticky-alert";
 
-// DEBUG MODE - Set to false before production push
-const DEBUG_MODE = true;
+// PRODUCTION MODE - Debug features disabled
+const DEBUG_MODE = false;
 
 interface RegistrationContainerProps {
   onSuccess?: () => void;
@@ -21,7 +21,7 @@ interface RegistrationContainerProps {
 
 export function RegistrationContainer({ onSuccess }: RegistrationContainerProps) {
   const router = useRouter();
-  const { register } = useMockAuth();
+  const { register } = useAuth();
   const [authMode, setAuthMode] = useState<"login" | "register">("register");
   const [alert, setAlert] = useState<{
     type: "success" | "error" | "warning" | "info";
@@ -169,7 +169,7 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
     }
 
     try {
-      // Create FormData for mock registration
+      // Create FormData for API request
       const formData = new FormData();
       formData.append('name', registerData.name);
       formData.append('email', registerData.email);
@@ -189,14 +189,15 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
       if (registerData.devfolio) formData.append('devfolio_link', registerData.devfolio);
       if (registerData.referralCode) formData.append('referral_code', registerData.referralCode);
 
-      // Use mock auth register (no API call)
+      // Register user - This will store user data
       await register(formData);
 
       setAlert({
         type: "success",
-        message: "Account created successfully! Redirecting to dashboard...",
+        message: "🎉 Registration successful! Redirecting to dashboard...",
       });
       
+      // Give user time to see success message, then redirect
       setTimeout(() => {
         if (onSuccess) {
           onSuccess();
@@ -204,7 +205,7 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
           // Redirect to dashboard
           router.push('/dashboard');
         }
-      }, 2000);
+      }, 1500);
     } catch (error) {
       setAlert({
         type: "error",

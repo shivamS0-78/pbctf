@@ -1,7 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Instrument_Serif } from 'next/font/google';
-import { MockAuthProvider } from '@/hooks/useMockAuth';
+import { AuthProvider } from '@/hooks/useAuth';
 
 const instrumentSerif = Instrument_Serif({ 
   subsets: ['latin'],
@@ -30,16 +30,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" style={{ background: '#171717' }}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@300;400;500;700&display=swap" rel="stylesheet" />
       </head>
-      <body className={instrumentSerif.variable} style={{ fontFamily: 'var(--font-body)' }}>
-        <MockAuthProvider>
+      <body className={instrumentSerif.variable} style={{ fontFamily: 'var(--font-body)', background: '#171717' }}>
+        <AuthProvider>
           {children}
-        </MockAuthProvider>
+        </AuthProvider>
       </body>
     </html>
   );

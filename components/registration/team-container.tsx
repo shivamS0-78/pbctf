@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useMockAuth } from "@/hooks/useMockAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { Home, Users, Upload, X, Award } from "lucide-react";
 import { FormSection } from "./form-section";
 import { FormInput } from "./form-input";
@@ -27,7 +27,7 @@ interface TeamContainerProps {
 }
 
 export function TeamContainer({ onNavigate }: TeamContainerProps) {
-  const { user, isAuthenticated } = useMockAuth();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const [team, setTeam] = useState<Team | null>(null);
   const [teamFormData, setTeamFormData] = useState({
