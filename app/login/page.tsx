@@ -3,20 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { LogIn, UserPlus, Zap } from "lucide-react";
 import { FormSection } from "@/components/registration/form-section";
 import { FormInput } from "@/components/registration/form-input";
 import { Button } from "@/components/registration/button";
 import { StickyAlert } from "@/components/registration/sticky-alert";
 import { DotPattern } from "@/components/registration/dot-pattern";
-import Link from "next/link";
-
-// PRODUCTION MODE - Debug features disabled
-const DEBUG_MODE = false;
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
@@ -24,15 +18,6 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  
-  // DEBUG: Auto-fill function
-  const handleAutoFill = () => {
-    setLoginData({
-      email: "testuser@example.com",
-      password: "password123",
-    });
-    setError("");
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,73 +51,24 @@ export default function LoginPage() {
           }}
         >
           <div className="max-w-[600px] w-full z-10 flex flex-col gap-[32px] items-center">
+            {error && <StickyAlert type="error" message={error} onClose={() => setError("")} />}
+
             <div className="flex flex-col gap-[12px] items-center text-center">
-              <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(255,255,255,0)] flex items-center justify-center px-[12px] py-[7px] rounded-[15px] shadow-[0px_3px_10px_0px_rgba(209,63,0,0.5)] relative">
-                <p className="text-[14px] text-white leading-[16.8px]" style={{ fontFamily: 'var(--font-body)' }}>
-                  Welcome Back
-                </p>
-                <div className="absolute inset-0 rounded-[15px]">
-                  <div className="absolute border border-[#b85c00] border-solid inset-0 pointer-events-none rounded-[15px]" />
-                </div>
-              </div>
-
-              <h1 className="text-[48px] text-white leading-[52px] tracking-[-1px]" style={{ fontFamily: 'var(--font-heading)' }}>
-                Welcome to Zenith
+              <h1 className="font-['Instrument_Serif',sans-serif] text-[48px] text-white leading-[52px] tracking-[-1px]">
+                Login to Zenith
               </h1>
-
-              <p className="text-[15.9px] text-white opacity-90 leading-[23.8px]" style={{ fontFamily: 'var(--font-body)' }}>
-                Login to your account to continue
+              <p className="font-['Inter',sans-serif] text-[15.9px] text-white opacity-90 leading-[23.8px]">
+                Access your dashboard and manage your hackathon journey.
               </p>
             </div>
 
-            <div className="flex gap-[12px] items-center justify-center flex-wrap">
-              <Button
-                onClick={() => setAuthMode("login")}
-                variant={authMode === "login" ? "primary" : "secondary"}
-              >
-                <LogIn className="w-4 h-4" />
-                Login
-              </Button>
-              <Link href="/register">
-                <Button variant={authMode === "register" ? "primary" : "secondary"}>
-                  <UserPlus className="w-4 h-4" />
-                  Register
-                </Button>
-              </Link>
-              {DEBUG_MODE && (
-                <Button
-                  onClick={handleAutoFill}
-                  variant="secondary"
-                >
-                  <Zap className="w-4 h-4" />
-                  Auto-Fill (Debug)
-                </Button>
-              )}
-            </div>
-
-            {error && <StickyAlert type="error" message={error} onClose={() => setError("")} />}
-
-            {DEBUG_MODE && (
-              <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(255,165,0,0.2)] border border-orange-500 rounded-[15px] p-[12px] flex items-center gap-[12px]">
-                <Zap className="w-5 h-5 text-orange-400" />
-                <div className="flex flex-col gap-[4px]">
-                  <span className="text-[13px] text-white font-semibold" style={{ fontFamily: 'var(--font-body)' }}>
-                    Debug Mode Active
-                  </span>
-                  <span className="text-[12px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                    Set DEBUG_MODE = false in login/page.tsx before production
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <FormSection title="Login to Your Account">
+            <FormSection title="Login">
               <form onSubmit={handleLogin} className="flex flex-col gap-[20px]">
                 <FormInput
                   label="Email Address"
-                    type="email" 
+                  type="email"
                   placeholder="your.email@example.com"
-                    required
+                  required
                   value={loginData.email}
                   onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                 />
@@ -140,14 +76,29 @@ export default function LoginPage() {
                   label="Password"
                   type="password"
                   placeholder="Enter your password"
-                    required
+                  required
                   value={loginData.password}
                   onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                 />
+                <p className="font-['Inter',sans-serif] text-[13px] text-white opacity-60">
+                  Test accounts: Use 'admin@test.com' for Admin, 'evaluator@test.com' for Evaluator, or any other email for Participant
+                </p>
                 <Button type="submit" variant="primary" disabled={isSubmitting}>
-                  {isSubmitting ? "Logging in..." : "Login"}
-              </Button>
-            </form>
+                  Login
+                </Button>
+                <div className="flex items-center justify-center gap-[8px]">
+                  <span className="font-['Inter',sans-serif] text-[14px] text-white opacity-70">
+                    Don't have an account?
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/register")}
+                    className="font-['Inter',sans-serif] text-[14px] text-[#ff4d00] hover:underline"
+                  >
+                    Register here
+                  </button>
+                </div>
+              </form>
             </FormSection>
           </div>
         </div>
