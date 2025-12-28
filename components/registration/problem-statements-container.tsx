@@ -12,9 +12,11 @@ interface ProblemStatement {
   id: string;
   title: string;
   description: string;
-  category: string;
-  difficulty: string;
-  active: boolean;
+  category?: string;
+  difficulty?: string;
+  active?: boolean;
+  teamCount?: number;
+  isActive?: boolean;
 }
 
 interface ProblemStatementsContainerProps {
@@ -45,8 +47,25 @@ export function ProblemStatementsContainer({ onNavigate }: ProblemStatementsCont
 
         if (response.ok) {
           const data = await response.json();
-          if (data.success && data.data) {
+          if (data.success && data.data && Array.isArray(data.data.problemStatements)) {
+            // Transform API response to match component interface
+            const transformed = data.data.problemStatements.map((ps: any) => ({
+              id: ps.id,
+              title: ps.title,
+              description: ps.description,
+              category: ps.category || 'General',
+              difficulty: ps.difficulty || 'Medium',
+              active: ps.isActive !== undefined ? ps.isActive : true,
+              teamCount: ps.teamCount,
+              isActive: ps.isActive,
+            }));
+            setProblemStatements(transformed);
+          } else if (data.success && data.data && Array.isArray(data.data)) {
+            // Fallback: if data.data is directly an array
             setProblemStatements(data.data);
+          } else {
+            // If data structure is unexpected, use empty array
+            setProblemStatements([]);
           }
         } else {
           // Fallback to mock data if API fails
@@ -93,32 +112,45 @@ export function ProblemStatementsContainer({ onNavigate }: ProblemStatementsCont
           <div className="text-white text-center py-[40px]">Loading challenges...</div>
         ) : (
           <div className="flex flex-col gap-[16px]">
-            {problemStatements.map((ps) => (
-              <Card key={ps.id}>
-                <div className="flex flex-col gap-[12px]">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-['Inter',sans-serif] text-[18px] text-white mb-[8px]">{ps.title}</h3>
-                      <p className="font-['Inter',sans-serif] text-[14px] text-white opacity-70 mb-[12px]">
-                        {ps.description}
-                      </p>
-                      <div className="flex items-center gap-[12px]">
-                        <span className="text-[13px] text-[#ff4d00] bg-[rgba(255,77,0,0.2)] px-[10px] py-[4px] rounded-[8px]">
-                          {ps.category}
-                        </span>
-                        <span className="text-[13px] text-white opacity-60">
-                          {ps.difficulty}
-                        </span>
+            {Array.isArray(problemStatements) && problemStatements.length > 0 ? (
+              problemStatements.map((ps) => (
+                <Card key={ps.id}>
+                  <div className="flex flex-col gap-[12px]">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-['Inter',sans-serif] text-[18px] text-white mb-[8px]">{ps.title}</h3>
+                        <p className="font-['Inter',sans-serif] text-[14px] text-white opacity-70 mb-[12px]">
+                          {ps.description}
+                        </p>
+                        <div className="flex items-center gap-[12px]">
+                          {ps.category && (
+                            <span className="text-[13px] text-[#ff4d00] bg-[rgba(255,77,0,0.2)] px-[10px] py-[4px] rounded-[8px]">
+                              {ps.category}
+                            </span>
+                          )}
+                          {ps.difficulty && (
+                            <span className="text-[13px] text-white opacity-60">
+                              {ps.difficulty}
+                            </span>
+                          )}
+                          {ps.teamCount !== undefined && (
+                            <span className="text-[13px] text-white opacity-60">
+                              {ps.teamCount} {ps.teamCount === 1 ? 'team' : 'teams'}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      <Button variant="secondary">
+                        <Eye className="w-4 h-4" />
+                        View Details
+                      </Button>
                     </div>
-                    <Button variant="secondary">
-                      <Eye className="w-4 h-4" />
-                      View Details
-                    </Button>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              ))
+            ) : (
+              <div className="text-white text-center py-[40px]">No problem statements available.</div>
+            )}
           </div>
         )}
       </FormSection>

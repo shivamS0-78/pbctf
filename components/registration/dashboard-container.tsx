@@ -25,17 +25,46 @@ import { StatusBadge } from "./status-badge";
 import { AlertBanner } from "./alert-banner";
 
 interface Team {
-  id: string;
-  name: string;
-  code: string;
-  leadId: string;
-  members: string[];
-  problemStatement: string;
-  lookingForMembers: boolean;
-  status: "none" | "in-team" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined";
-  submissionUrl?: string;
-  videoUrl?: string;
-  projectLink?: string;
+  teamCode: string;
+  teamName: string;
+  teamLead: {
+    id?: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    organisation?: string;
+    resume_link?: string;
+    github_link?: string;
+  };
+  teamMembers: Array<{
+    uid: string;
+    name: string;
+    email?: string;
+    organisation?: string;
+    role: string;
+    joinedAt?: Date;
+  }>;
+  memberCount: number;
+  teamStatus: string;
+  isLooking: boolean;
+  appliedFor?: {
+    id: string;
+    title: string;
+  } | null;
+  videoURL?: string;
+  submissionPDF?: string;
+  anyOtherLink?: string;
+  isEvaluated?: boolean;
+  evaluator?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+  scores?: any;
+  comments?: string;
+  isShortlisted?: boolean;
+  createdAt?: Date;
+  submittedAt?: Date;
 }
 
 interface DashboardContainerProps {
@@ -78,7 +107,10 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
 
         if (userResponse.ok) {
           const userData = await userResponse.json();
-          if (userData.success && userData.data) {
+          // Profile API returns data directly (not wrapped in success/data)
+          const profileData = userData.success ? userData.data : userData;
+          
+          if (profileData) {
             // Calculate profile completeness based on required fields
             const requiredFields = [
               'name',           // Required
@@ -94,7 +126,7 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
             
             let completed = 0;
             requiredFields.forEach((field) => {
-              const value = userData.data[field];
+              const value = profileData[field];
               // Check if field exists and is not null/empty
               if (value && value !== null && value !== '') {
                 completed++;
@@ -103,28 +135,42 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
             
             const percentage = Math.round((completed / requiredFields.length) * 100);
             setProfileCompleteness(percentage);
-            
-            console.log('Profile completeness:', {
-              completed,
-              total: requiredFields.length,
-              percentage,
-              userData: userData.data
-            });
 
             // Fetch team data if user has a teamCode
-            if (userData.data.teamCode) {
-              const teamResponse = await fetch(API_ENDPOINTS.getTeam(userData.data.teamCode), {
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-              });
+            if (profileData.teamCode) {
+              try {
+                // Try the regular team endpoint first
+                const teamResponse = await fetch(API_ENDPOINTS.getTeam(profileData.teamCode), {
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  }
+                });
 
-              if (teamResponse.ok) {
-                const teamData = await teamResponse.json();
-                if (teamData.success && teamData.data) {
-                  setTeam(teamData.data);
+                if (teamResponse.ok) {
+                  const teamData = await teamResponse.json();
+                  if (teamData.success && teamData.data) {
+                    setTeam(teamData.data);
+                  }
+                } else {
+                  // If regular endpoint doesn't exist, try admin endpoint (might fail for non-admins)
+                  const adminTeamResponse = await fetch(`/api/admin/teams/${profileData.teamCode}`, {
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json'
+                    }
+                  });
+
+                  if (adminTeamResponse.ok) {
+                    const teamData = await adminTeamResponse.json();
+                    if (teamData.success && teamData.data) {
+                      setTeam(teamData.data);
+                    }
+                  }
                 }
+              } catch (error) {
+                console.error('Error fetching team data:', error);
+                // Team fetch failed, but we'll continue without team data
               }
             }
           } else {
@@ -174,7 +220,23 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
 
   const getTeamStatus = (): "none" | "in-team" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined" => {
     if (!team) return "none";
-    return team.status;
+    // Map teamStatus from API to component status
+    const statusMap: Record<string, "none" | "in-team" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined"> = {
+      'pending': 'in-team',
+      'submitted': 'submitted',
+      'withdrawn': 'none',
+      'shortlisted': 'shortlisted',
+      'rsvped': 'confirmed',
+      'rsvp_declined': 'declined',
+    };
+    return statusMap[team.teamStatus] || 'in-team';
+  };
+
+  const isTeamLead = (): boolean => {
+    if (!team || !user) return false;
+    // Check if user is the team lead by checking teamMembers array
+    const userMember = team.teamMembers?.find((member: any) => member.uid === user.uid);
+    return userMember?.role === 'Team Lead' || false;
   };
 
   const handleRSVP = (status: "confirmed" | "declined") => {
@@ -219,7 +281,7 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
           <Users className="w-4 h-4" />
           Team
         </Button>
-        {team && team.leadId === user.uid && team.status === "in-team" && (
+        {team && isTeamLead() && getTeamStatus() === "in-team" && (
           <Button onClick={() => onNavigate("submission")} variant="secondary">
             <FileText className="w-4 h-4" />
             Submit Project
@@ -293,7 +355,7 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
                 </Button>
               </div>
             </>
-          ) : (
+          ) : team ? (
             <>
               <div className="flex flex-col gap-[8px]">
                 <div className="flex justify-between">
@@ -301,7 +363,7 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
                     Team Name
                   </span>
                   <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                    {team?.name}
+                    {team.teamName}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -309,7 +371,7 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
                     Team Code
                   </span>
                   <span className="text-[14px] text-white font-mono" style={{ fontFamily: 'var(--font-body)' }}>
-                    {team?.code}
+                    {team.teamCode}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -317,20 +379,38 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
                     Members
                   </span>
                   <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                    {(team?.members || []).length}
+                    {team.memberCount} / 4
                   </span>
                 </div>
+                {team.appliedFor && (
+                  <div className="flex justify-between">
+                    <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                      Problem Statement
+                    </span>
+                    <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+                      {team.appliedFor.title}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
                     Your Role
                   </span>
                   <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                    {team?.leadId === user.uid ? "Team Lead" : "Member"}
+                    {isTeamLead() ? "Team Lead" : "Member"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                    Team Status
+                  </span>
+                  <span className="text-[14px] text-white capitalize" style={{ fontFamily: 'var(--font-body)' }}>
+                    {team.teamStatus}
                   </span>
                 </div>
               </div>
 
-              {teamStatus === "in-team" && team?.leadId === user.uid && (
+              {teamStatus === "in-team" && isTeamLead() && (
                 <Button onClick={() => onNavigate("submission")} variant="primary">
                   <FileText className="w-4 h-4" />
                   Submit Project
@@ -372,7 +452,7 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
                 View Team Details
               </Button>
             </>
-          )}
+          ) : null}
         </div>
       </FormSection>
 
@@ -393,10 +473,10 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
               Team Management
             </Button>
           )}
-          {team && team.leadId === user.uid && (
+          {team && isTeamLead() && (
             <Button onClick={() => onNavigate("submission")} variant="secondary">
               <Upload className="w-4 h-4" />
-              {team.status === "submitted" ? "Update Submission" : "Submit Project"}
+              {team.teamStatus === "submitted" ? "Update Submission" : "Submit Project"}
             </Button>
           )}
         </div>

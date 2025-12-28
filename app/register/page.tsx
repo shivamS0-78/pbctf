@@ -1,9 +1,31 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
 import { RegistrationContainer } from "@/components/registration/registration-container";
 import { DotPattern } from "@/components/registration/dot-pattern";
 
 export default function RegisterPage() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  // Show loading or nothing while checking auth or redirecting
+  if (isLoading || isAuthenticated) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#171717]">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="min-h-screen w-full flex flex-col items-start relative"

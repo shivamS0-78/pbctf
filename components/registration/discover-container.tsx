@@ -53,8 +53,18 @@ export function DiscoverContainer({ onNavigate }: DiscoverContainerProps) {
 
         if (teamsResponse.ok) {
           const teamsData = await teamsResponse.json();
-          if (teamsData.success && teamsData.data) {
-            setTeamsLookingForMembers(teamsData.data);
+          if (teamsData.success && teamsData.data && Array.isArray(teamsData.data.teams)) {
+            // Transform API response to match component interface
+            const transformed = teamsData.data.teams.map((team: any) => ({
+              teamName: team.teamName,
+              teamCode: team.teamCode,
+              problemStatement: team.appliedFor?.title || 'No problem statement selected',
+              currentMembers: team.currentMemberCount || 0,
+              maxMembers: team.maxMembers || 4,
+            }));
+            setTeamsLookingForMembers(transformed);
+          } else {
+            setTeamsLookingForMembers([]);
           }
         }
 
@@ -69,8 +79,17 @@ export function DiscoverContainer({ onNavigate }: DiscoverContainerProps) {
 
         if (participantsResponse.ok) {
           const participantsData = await participantsResponse.json();
-          if (participantsData.success && participantsData.data) {
-            setParticipantsLookingForTeams(participantsData.data);
+          if (participantsData.success && participantsData.data && Array.isArray(participantsData.data.users)) {
+            // Transform API response to match component interface
+            const transformed = participantsData.data.users.map((user: any) => ({
+              name: user.name,
+              skills: user.bio || 'No skills listed',
+              interests: user.bio || 'No interests listed',
+              university: user.organisation || undefined,
+            }));
+            setParticipantsLookingForTeams(transformed);
+          } else {
+            setParticipantsLookingForTeams([]);
           }
         }
       } catch (error) {
@@ -93,11 +112,11 @@ export function DiscoverContainer({ onNavigate }: DiscoverContainerProps) {
       <FormSection title="Teams Looking for Members">
         {isLoading ? (
           <div className="text-white text-center py-[40px]">Loading teams...</div>
-        ) : teamsLookingForMembers.length === 0 ? (
+        ) : Array.isArray(teamsLookingForMembers) && teamsLookingForMembers.length === 0 ? (
           <div className="text-white text-center py-[40px] opacity-70">
             No teams are currently looking for members.
           </div>
-        ) : (
+        ) : Array.isArray(teamsLookingForMembers) && teamsLookingForMembers.length > 0 ? (
           <div className="flex flex-col gap-[16px]">
             {teamsLookingForMembers.map((team, idx) => (
               <Card key={idx}>
@@ -127,17 +146,21 @@ export function DiscoverContainer({ onNavigate }: DiscoverContainerProps) {
               </Card>
             ))}
           </div>
+        ) : (
+          <div className="text-white text-center py-[40px] opacity-70">
+            No teams are currently looking for members.
+          </div>
         )}
       </FormSection>
 
       <FormSection title="Participants Looking for Teams">
         {isLoading ? (
           <div className="text-white text-center py-[40px]">Loading participants...</div>
-        ) : participantsLookingForTeams.length === 0 ? (
+        ) : Array.isArray(participantsLookingForTeams) && participantsLookingForTeams.length === 0 ? (
           <div className="text-white text-center py-[40px] opacity-70">
             No participants are currently looking for teams.
           </div>
-        ) : (
+        ) : Array.isArray(participantsLookingForTeams) && participantsLookingForTeams.length > 0 ? (
           <div className="flex flex-col gap-[16px]">
             {participantsLookingForTeams.map((participant, idx) => (
               <Card key={idx}>
@@ -157,6 +180,10 @@ export function DiscoverContainer({ onNavigate }: DiscoverContainerProps) {
                 </div>
               </Card>
             ))}
+          </div>
+        ) : (
+          <div className="text-white text-center py-[40px] opacity-70">
+            No participants are currently looking for teams.
           </div>
         )}
       </FormSection>

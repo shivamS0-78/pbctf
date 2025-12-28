@@ -1,8 +1,19 @@
 "use client";
 
-import { AppContainer } from "@/components/registration/app-container";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  return <AppContainer />;
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push("/dashboard");
+  }, [router]);
+
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#171717]">
+      <div className="text-white">Redirecting...</div>
+    </div>
+  );
 }
 

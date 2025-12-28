@@ -23,7 +23,7 @@ export function NavBar({
 }: NavBarProps) {
   return (
     <div className="bg-gradient-to-t from-[rgba(23,23,23,0)] to-[#171717] h-[78px] w-full sticky top-0 z-50">
-      <div className="flex items-center justify-center size-full">
+      <div className="flex items-center justify-center size-full pt-[16px]">
         <div className="flex items-center justify-between px-[40px] max-w-[1200px] w-full">
           <div 
             className="cursor-pointer" 
