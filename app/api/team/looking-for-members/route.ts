@@ -142,33 +142,63 @@ export async function PUT(request: NextRequest) {
     const { teamCode, isLooking } = body;
 
     if (!teamCode) {
-      return createErrorResponse("Team code is required", "VALIDATION_ERROR", 400);
+      return NextResponse.json(
+        { message: "Team code is required" },
+        { status: 400 }
+      );
     }
 
     if (typeof isLooking !== 'boolean') {
-      return createErrorResponse("isLooking must be a boolean", "VALIDATION_ERROR", 400);
+      return NextResponse.json(
+        { message: "isLooking must be a boolean" },
+        { status: 400 }
+      );
     }
 
     await dbConnect();
 
     const team = await Team.findOne({ teamCode });
     if (!team) {
-      return createErrorResponse("Team not found", "NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "Team not found" },
+        { status: 404 }
+      );
     }
 
     // Check if user is team lead
     if (team.teamLead !== authResult.user.uid) {
-      return createErrorResponse("Only team lead can update this status", "NOT_TEAM_LEAD", 403);
+      return NextResponse.json(
+        { message: "User is not team lead" },
+        { status: 403 }
+      );
     }
 
-    await Team.findOneAndUpdate({ teamCode }, { isLooking });
+    const updatedTeam = await Team.findOneAndUpdate(
+      { teamCode },
+      { $set: { isLooking } },
+      { new: true }
+    );
 
-    return createSuccessResponse("Team status updated successfully", {
-      teamCode,
-      isLooking,
+    if (!updatedTeam) {
+      return NextResponse.json(
+        { message: "Failed to update status" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Team status updated successfully",
+      data: {
+        teamCode: updatedTeam.teamCode,
+        isLooking: updatedTeam.isLooking,
+      },
     });
   } catch (error: any) {
     console.error("Update looking-for-members error:", error);
-    return createErrorResponse("Failed to update status", "SERVER_ERROR", 500);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
   }
 }
