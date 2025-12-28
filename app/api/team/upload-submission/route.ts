@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authenticateUser, createAuthErrorResponse } from "@/lib/middleware/auth";
+import { authenticateUser } from "@/lib/middleware/auth";
 import { cloudinaryV2 } from "@/c";
 import dbConnect from "@/lib/db";
 import Team from "@/models/Team";
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -14,24 +17,6 @@ cloudinaryV2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-function createSuccessResponse(message: string, data: any, status = 200) {
-  return NextResponse.json({
-    success: true,
-    message,
-    data,
-    timestamp: new Date().toISOString(),
-  }, { status });
-}
-
-function createErrorResponse(message: string, code: string, status: number) {
-  return NextResponse.json({
-    success: false,
-    message,
-    error: { code, message },
-    timestamp: new Date().toISOString(),
-  }, { status });
-}
-
 // Validate YouTube URL
 function isValidYouTubeURL(url: string): boolean {
   const patterns = [
@@ -41,18 +26,56 @@ function isValidYouTubeURL(url: string): boolean {
   return patterns.some(pattern => pattern.test(url));
 }
 
-// Upload base64 file to Cloudinary
-async function uploadBase64ToCloudinary(base64Data: string, folder: string, resourceType: 'raw'): Promise<string> {
+async function uploadToCloudinary(filePath: string, folder: string, mimetype: string): Promise<string> {
   return new Promise((resolve, reject) => {
     cloudinaryV2.uploader.upload(
-      base64Data,
-      { folder, resource_type: resourceType },
-      (error, result) => {
+      filePath,
+      {
+        folder,
+        resource_type: 'raw',
+        use_filename: true,
+        unique_filename: true,
+      },
+      (error: any, result: any) => {
         if (error) reject(error);
         else resolve(result!.secure_url);
       }
     );
   });
+}
+async function parseForm(req: Request): Promise<{ fields: Record<string, any>, files: Record<string, any> }> {
+  const formData = await req.formData();
+  const fields: Record<string, any> = {};
+  const files: Record<string, any> = {};
+  
+  const tempDir = os.tmpdir();
+  
+  for (const [key, value] of formData.entries()) {
+    const isFile = typeof value === 'object' && 
+                   value !== null && 
+                   typeof (value as any).name === 'string' && 
+                   typeof (value as any).arrayBuffer === 'function' &&
+                   typeof (value as any).type === 'string';
+    
+    if (isFile) {
+      const file = value as any;
+      const safeFilename = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+      const tempFilePath = path.join(tempDir, `${Date.now()}_${safeFilename}`);
+      const arrayBuffer = await file.arrayBuffer();
+      await fs.promises.writeFile(tempFilePath, new Uint8Array(arrayBuffer));
+      
+      files[key] = {
+        filepath: tempFilePath,
+        originalFilename: file.name,
+        mimetype: file.type,
+        size: file.size
+      };
+    } else {
+      fields[key] = value;
+    }
+  }
+  
+  return { fields, files };
 }
 
 /**
@@ -60,29 +83,52 @@ async function uploadBase64ToCloudinary(base64Data: string, folder: string, reso
  * Upload video pitch and PDF submission (team lead only)
  */
 export async function POST(request: NextRequest) {
+  let tempFilePath: string | null = null;
+  
   try {
     const authResult = await authenticateUser(request);
     if (!authResult.success) {
-      return createAuthErrorResponse(authResult);
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
     }
 
-    const body = await request.json();
-    const { teamCode, videoURL, submissionPDF, anyOtherLink } = body;
+    // Parse multipart form data
+    const { fields, files } = await parseForm(request);
+    const { teamCode, videoURL, anyOtherLink } = fields;
+    const submissionPDF = files.submissionPDF;
 
     if (!teamCode) {
-      return createErrorResponse("Team code is required", "VALIDATION_ERROR", 400);
+      return NextResponse.json(
+        { message: "Team code is required" },
+        { status: 400 }
+      );
     }
 
     await dbConnect();
 
     const team = await Team.findOne({ teamCode });
     if (!team) {
-      return createErrorResponse("Team not found", "NOT_FOUND", 404);
+      return NextResponse.json(
+        { message: "Team not found" },
+        { status: 404 }
+      );
     }
 
     // Check if user is team lead
     if (team.teamLead !== authResult.user.uid) {
-      return createErrorResponse("Only team lead can upload submissions", "NOT_TEAM_LEAD", 403);
+      return NextResponse.json(
+        { message: "User is not team lead" },
+        { status: 403 }
+      );
+    }
+
+    if (team.teamStatus === 'submitted' || team.teamStatus === 'shortlisted' || team.teamStatus === 'rsvped') {
+      return NextResponse.json(
+        { message: "Team must not have submitted yet" },
+        { status: 400 }
+      );
     }
 
     // Build update object
@@ -91,22 +137,44 @@ export async function POST(request: NextRequest) {
     // Validate and set video URL
     if (videoURL) {
       if (!isValidYouTubeURL(videoURL)) {
-        return createErrorResponse("Invalid YouTube URL format", "INVALID_VIDEO_URL", 400);
+        return NextResponse.json(
+          { message: "Invalid YouTube URL format" },
+          { status: 400 }
+        );
       }
       updateData.videoURL = videoURL;
     }
 
     // Upload PDF if provided
     if (submissionPDF) {
+      if (!submissionPDF.mimetype.includes('pdf')) {
+        return NextResponse.json(
+          { message: "Submission must be a PDF file" },
+          { status: 400 }
+        );
+      }
+
+      const maxSize = 10 * 1024 * 1024;
+      if (submissionPDF.size > maxSize) {
+        return NextResponse.json(
+          { message: "PDF file size must be under 10MB" },
+          { status: 400 }
+        );
+      }
+
+      tempFilePath = submissionPDF.filepath;
       try {
-        updateData.submissionPDF = await uploadBase64ToCloudinary(
-          submissionPDF,
+        updateData.submissionPDF = await uploadToCloudinary(
+          submissionPDF.filepath,
           'zenith/submissions',
-          'raw'
+          submissionPDF.mimetype
         );
       } catch (uploadError) {
         console.error('PDF upload error:', uploadError);
-        return createErrorResponse("Failed to upload PDF", "UPLOAD_ERROR", 500);
+        return NextResponse.json(
+          { message: "Failed to upload PDF" },
+          { status: 500 }
+        );
       }
     }
 
@@ -122,15 +190,37 @@ export async function POST(request: NextRequest) {
       { new: true }
     );
 
-    return createSuccessResponse("Submission uploaded successfully", {
-      teamCode,
-      videoURL: updatedTeam!.videoURL || null,
-      submissionPDF: updatedTeam!.submissionPDF || null,
-      anyOtherLink: updatedTeam!.anyOtherLink || null,
-      uploadedAt: new Date().toISOString(),
+    if (!updatedTeam) {
+      return NextResponse.json(
+        { message: "Failed to update team" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Submission uploaded successfully",
+      data: {
+        teamCode: updatedTeam.teamCode,
+        videoURL: updatedTeam.videoURL || null,
+        submissionPDF: updatedTeam.submissionPDF || null,
+        anyOtherLink: updatedTeam.anyOtherLink || null,
+        uploadedAt: new Date().toISOString(),
+      },
     });
   } catch (error: any) {
     console.error("Upload submission error:", error);
-    return createErrorResponse("Failed to upload submission", "SERVER_ERROR", 500);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
+  } finally {
+    if (tempFilePath && fs.existsSync(tempFilePath)) {
+      try {
+        await fs.promises.unlink(tempFilePath);
+      } catch (cleanupError) {
+        console.error('Failed to cleanup temp file:', cleanupError);
+      }
+    }
   }
 }
