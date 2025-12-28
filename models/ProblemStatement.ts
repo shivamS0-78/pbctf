@@ -1,21 +1,47 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IProblemStatement extends Document {
-    id: string;
-    uid: string;
-    title: string;
-    description: string;
+  title: string;
+  description: string;
+  teamCount: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const ProblemStatementSchema: Schema = new Schema({
-    id: { type: String, required: true, unique: true },
-    uid: { type: String, required: true },
-    title: { type: String, required: true },
-    description: { type: String, required: true },
+  title: { 
+    type: String, 
+    required: true, 
+    unique: true,
+    minlength: 10,
+    maxlength: 200,
+    index: true,
+  },
+  description: { 
+    type: String, 
+    required: true,
+    minlength: 50,
+    maxlength: 1000,
+  },
+  teamCount: { 
+    type: Number, 
+    default: 0,
+  },
+  isActive: { 
+    type: Boolean, 
+    default: true,
+    index: true,
+  },
 }, {
-    timestamps: true,
+  timestamps: true,
 });
 
-const ProblemStatement: Model<IProblemStatement> = mongoose.models.ProblemStatement || mongoose.model<IProblemStatement>('ProblemStatement', ProblemStatementSchema);
+// Delete the model if it exists to prevent OverwriteModelError
+if (mongoose.models.ProblemStatement) {
+  delete mongoose.models.ProblemStatement;
+}
+
+const ProblemStatement: Model<IProblemStatement> = mongoose.model<IProblemStatement>('ProblemStatement', ProblemStatementSchema);
 
 export default ProblemStatement;

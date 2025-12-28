@@ -1,0 +1,169 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/Firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { FirebaseError } from "firebase/app";
+import dbConnect from "@/lib/db";
+import User from "@/models/User";
+
+const ADMIN_EMAIL_DOMAIN = process.env.ADMIN_EMAIL_DOMAIN;
+const SECRET_CODE = process.env.SECRET_CODE;
+
+// Helper to create success response
+function createSuccessResponse(message: string, data: any, status = 200) {
+  return NextResponse.json({
+    success: true,
+    message,
+    ...data,
+    timestamp: new Date().toISOString(),
+  }, { status });
+}
+
+// Helper to create error response
+function createErrorResponse(message: string, code: string, status: number) {
+  return NextResponse.json({
+    success: false,
+    message,
+    error: { code, message },
+    timestamp: new Date().toISOString(),
+  }, { status });
+}
+
+// Handle authentication with Firebase  
+async function authenticateUser(email: string, password: string, isAdminAttempt: boolean) {
+  try {
+    return await signInWithEmailAndPassword(auth, email, password);
+  } catch (authError: unknown) {
+    if (authError instanceof FirebaseError && isAdminAttempt && 
+        (authError.code === 'auth/invalid-credential' || 
+         authError.code === 'auth/user-not-found')) {
+      // Create new admin account if login fails with valid admin domain
+      return await createUserWithEmailAndPassword(auth, email, password);
+    }
+    throw authError;
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const { email, password } = await request.json();
+
+    if (!email || !password) {
+      return createErrorResponse("Email and password are required", "VALIDATION_ERROR", 400);
+    }
+    
+    const isAdminAttempt = ADMIN_EMAIL_DOMAIN && SECRET_CODE && 
+                           email.endsWith(ADMIN_EMAIL_DOMAIN) && 
+                           password === SECRET_CODE;
+    
+    // Authentication phase
+    const userCredential = await authenticateUser(email, password, isAdminAttempt);
+    const firebaseUser = userCredential.user;
+    const idToken = await firebaseUser.getIdToken();
+    
+    await dbConnect();
+    let user = await User.findOne({ uid: firebaseUser.uid });
+    if (!user) {
+      user = await User.findOne({ email: email.toLowerCase() });
+    }
+    
+    // Process based on user type
+    if (isAdminAttempt) {
+      // Admin login flow
+      if (user) {
+        if (user.role !== 'admin') {
+          await User.findByIdAndUpdate(user._id, { role: 'admin' });
+          user.role = 'admin';
+        }
+        
+        return createSuccessResponse("Login successful", {
+          user: {
+            uid: user.uid,
+            email: user.email,
+            name: user.name,
+            isAdmin: true,
+            profile_picture: user.profile_picture || null,
+            status: "active"
+          },
+          token: idToken
+        });
+      } else {
+        // Create new admin user
+        const adminName = email.split('@')[0].split('.')
+          .map((s: string) => s.charAt(0).toUpperCase() + s.slice(1))
+          .join(' ');
+        
+        const newAdminUser = await new User({
+          uid: firebaseUser.uid,
+          name: adminName,
+          email: email.toLowerCase(),
+          role: 'admin',
+          isLooking: false
+        }).save();
+        
+        return createSuccessResponse("Login successful. Admin privileges granted.", {
+          user: {
+            uid: newAdminUser.uid,
+            email: newAdminUser.email,
+            name: newAdminUser.name,
+            isAdmin: true,
+            profile_picture: newAdminUser.profile_picture || null,
+            status: "active"
+          },
+          token: idToken
+        });
+      }
+    } else {
+      // Regular user login
+      if (!user) {
+        return createErrorResponse("User record not found", "USER_NOT_FOUND", 404);
+      }
+      
+      return createSuccessResponse("Login successful", {
+        user: {
+          uid: user.uid,
+          email: user.email,
+          name: user.name,
+          isAdmin: user.role === 'admin',
+          profile_picture: user.profile_picture || null,
+          status: "active"
+        },
+        token: idToken
+      });
+    }
+  } catch (error: unknown) {
+    console.error("Login error:", error);
+    
+    const errorCode = error instanceof FirebaseError ? error.code : undefined;
+    let errorMessage = "Login failed";
+    let statusCode = 500;
+
+    switch (errorCode) {
+      case 'auth/invalid-email':
+        errorMessage = "Invalid email format";
+        statusCode = 400;
+        break;
+      case 'auth/invalid-credential':
+        errorMessage = "Invalid credentials";
+        statusCode = 401;
+        break;
+      case 'auth/user-disabled':
+        errorMessage = "This account has been disabled";
+        statusCode = 403;
+        break;
+      case 'auth/user-not-found':
+        errorMessage = "No account found with this email";
+        statusCode = 404;
+        break;
+      case 'auth/wrong-password':
+        errorMessage = "Incorrect password";
+        statusCode = 401;
+        break;
+      case 'auth/too-many-requests':
+        errorMessage = "Too many unsuccessful login attempts. Please try again later";
+        statusCode = 429;
+        break;
+    }
+
+    return createErrorResponse(errorMessage, errorCode || 'AUTH_ERROR', statusCode);
+  }
+}
