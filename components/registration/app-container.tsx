@@ -28,11 +28,13 @@ export function AppContainer() {
     if (isLoading) return;
 
     if (isAuthenticated && user) {
+      // User is authenticated, show dashboard
       setCurrentView("dashboard");
-    } else {
-      setCurrentView("landing");
+    } else if (!isAuthenticated && !user) {
+      // User is not authenticated, redirect to login
+      router.push('/login');
     }
-  }, [isAuthenticated, user, isLoading]);
+  }, [isAuthenticated, user, isLoading, router]);
 
   const handleNavigate = (view: "dashboard" | "profile" | "team" | "submission") => {
     setCurrentView(view);
@@ -56,6 +58,15 @@ export function AppContainer() {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-[#171717]">
         <div className="text-white" style={{ fontFamily: 'var(--font-body)' }}>Loading...</div>
+      </div>
+    );
+  }
+
+  // If not authenticated, redirect to login (handled in useEffect)
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#171717]">
+        <div className="text-white" style={{ fontFamily: 'var(--font-body)' }}>Redirecting...</div>
       </div>
     );
   }
@@ -89,23 +100,19 @@ export function AppContainer() {
               />
             )}
 
-            {currentView === "landing" && (
-              <RegistrationContainer onSuccess={handleRegistrationSuccess} />
-            )}
-
-            {currentView === "dashboard" && isAuthenticated && (
+            {currentView === "dashboard" && (
               <DashboardContainer onNavigate={handleNavigate} />
             )}
 
-            {currentView === "profile" && isAuthenticated && (
+            {currentView === "profile" && (
               <ProfileContainer onNavigate={handleNavigate} />
             )}
 
-            {currentView === "team" && isAuthenticated && (
+            {currentView === "team" && (
               <TeamContainer onNavigate={handleNavigate} />
             )}
 
-            {currentView === "submission" && isAuthenticated && (
+            {currentView === "submission" && (
               <SubmissionContainer onNavigate={handleNavigate} />
             )}
           </div>
