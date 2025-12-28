@@ -17,6 +17,7 @@ import {
   AlertCircle,
   X,
   Check,
+  Search,
 } from "lucide-react";
 import { FormSection } from "./form-section";
 import { Button } from "./button";
@@ -38,7 +39,7 @@ interface Team {
 }
 
 interface DashboardContainerProps {
-  onNavigate: (view: "dashboard" | "profile" | "team" | "submission") => void;
+  onNavigate: (view: "dashboard" | "profile" | "team" | "submission" | "discover") => void;
 }
 
 export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
@@ -286,6 +287,10 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
                   <Users className="w-4 h-4" />
                   Create / Join Team
                 </Button>
+                <Button onClick={() => onNavigate("discover")} variant="secondary">
+                  <Search className="w-4 h-4" />
+                  Discover Teams
+                </Button>
               </div>
             </>
           ) : (
@@ -377,6 +382,10 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
           <Button onClick={() => onNavigate("profile")} variant="secondary">
             <Edit className="w-4 h-4" />
             Edit Profile
+          </Button>
+          <Button onClick={() => onNavigate("discover")} variant="secondary">
+            <Search className="w-4 h-4" />
+            Discover
           </Button>
           {!team && (
             <Button onClick={() => onNavigate("team")} variant="secondary">

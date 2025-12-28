@@ -1,15 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { AppContainer } from "@/components/registration/app-container";
 
 export default function Home() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace("/register");
-  }, [router]);
-
-  return null;
+  return <AppContainer />;
 }
 
