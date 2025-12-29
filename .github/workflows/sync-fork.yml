@@ -27,14 +27,7 @@ jobs:
 
       - name: Add upstream remote
         run: |
-          # Replace UPSTREAM_REPO with your upstream repository URL
-          # Format: https://github.com/OWNER/REPO.git
-          UPSTREAM_REPO="${UPSTREAM_REPO:-}"
-          if [ -z "$UPSTREAM_REPO" ]; then
-            echo "Error: UPSTREAM_REPO secret is not set"
-            echo "Please set it in your repository secrets: Settings > Secrets and variables > Actions"
-            exit 1
-          fi
+          UPSTREAM_REPO="https://github.com/pbdsce/Zenith.git"
           
           # Check if upstream remote already exists
           if git remote | grep -q "^upstream$"; then
@@ -42,8 +35,6 @@ jobs:
           else
             git remote add upstream "$UPSTREAM_REPO"
           fi
-        env:
-          UPSTREAM_REPO: ${{ secrets.UPSTREAM_REPO }}
 
       - name: Fetch upstream
         run: git fetch upstream
@@ -54,15 +45,32 @@ jobs:
 
       - name: Merge upstream changes
         run: |
-          git checkout ${{ steps.branch.outputs.branch }}
-          git merge upstream/${{ steps.branch.outputs.branch }} --no-edit || {
-            echo "No changes to merge or merge conflict occurred"
-            exit 0
-          }
+          CURRENT_BRANCH="${{ steps.branch.outputs.branch }}"
+          UPSTREAM_BRANCH="prod"  # Upstream default branch
+          
+          git checkout $CURRENT_BRANCH
+          
+          # Try to merge from upstream branch
+          if git merge "upstream/$UPSTREAM_BRANCH" --no-edit; then
+            echo "Successfully merged upstream/$UPSTREAM_BRANCH into $CURRENT_BRANCH"
+          else
+            echo "Merge failed or no changes to merge"
+            # Check if there are actual conflicts or just no changes
+            if [ -n "$(git status --porcelain)" ]; then
+              echo "Merge conflicts detected, skipping push"
+              exit 1
+            else
+              echo "No changes to merge"
+              exit 0
+            fi
+          fi
 
       - name: Push changes
         run: |
-          git push origin ${{ steps.branch.outputs.branch }} || {
-            echo "No changes to push"
+          CURRENT_BRANCH="${{ steps.branch.outputs.branch }}"
+          if git push origin $CURRENT_BRANCH; then
+            echo "Successfully pushed changes to $CURRENT_BRANCH"
+          else
+            echo "No changes to push or push failed"
             exit 0
-          }
+          fi
