@@ -504,7 +504,7 @@ export function DashboardContainer() {
       {alert && <AlertBanner type={alert.type} message={alert.message} />}
       <div className="flex flex-col gap-[12px] items-center text-center">
         <h1 className="text-[48px] text-white leading-[52px] tracking-[-1px]" style={{ fontFamily: 'var(--font-heading)' }}>
-          Welcome back, {user.name}!
+          Welcome, {user.name}!
         </h1>
         <p className="text-[15.9px] text-white opacity-90 leading-[23.8px]" style={{ fontFamily: 'var(--font-body)' }}>
           Manage your profile, team, and submissions from your dashboard.

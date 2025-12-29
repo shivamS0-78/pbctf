@@ -158,9 +158,8 @@ export function DiscoverContainer() {
     fetchData();
   }, [getToken]);
 
-  const handleSendRequest = async (teamCode: string, e?: React.MouseEvent) => {
+  const handleSendRequest = async (teamCode: string) => {
     if (!user) return;
-    e?.stopPropagation(); // Prevent opening team modal when clicking button
 
     try {
       setSendingRequest(teamCode);
@@ -323,8 +322,7 @@ export function DiscoverContainer() {
     setUserDetails(null);
   };
 
-  const handleUserClick = async (userId: string, e?: React.MouseEvent) => {
-    e?.stopPropagation(); // Prevent closing team modal
+  const handleUserClick = async (userId: string) => {
     setSelectedUserId(userId);
     setIsLoadingUser(true);
     
@@ -369,7 +367,7 @@ export function DiscoverContainer() {
         </Button>
       </div>
 
-      <FormSection title="Discover">
+      <FormSection title="What are you looking for?">
         <div className="flex flex-col gap-[24px]">
           {/* Tab Navigation */}
           <div className="flex gap-[12px]">
@@ -399,13 +397,29 @@ export function DiscoverContainer() {
         ) : Array.isArray(teamsLookingForMembers) && teamsLookingForMembers.length > 0 ? (
           <div className="flex flex-col gap-[16px]">
             {teamsLookingForMembers.map((team, idx) => (
-              <Card key={idx}>
-                      <div 
-                        className="flex items-start justify-between cursor-pointer"
-                        onClick={() => handleTeamClick(team.teamCode)}
-                      >
+              <div
+                key={idx}
+                className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-[rgba(255,77,0,0.2)]"
+              >
+                <Card>
+                  <div 
+                    className="flex items-start justify-between cursor-pointer"
+                    onClick={() => handleTeamClick(team.teamCode)}
+                  >
                   <div className="flex-1">
-                    <h3 className="font-['Inter',sans-serif] text-[16px] text-white mb-[4px]">{team.teamName}</h3>
+                    <div className="flex items-center gap-[12px] mb-[8px]">
+                      <h3 className="font-['Inter',sans-serif] text-[16px] text-white">{team.teamName}</h3>
+                      {userRequests[team.teamCode] === 'pending' && (
+                        <span className="px-[8px] py-[2px] bg-[rgba(255,235,59,0.2)] border border-[#ffeb3b] rounded-[6px] text-[12px] text-[#ffeb3b] font-medium">
+                          Request Sent
+                        </span>
+                      )}
+                      {userRequests[team.teamCode] === 'accepted' && (
+                        <span className="px-[8px] py-[2px] bg-[rgba(76,175,80,0.2)] border border-[#4caf50] rounded-[6px] text-[12px] text-[#4caf50] font-medium">
+                          Accepted
+                        </span>
+                      )}
+                    </div>
                     <p className="font-['Inter',sans-serif] text-[13px] text-white opacity-70 mb-[8px]">
                       Problem: {team.problemStatement}
                     </p>
@@ -418,45 +432,9 @@ export function DiscoverContainer() {
                       </span>
                     </div>
                   </div>
-                  {userRequests[team.teamCode] === 'pending' ? (
-                    <Button 
-                      variant="secondary"
-                      disabled
-                            onClick={(e) => e.stopPropagation()}
-                    >
-                      <Users className="w-4 h-4" />
-                      Request Sent
-                    </Button>
-                  ) : userRequests[team.teamCode] === 'accepted' ? (
-                    <Button 
-                      variant="secondary"
-                      disabled
-                            onClick={(e) => e.stopPropagation()}
-                    >
-                      <Users className="w-4 h-4" />
-                      Accepted
-                    </Button>
-                  ) : userRequests[team.teamCode] === 'declined' ? (
-                    <Button 
-                      variant="secondary"
-                            onClick={(e) => handleSendRequest(team.teamCode, e)}
-                      disabled={sendingRequest === team.teamCode}
-                    >
-                      <Users className="w-4 h-4" />
-                      {sendingRequest === team.teamCode ? 'Sending...' : 'Send Request'}
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant="secondary"
-                            onClick={(e) => handleSendRequest(team.teamCode, e)}
-                      disabled={sendingRequest === team.teamCode}
-                    >
-                      <Users className="w-4 h-4" />
-                      {sendingRequest === team.teamCode ? 'Sending...' : 'Send Request'}
-                    </Button>
-                  )}
                 </div>
-              </Card>
+                </Card>
+              </div>
             ))}
           </div>
         ) : (
@@ -476,11 +454,15 @@ export function DiscoverContainer() {
         ) : Array.isArray(participantsLookingForTeams) && participantsLookingForTeams.length > 0 ? (
           <div className="flex flex-col gap-[16px]">
             {participantsLookingForTeams.map((participant, idx) => (
-              <Card key={idx}>
-                      <div 
-                        className="flex flex-col gap-[8px] cursor-pointer"
-                        onClick={() => handleUserClick(participant.id)}
-                      >
+              <div
+                key={idx}
+                className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-[rgba(255,77,0,0.2)]"
+              >
+                <Card>
+                  <div 
+                    className="flex flex-col gap-[8px] cursor-pointer"
+                    onClick={() => handleUserClick(participant.id)}
+                  >
                   <div className="flex items-start justify-between">
                     <h3 className="font-['Inter',sans-serif] text-[16px] text-white">{participant.name}</h3>
                     {participant.university && (
@@ -494,7 +476,8 @@ export function DiscoverContainer() {
                     Interests: {participant.interests}
                   </p>
                 </div>
-              </Card>
+                </Card>
+              </div>
             ))}
           </div>
         ) : (
@@ -514,7 +497,10 @@ export function DiscoverContainer() {
         teamDetails={teamDetails}
         isLoading={isLoadingTeam}
         error={teamError}
-        onMemberClick={(userId) => handleUserClick(userId)}
+        onMemberClick={(userId: string) => handleUserClick(userId)}
+        requestStatus={selectedTeamCode ? userRequests[selectedTeamCode] : undefined}
+        onSendRequest={selectedTeamCode ? () => handleSendRequest(selectedTeamCode) : undefined}
+        isSendingRequest={selectedTeamCode ? sendingRequest === selectedTeamCode : false}
       />
 
       {/* User Details Modal */}

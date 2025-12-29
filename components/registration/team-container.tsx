@@ -606,7 +606,7 @@ export function TeamContainer() {
               />
               <div className="flex flex-col gap-[12px]">
                 <label className="text-[14px] text-white opacity-90" style={{ fontFamily: 'var(--font-body)' }}>
-                  Problem Statement <span className="text-red-400">*</span>
+                  Select a Problem Statement <span className="text-red-400">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-[16px] relative">
                   {problemStatements.map((ps, index) => {

@@ -1,8 +1,9 @@
 "use client";
 
-import { User } from "lucide-react";
+import { User, Users } from "lucide-react";
+import { Button } from "./button";
 
-interface TeamDetails {
+export interface TeamDetails {
   teamCode: string;
   teamName: string;
   teamLead: {
@@ -35,6 +36,9 @@ interface TeamDetailsModalProps {
   isLoading: boolean;
   error: string | null;
   onMemberClick: (userId: string) => void;
+  requestStatus?: string; // 'pending', 'accepted', 'declined', or undefined
+  onSendRequest?: () => void;
+  isSendingRequest?: boolean;
 }
 
 export function TeamDetailsModal({ 
@@ -43,7 +47,10 @@ export function TeamDetailsModal({
   teamDetails, 
   isLoading, 
   error,
-  onMemberClick 
+  onMemberClick,
+  requestStatus,
+  onSendRequest,
+  isSendingRequest = false
 }: TeamDetailsModalProps) {
   // For stacked modals, team modal uses z-100
   return (
@@ -89,6 +96,42 @@ export function TeamDetailsModal({
                 Members: {teamDetails.memberCount || (teamDetails.teamMembers?.length || 0)}/{teamDetails.maxMembers || 4}
               </p>
             </div>
+
+            {/* Send Request Button */}
+            {onSendRequest && (
+              <div className="pt-[8px] border-t border-[rgba(255,255,255,0.1)]">
+                {requestStatus === 'pending' ? (
+                  <Button 
+                    variant="secondary"
+                    disabled
+                    onClick={() => {}}
+                  >
+                    <Users className="w-4 h-4" />
+                    Request Sent
+                  </Button>
+                ) : requestStatus === 'accepted' ? (
+                  <Button 
+                    variant="secondary"
+                    disabled
+                    onClick={() => {}}
+                  >
+                    <Users className="w-4 h-4" />
+                    Accepted
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="secondary"
+                    onClick={() => {
+                      onSendRequest();
+                    }}
+                    disabled={isSendingRequest}
+                  >
+                    <Users className="w-4 h-4" />
+                    {isSendingRequest ? 'Sending...' : 'Send Request'}
+                  </Button>
+                )}
+              </div>
+            )}
 
             <div>
               <h4 className="font-['Inter',sans-serif] text-[16px] text-white mb-[12px]">Team Lead</h4>
@@ -152,6 +195,3 @@ export function TeamDetailsModal({
     </div>
   );
 }
-
-export type { TeamDetails };
-
