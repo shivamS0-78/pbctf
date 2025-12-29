@@ -34,7 +34,7 @@ export function NavBar({
           {user ? (
             <div className="flex items-center gap-[12px]">
               <div className="text-[13px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                {user.name} {user.role && <span className="text-[#ff4d00] capitalize">({user.role})</span>}
+                {user.name} {user.role === "admin" && <span className="text-[#ff4d00] capitalize">({user.role})</span>}
               </div>
               <button
                 onClick={onLogout}

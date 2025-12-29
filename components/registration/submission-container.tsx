@@ -280,7 +280,7 @@ export function SubmissionContainer({ onNavigate }: SubmissionContainerProps) {
 
       setAlert({
         type: "success",
-        message: "Project submitted successfully!",
+        message: "Team submitted successfully!",
       });
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
@@ -332,7 +332,7 @@ export function SubmissionContainer({ onNavigate }: SubmissionContainerProps) {
     <div className="flex flex-col gap-[24px] max-w-[700px] w-full">
       <div className="flex items-center justify-between">
         <h1 className="text-[42px] text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-          Project Submission
+          Team Submission
         </h1>
         <Button onClick={() => onNavigate("dashboard")} variant="secondary">
           <Home className="w-4 h-4" />

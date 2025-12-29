@@ -532,7 +532,7 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
         {team && isTeamLead() && getTeamStatus() === "in-team" && (
           <Button onClick={() => onNavigate("submission")} variant="secondary">
             <FileText className="w-4 h-4" />
-            Submit Project
+            Submit Team
           </Button>
         )}
       </div>
@@ -607,6 +607,10 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
         <div className="flex flex-col gap-[16px]">
           {teamStatus === "none" ? (
             <>
+              <AlertBanner 
+                type="warning" 
+                message="Important: Even if you want to participate alone, you still need to create a team to submit your project." 
+              />
               <p className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
                 You're not part of a team yet. Create or join a team to participate in the hackathon.
               </p>
@@ -679,7 +683,7 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
               {teamStatus === "in-team" && isTeamLead() && (
                 <Button onClick={() => onNavigate("submission")} variant="primary">
                   <FileText className="w-4 h-4" />
-                  Submit Project
+                  Submit Team
                 </Button>
               )}
 
