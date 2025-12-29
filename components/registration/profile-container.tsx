@@ -11,11 +11,7 @@ import { FormFileUpload } from "./form-file-upload";
 import { Button } from "./button";
 import { AlertBanner } from "./alert-banner";
 
-interface ProfileContainerProps {
-  onNavigate: (view: "dashboard" | "profile" | "team" | "submission") => void;
-}
-
-export function ProfileContainer({ onNavigate }: ProfileContainerProps) {
+export function ProfileContainer() {
   const { user, isAuthenticated, refreshUser } = useAuth();
   const router = useRouter();
   const [profileData, setProfileData] = useState({
@@ -148,7 +144,7 @@ export function ProfileContainer({ onNavigate }: ProfileContainerProps) {
         <h1 className="text-[42px] text-white" style={{ fontFamily: 'var(--font-heading)' }}>
           Edit Profile
         </h1>
-        <Button onClick={() => onNavigate("dashboard")} variant="secondary">
+        <Button onClick={() => router.push("/dashboard")} variant="secondary">
           <Home className="w-4 h-4" />
           Back to Dashboard
         </Button>

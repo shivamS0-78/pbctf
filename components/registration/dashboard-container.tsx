@@ -69,11 +69,7 @@ interface Team {
   submittedAt?: Date;
 }
 
-interface DashboardContainerProps {
-  onNavigate: (view: "dashboard" | "profile" | "team" | "submission" | "discover") => void;
-}
-
-export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
+export function DashboardContainer() {
   const { user, isAuthenticated, getToken } = useAuth();
   const router = useRouter();
   const [team, setTeam] = useState<Team | null>(null);
@@ -517,20 +513,20 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
 
       {/* Navigation */}
       <div className="flex flex-wrap gap-[12px] justify-center">
-        <Button onClick={() => onNavigate("dashboard")} variant="primary">
+        <Button onClick={() => router.push("/dashboard")} variant="primary">
           <Home className="w-4 h-4" />
           Dashboard
         </Button>
-        <Button onClick={() => onNavigate("profile")} variant="secondary">
+        <Button onClick={() => router.push("/dashboard/profile")} variant="secondary">
           <UserCircle className="w-4 h-4" />
           Profile
         </Button>
-        <Button onClick={() => onNavigate("team")} variant="secondary">
+        <Button onClick={() => router.push("/dashboard/team")} variant="secondary">
           <Users className="w-4 h-4" />
           Team
         </Button>
         {team && isTeamLead() && getTeamStatus() === "in-team" && (
-          <Button onClick={() => onNavigate("submission")} variant="secondary">
+          <Button onClick={() => router.push("/dashboard/submission")} variant="secondary">
             <FileText className="w-4 h-4" />
             Submit Team
           </Button>
@@ -581,7 +577,7 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
             </div>
           )}
           {profileCompleteness < 100 && (
-            <Button onClick={() => onNavigate("profile")} variant="secondary">
+            <Button onClick={() => router.push("/dashboard/profile")} variant="secondary">
               Complete Profile
             </Button>
           )}
@@ -615,11 +611,11 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
                 You're not part of a team yet. Create or join a team to participate in the hackathon.
               </p>
               <div className="flex gap-[12px]">
-                <Button onClick={() => onNavigate("team")} variant="primary">
+                <Button onClick={() => router.push("/dashboard/team")} variant="primary">
                   <Users className="w-4 h-4" />
                   Create / Join Team
                 </Button>
-                <Button onClick={() => onNavigate("discover")} variant="secondary">
+                <Button onClick={() => router.push("/dashboard/discover")} variant="secondary">
                   <Search className="w-4 h-4" />
                   Discover Teams
                 </Button>
@@ -681,22 +677,14 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
               </div>
 
               {teamStatus === "in-team" && isTeamLead() && (
-                <Button onClick={() => onNavigate("submission")} variant="primary">
+                <Button onClick={() => router.push("/dashboard/submission")} variant="primary">
                   <FileText className="w-4 h-4" />
                   Submit Team
                 </Button>
               )}
 
               {teamStatus === "submitted" && (
-                <div className="flex flex-col gap-[12px]">
-                  <AlertBanner type="success" message="Project submitted! Waiting for evaluation." />
-                  {isTeamLead() && !team.isEvaluated && !team.isShortlisted && team.teamStatus === 'submitted' && (
-                    <Button onClick={handleWithdrawSubmission} variant="danger">
-                      <X className="w-4 h-4" />
-                      Withdraw Submission
-                    </Button>
-                  )}
-                </div>
+                <AlertBanner type="yellow" message="Project submitted! Waiting for evaluation." />
               )}
 
               {teamStatus === "under-review" && (
@@ -780,11 +768,17 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
 
               {/* Edit Team Details and Delete Team Buttons - Only for Team Lead */}
               {isTeamLead() && (
-                <div className="flex gap-[12px]">
-                  <Button onClick={() => onNavigate("team")} variant="secondary">
+                <div className="flex gap-[12px] flex-wrap">
+                  <Button onClick={() => router.push("/dashboard/team")} variant="secondary">
                     <Edit className="w-4 h-4" />
                     Edit Team Details
                   </Button>
+                  {teamStatus === "submitted" && !team.isEvaluated && !team.isShortlisted && (
+                    <Button onClick={() => router.push("/dashboard/submission")} variant="secondary">
+                      <FileText className="w-4 h-4" />
+                      Edit Submission
+                    </Button>
+                  )}
                   {teamStatus !== "submitted" && teamStatus !== "shortlisted" && teamStatus !== "confirmed" && (
                     <Button onClick={handleDeleteTeam} variant="danger">
                       <Trash2 className="w-4 h-4" />
@@ -799,30 +793,46 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
       </FormSection>
 
       {/* Quick Actions */}
-      <FormSection title="Quick Actions">
+      {/* <FormSection title="Quick Actions">
         <div className="grid grid-cols-2 gap-[12px]">
-          <Button onClick={() => onNavigate("profile")} variant="secondary">
+          <Button onClick={() => router.push("/dashboard/profile")} variant="secondary">
             <Edit className="w-4 h-4" />
             Edit Profile
           </Button>
-          <Button onClick={() => onNavigate("discover")} variant="secondary">
+          <Button onClick={() => router.push("/dashboard/discover")} variant="secondary">
             <Search className="w-4 h-4" />
             Discover
           </Button>
           {!team && (
-            <Button onClick={() => onNavigate("team")} variant="secondary">
+            <Button onClick={() => router.push("/dashboard/team")} variant="secondary">
               <Users className="w-4 h-4" />
               Team Management
             </Button>
           )}
           {team && isTeamLead() && (
-            <Button onClick={() => onNavigate("submission")} variant="secondary">
-              <Upload className="w-4 h-4" />
-              {team.teamStatus === "submitted" ? "Update Submission" : "Submit Project"}
-            </Button>
+            <>
+              {team.teamStatus === "submitted" && !team.isEvaluated && !team.isShortlisted && (
+                <>
+                  <Button onClick={() => router.push("/dashboard/submission")} variant="secondary">
+                    <Edit className="w-4 h-4" />
+                    Edit Submission
+                  </Button>
+                  <Button onClick={handleWithdrawSubmission} variant="danger">
+                    <X className="w-4 h-4" />
+                    Withdraw Submission
+                  </Button>
+                </>
+              )}
+              {team.teamStatus !== "submitted" && (
+                <Button onClick={() => router.push("/dashboard/submission")} variant="secondary">
+                  <Upload className="w-4 h-4" />
+                  Submit Project
+                </Button>
+              )}
+            </>
           )}
         </div>
-      </FormSection>
+      </FormSection> */}
     </div>
   );
 }

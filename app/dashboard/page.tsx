@@ -1,8 +1,8 @@
 "use client";
 
-import { AppContainer } from "@/components/registration/app-container";
+import { DashboardContainer } from "@/components/registration/dashboard-container";
 
 export default function DashboardPage() {
-  return <AppContainer />;
+  return <DashboardContainer />;
 }
 

@@ -21,11 +21,7 @@ interface Team {
   status: "none" | "in-team" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined";
 }
 
-interface SubmissionContainerProps {
-  onNavigate: (view: "dashboard" | "profile" | "team" | "submission") => void;
-}
-
-export function SubmissionContainer({ onNavigate }: SubmissionContainerProps) {
+export function SubmissionContainer() {
   const { user, isAuthenticated, getToken } = useAuth();
   const router = useRouter();
   const [team, setTeam] = useState<Team | null>(null);
@@ -305,7 +301,7 @@ export function SubmissionContainer({ onNavigate }: SubmissionContainerProps) {
     return (
       <div className="flex flex-col gap-[24px] max-w-[700px] w-full">
         <AlertBanner type="warning" message="You need to be part of a team to submit a project." />
-        <Button onClick={() => onNavigate("team")} variant="primary">
+        <Button onClick={() => router.push("/dashboard/team")} variant="primary">
           Go to Team Management
         </Button>
       </div>
@@ -318,7 +314,7 @@ export function SubmissionContainer({ onNavigate }: SubmissionContainerProps) {
     return (
       <div className="flex flex-col gap-[24px] max-w-[700px] w-full">
         <AlertBanner type="warning" message="Only team leaders can submit projects." />
-        <Button onClick={() => onNavigate("dashboard")} variant="primary">
+        <Button onClick={() => router.push("/dashboard")} variant="primary">
           Back to Dashboard
         </Button>
       </div>
@@ -334,7 +330,7 @@ export function SubmissionContainer({ onNavigate }: SubmissionContainerProps) {
         <h1 className="text-[42px] text-white" style={{ fontFamily: 'var(--font-heading)' }}>
           Team Submission
         </h1>
-        <Button onClick={() => onNavigate("dashboard")} variant="secondary">
+        <Button onClick={() => router.push("/dashboard")} variant="secondary">
           <Home className="w-4 h-4" />
           Back to Dashboard
         </Button>
@@ -352,12 +348,15 @@ export function SubmissionContainer({ onNavigate }: SubmissionContainerProps) {
           status={team.status === "submitted" ? <StatusBadge status="Submitted" icon={CheckCircle} /> : undefined}
         >
           <FormInput
-            label="YouTube Video Link"
+            label="YouTube Pitch Video Link"
             placeholder="https://youtube.com/watch?v=..."
             required
             value={submissionData.videoUrl}
             onChange={(e) => setSubmissionData({ ...submissionData, videoUrl: e.target.value })}
           />
+          <p className="text-[13px] text-[rgba(255,255,255,0.6)]" style={{ fontFamily: 'var(--font-body)' }}>
+            Upload a pitch video explaining your project idea and solution.
+          </p>
           <FormFileUpload
             label="Project Documentation (PDF)"
             accept=".pdf"
@@ -370,13 +369,13 @@ export function SubmissionContainer({ onNavigate }: SubmissionContainerProps) {
             }}
             currentFile={documentationFileName}
           />
-          <FormInput
+          {/* <FormInput
             label="Project Link (Optional)"
             placeholder="https://github.com/team/project"
             value={submissionData.projectLink}
             onChange={(e) => setSubmissionData({ ...submissionData, projectLink: e.target.value })}
-          />
-          <p className="text-[13px] text-[rgba(255,255,255,0.6)]" style={{ fontFamily: 'var(--font-body)' }}>
+          /> */}
+          <p className="text-[13px] text-[rgba(255,255,255,0.6)] mt-[-8px]" style={{ fontFamily: 'var(--font-body)' }}>
             Make sure all links are accessible and working before submitting. You can update your submission before the deadline.
           </p>
         </FormSection>
@@ -392,7 +391,7 @@ export function SubmissionContainer({ onNavigate }: SubmissionContainerProps) {
               Withdraw Submission
             </Button>
           )}
-          <Button onClick={() => onNavigate("team")} variant="secondary">
+          <Button onClick={() => router.push("/dashboard/team")} variant="secondary">
             Cancel
           </Button>
         </div>

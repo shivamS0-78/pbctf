@@ -33,13 +33,13 @@ export function AppContainer() {
     if (isLoading) return;
 
     if (isAuthenticated && user) {
-      // User is authenticated, show dashboard based on role
+      // User is authenticated, redirect to dashboard based on role
       if (user.role === 'admin') {
-        setCurrentView("admin");
+        router.push('/dashboard/admin');
       } else if (user.role === 'evaluator') {
-        setCurrentView("evaluator");
+        router.push('/dashboard/evaluator');
       } else {
-        setCurrentView("dashboard");
+        router.push('/dashboard');
       }
     } else if (!isAuthenticated && !user) {
       // User is not authenticated, show landing page
@@ -56,8 +56,9 @@ export function AppContainer() {
     } else if (view.startsWith('team?joinCode=')) {
       // Extract join code from query string
       const joinCode = view.split('joinCode=')[1];
-      setCurrentView("team");
-      // You might want to pass this to TeamContainer via props or state
+      router.push(`/dashboard/team?joinCode=${joinCode}`);
+    } else if (view === 'dashboard' || view === 'profile' || view === 'team' || view === 'submission' || view === 'discover' || view === 'evaluator' || view === 'admin') {
+      router.push(`/dashboard/${view === 'dashboard' ? '' : view}`);
     } else {
       setCurrentView(view as View);
     }
@@ -74,7 +75,7 @@ export function AppContainer() {
   };
 
   const handleRegistrationSuccess = () => {
-    setCurrentView("dashboard");
+    router.push('/dashboard');
   };
 
   if (isLoading) {
@@ -163,33 +164,8 @@ export function AppContainer() {
               />
             )}
 
-            {currentView === "dashboard" && (
-              <DashboardContainer onNavigate={handleNavigate} />
-            )}
-
-            {currentView === "profile" && (
-              <ProfileContainer onNavigate={handleNavigate} />
-            )}
-
-            {currentView === "team" && (
-              <TeamContainer onNavigate={handleNavigate} />
-            )}
-
-            {currentView === "submission" && (
-              <SubmissionContainer onNavigate={handleNavigate} />
-            )}
-
-            {currentView === "discover" && (
-              <DiscoverContainer onNavigate={handleNavigate} />
-            )}
-
-            {currentView === "evaluator" && (
-              <EvaluatorContainer />
-            )}
-
-            {currentView === "admin" && (
-              <AdminContainer />
-            )}
+            {/* Authenticated users are redirected to /dashboard routes */}
+            {/* This section should not be reached for authenticated users */}
           </div>
         </div>
 

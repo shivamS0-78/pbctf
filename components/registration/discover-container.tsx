@@ -1,17 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from '@/hooks/use-auth';
 import { API_ENDPOINTS } from "@/lib/api-config";
-import { Users, Search, X, User, Mail, Phone, Building, FileText, Github, Linkedin, ExternalLink } from "lucide-react";
+import { Users, Search, Home } from "lucide-react";
 import { FormSection } from "./form-section";
 import { Button } from "./button";
 import { Card } from "./card";
 import { SectionTab } from "./section-tab";
+import { TeamDetailsModal, TeamDetails } from "./team-details-modal";
+import { UserProfileModal, UserDetails } from "./user-profile-modal";
 
-interface DiscoverContainerProps {
-  onNavigate: (view: string) => void;
-}
 
 interface TeamLookingForMembers {
   teamName: string;
@@ -42,54 +42,9 @@ interface ParticipantLookingForTeam {
   university?: string;
 }
 
-interface TeamDetails {
-  teamCode: string;
-  teamName: string;
-  teamLead: {
-    id?: string;
-    uid?: string;
-    name: string;
-    email?: string;
-    phone?: string;
-    organisation?: string;
-  };
-  teamMembers: Array<{
-    uid: string;
-    name: string;
-    email?: string;
-    role: string;
-  }>;
-  appliedFor?: {
-    id: string;
-    title: string;
-  };
-  memberCount: number;
-  maxMembers: number;
-  teamStatus: string;
-}
-
-interface UserDetails {
-  uid: string;
-  name: string;
-  email: string;
-  phone?: string;
-  organisation?: string;
-  bio?: string;
-  profile_picture?: string;
-  resume_link?: string;
-  github_link?: string;
-  linkedin_link?: string;
-  leetcode_profile?: string;
-  codeforces_link?: string;
-  kaggle_link?: string;
-  devfolio_link?: string;
-  portfolio_link?: string;
-  ctf_profile?: string;
-  age?: number;
-}
-
-export function DiscoverContainer({ onNavigate }: DiscoverContainerProps) {
+export function DiscoverContainer() {
   const { user, getToken } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"teams" | "participants">("teams");
   const [teamsLookingForMembers, setTeamsLookingForMembers] = useState<TeamLookingForMembers[]>([]);
   const [participantsLookingForTeams, setParticipantsLookingForTeams] = useState<ParticipantLookingForTeam[]>([]);
@@ -251,7 +206,7 @@ export function DiscoverContainer({ onNavigate }: DiscoverContainerProps) {
       if (!token) {
         // If no token, use basic data
         if (basicTeamData) {
-          const basicDetails: TeamDetails = {
+          const basicDetails = {
             teamCode: basicTeamData.teamCode,
             teamName: basicTeamData.teamName,
             teamLead: basicTeamData.teamLead || { id: '', name: 'Unknown' },
@@ -288,7 +243,7 @@ export function DiscoverContainer({ onNavigate }: DiscoverContainerProps) {
         } else {
           // Fallback to basic data
           if (basicTeamData) {
-            const basicDetails: TeamDetails = {
+            const basicDetails = {
               teamCode: basicTeamData.teamCode,
               teamName: basicTeamData.teamName,
               teamLead: basicTeamData.teamLead || { id: '', name: 'Unknown' },
@@ -310,7 +265,7 @@ export function DiscoverContainer({ onNavigate }: DiscoverContainerProps) {
       } else {
         // If API fails (e.g., user is not a member), use basic data if available
         if (basicTeamData) {
-          const basicDetails: TeamDetails = {
+          const basicDetails = {
             teamCode: basicTeamData.teamCode,
             teamName: basicTeamData.teamName,
             teamLead: basicTeamData.teamLead || { id: '', name: 'Unknown' },
@@ -404,6 +359,16 @@ export function DiscoverContainer({ onNavigate }: DiscoverContainerProps) {
 
   return (
     <div className="flex flex-col gap-[24px] w-full">
+      <div className="flex items-center justify-between">
+        <h1 className="text-[42px] text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+          Discover
+        </h1>
+        <Button onClick={() => router.push("/dashboard")} variant="secondary">
+          <Home className="w-4 h-4" />
+          Back to Dashboard
+        </Button>
+      </div>
+
       <FormSection title="Discover">
         <div className="flex flex-col gap-[24px]">
           {/* Tab Navigation */}
@@ -425,415 +390,140 @@ export function DiscoverContainer({ onNavigate }: DiscoverContainerProps) {
           {/* Tab Content */}
           {activeTab === "teams" ? (
             <div>
-              {isLoading ? (
-                <div className="text-white text-center py-[40px]">Loading teams...</div>
-              ) : Array.isArray(teamsLookingForMembers) && teamsLookingForMembers.length === 0 ? (
-                <div className="text-white text-center py-[40px] opacity-70">
-                  No teams are currently looking for members.
-                </div>
-              ) : Array.isArray(teamsLookingForMembers) && teamsLookingForMembers.length > 0 ? (
-                <div className="flex flex-col gap-[16px]">
-                  {teamsLookingForMembers.map((team, idx) => (
-                    <Card key={idx}>
+        {isLoading ? (
+          <div className="text-white text-center py-[40px]">Loading teams...</div>
+        ) : Array.isArray(teamsLookingForMembers) && teamsLookingForMembers.length === 0 ? (
+          <div className="text-white text-center py-[40px] opacity-70">
+            No teams are currently looking for members.
+          </div>
+        ) : Array.isArray(teamsLookingForMembers) && teamsLookingForMembers.length > 0 ? (
+          <div className="flex flex-col gap-[16px]">
+            {teamsLookingForMembers.map((team, idx) => (
+              <Card key={idx}>
                       <div 
                         className="flex items-start justify-between cursor-pointer"
                         onClick={() => handleTeamClick(team.teamCode)}
                       >
-                        <div className="flex-1">
-                          <h3 className="font-['Inter',sans-serif] text-[16px] text-white mb-[4px]">{team.teamName}</h3>
-                          <p className="font-['Inter',sans-serif] text-[13px] text-white opacity-70 mb-[8px]">
-                            Problem: {team.problemStatement}
-                          </p>
-                          <div className="flex items-center gap-[12px]">
-                            <span className="font-['Inter',sans-serif] text-[12px] text-white opacity-60">
-                              {team.currentMembers}/{team.maxMembers} members
-                            </span>
-                            <span className="font-['Inter',sans-serif] text-[12px] text-white opacity-60">
-                              Code: <span className="font-mono text-[#ff4d00]">{team.teamCode}</span>
-                            </span>
-                          </div>
-                        </div>
-                        {userRequests[team.teamCode] === 'pending' ? (
-                          <Button 
-                            variant="secondary"
-                            disabled
+                  <div className="flex-1">
+                    <h3 className="font-['Inter',sans-serif] text-[16px] text-white mb-[4px]">{team.teamName}</h3>
+                    <p className="font-['Inter',sans-serif] text-[13px] text-white opacity-70 mb-[8px]">
+                      Problem: {team.problemStatement}
+                    </p>
+                    <div className="flex items-center gap-[12px]">
+                      <span className="font-['Inter',sans-serif] text-[12px] text-white opacity-60">
+                        {team.currentMembers}/{team.maxMembers} members
+                      </span>
+                      <span className="font-['Inter',sans-serif] text-[12px] text-white opacity-60">
+                        Code: <span className="font-mono text-[#ff4d00]">{team.teamCode}</span>
+                      </span>
+                    </div>
+                  </div>
+                  {userRequests[team.teamCode] === 'pending' ? (
+                    <Button 
+                      variant="secondary"
+                      disabled
                             onClick={(e) => e.stopPropagation()}
-                          >
-                            <Users className="w-4 h-4" />
-                            Request Sent
-                          </Button>
-                        ) : userRequests[team.teamCode] === 'accepted' ? (
-                          <Button 
-                            variant="secondary"
-                            disabled
+                    >
+                      <Users className="w-4 h-4" />
+                      Request Sent
+                    </Button>
+                  ) : userRequests[team.teamCode] === 'accepted' ? (
+                    <Button 
+                      variant="secondary"
+                      disabled
                             onClick={(e) => e.stopPropagation()}
-                          >
-                            <Users className="w-4 h-4" />
-                            Accepted
-                          </Button>
-                        ) : userRequests[team.teamCode] === 'declined' ? (
-                          <Button 
-                            variant="secondary"
+                    >
+                      <Users className="w-4 h-4" />
+                      Accepted
+                    </Button>
+                  ) : userRequests[team.teamCode] === 'declined' ? (
+                    <Button 
+                      variant="secondary"
                             onClick={(e) => handleSendRequest(team.teamCode, e)}
-                            disabled={sendingRequest === team.teamCode}
-                          >
-                            <Users className="w-4 h-4" />
-                            {sendingRequest === team.teamCode ? 'Sending...' : 'Send Request'}
-                          </Button>
-                        ) : (
-                          <Button 
-                            variant="secondary"
+                      disabled={sendingRequest === team.teamCode}
+                    >
+                      <Users className="w-4 h-4" />
+                      {sendingRequest === team.teamCode ? 'Sending...' : 'Send Request'}
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="secondary"
                             onClick={(e) => handleSendRequest(team.teamCode, e)}
-                            disabled={sendingRequest === team.teamCode}
-                          >
-                            <Users className="w-4 h-4" />
-                            {sendingRequest === team.teamCode ? 'Sending...' : 'Send Request'}
-                          </Button>
-                        )}
-                      </div>
-                    </Card>
-                  ))}
+                      disabled={sendingRequest === team.teamCode}
+                    >
+                      <Users className="w-4 h-4" />
+                      {sendingRequest === team.teamCode ? 'Sending...' : 'Send Request'}
+                    </Button>
+                  )}
                 </div>
-              ) : (
-                <div className="text-white text-center py-[40px] opacity-70">
-                  No teams are currently looking for members.
-                </div>
-              )}
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-white text-center py-[40px] opacity-70">
+            No teams are currently looking for members.
+          </div>
+        )}
             </div>
           ) : (
             <div>
-              {isLoading ? (
-                <div className="text-white text-center py-[40px]">Loading participants...</div>
-              ) : Array.isArray(participantsLookingForTeams) && participantsLookingForTeams.length === 0 ? (
-                <div className="text-white text-center py-[40px] opacity-70">
-                  No participants are currently looking for teams.
-                </div>
-              ) : Array.isArray(participantsLookingForTeams) && participantsLookingForTeams.length > 0 ? (
-                <div className="flex flex-col gap-[16px]">
-                  {participantsLookingForTeams.map((participant, idx) => (
-                    <Card key={idx}>
+        {isLoading ? (
+          <div className="text-white text-center py-[40px]">Loading participants...</div>
+        ) : Array.isArray(participantsLookingForTeams) && participantsLookingForTeams.length === 0 ? (
+          <div className="text-white text-center py-[40px] opacity-70">
+            No participants are currently looking for teams.
+          </div>
+        ) : Array.isArray(participantsLookingForTeams) && participantsLookingForTeams.length > 0 ? (
+          <div className="flex flex-col gap-[16px]">
+            {participantsLookingForTeams.map((participant, idx) => (
+              <Card key={idx}>
                       <div 
                         className="flex flex-col gap-[8px] cursor-pointer"
                         onClick={() => handleUserClick(participant.id)}
                       >
-                        <div className="flex items-start justify-between">
-                          <h3 className="font-['Inter',sans-serif] text-[16px] text-white">{participant.name}</h3>
-                          {participant.university && (
-                            <span className="font-['Inter',sans-serif] text-[12px] text-white opacity-60">{participant.university}</span>
-                          )}
-                        </div>
-                        <p className="font-['Inter',sans-serif] text-[13px] text-white opacity-70">
-                          Skills: {participant.skills}
-                        </p>
-                        <p className="font-['Inter',sans-serif] text-[13px] text-white opacity-70">
-                          Interests: {participant.interests}
-                        </p>
-                      </div>
-                    </Card>
-                  ))}
+                  <div className="flex items-start justify-between">
+                    <h3 className="font-['Inter',sans-serif] text-[16px] text-white">{participant.name}</h3>
+                    {participant.university && (
+                      <span className="font-['Inter',sans-serif] text-[12px] text-white opacity-60">{participant.university}</span>
+                    )}
+                  </div>
+                  <p className="font-['Inter',sans-serif] text-[13px] text-white opacity-70">
+                    Skills: {participant.skills}
+                  </p>
+                  <p className="font-['Inter',sans-serif] text-[13px] text-white opacity-70">
+                    Interests: {participant.interests}
+                  </p>
                 </div>
-              ) : (
-                <div className="text-white text-center py-[40px] opacity-70">
-                  No participants are currently looking for teams.
-                </div>
-              )}
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-white text-center py-[40px] opacity-70">
+            No participants are currently looking for teams.
+          </div>
+        )}
             </div>
           )}
         </div>
       </FormSection>
 
       {/* Team Details Modal */}
-      {selectedTeamCode && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            onClick={handleCloseTeamModal}
-          />
-          
-          {/* Modal Content */}
-          <div className="relative z-[101] w-full max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.15)] rounded-[20px] p-[32px] border border-[rgba(255,255,255,0.2)]">
-            <div className="flex items-center justify-between mb-[24px]">
-              <h2 className="text-[28px] text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-                Team Details
-              </h2>
-              <button
-                onClick={handleCloseTeamModal}
-                className="text-white opacity-70 hover:opacity-100 transition-opacity"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            {isLoadingTeam ? (
-              <div className="text-white text-center py-[40px]">Loading team details...</div>
-            ) : teamError ? (
-              <div className="text-white text-center py-[40px]">
-                <p className="text-red-400 mb-[8px]">Error loading team details</p>
-                <p className="text-white opacity-70 text-[14px]">{teamError}</p>
-              </div>
-            ) : teamDetails && teamDetails.teamName ? (
-              <div className="flex flex-col gap-[24px]">
-                <div>
-                  <h3 className="font-['Inter',sans-serif] text-[20px] text-white mb-[8px]">{teamDetails.teamName}</h3>
-                  <p className="font-['Inter',sans-serif] text-[14px] text-white opacity-70">
-                    Team Code: <span className="font-mono text-[#ff4d00]">{teamDetails.teamCode}</span>
-                  </p>
-                  {teamDetails.appliedFor && (
-                    <p className="font-['Inter',sans-serif] text-[14px] text-white opacity-70 mt-[4px]">
-                      Problem Statement: {teamDetails.appliedFor.title}
-                    </p>
-                  )}
-                  <p className="font-['Inter',sans-serif] text-[14px] text-white opacity-70 mt-[4px]">
-                    Members: {teamDetails.memberCount || (teamDetails.teamMembers?.length || 0)}/{teamDetails.maxMembers || 4}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-['Inter',sans-serif] text-[16px] text-white mb-[12px]">Team Lead</h4>
-                  <div 
-                    className="p-[12px] bg-[rgba(138,138,138,0.1)] rounded-[8px] border border-[rgba(255,255,255,0.1)] cursor-pointer hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                    onClick={(e) => {
-                      const leadId = teamDetails.teamLead.uid || teamDetails.teamLead.id;
-                      if (leadId) {
-                        handleUserClick(leadId, e);
-                      }
-                    }}
-                  >
-                    <div className="flex items-center gap-[8px]">
-                      <User className="w-4 h-4 text-white opacity-70" />
-                      <span className="font-['Inter',sans-serif] text-[14px] text-white">{teamDetails.teamLead.name}</span>
-                      {teamDetails.teamLead.email && (
-                        <span className="font-['Inter',sans-serif] text-[12px] text-white opacity-60 ml-auto">
-                          {teamDetails.teamLead.email}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {teamDetails.teamMembers && teamDetails.teamMembers.length > 0 && (
-                  <div>
-                    <h4 className="font-['Inter',sans-serif] text-[16px] text-white mb-[12px]">Team Members</h4>
-                    <div className="flex flex-col gap-[8px]">
-                      {teamDetails.teamMembers.map((member) => (
-                        <div
-                          key={member.uid}
-                          className="p-[12px] bg-[rgba(138,138,138,0.1)] rounded-[8px] border border-[rgba(255,255,255,0.1)] cursor-pointer hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                          onClick={(e) => handleUserClick(member.uid, e)}
-                        >
-                          <div className="flex items-center gap-[8px]">
-                            <User className="w-4 h-4 text-white opacity-70" />
-                            <span className="font-['Inter',sans-serif] text-[14px] text-white">{member.name}</span>
-                            <span className="font-['Inter',sans-serif] text-[12px] text-white opacity-60">
-                              ({member.role})
-                            </span>
-                            {member.email && (
-                              <span className="font-['Inter',sans-serif] text-[12px] text-white opacity-60 ml-auto">
-                                {member.email}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-white text-center py-[40px]">Failed to load team details</div>
-            )}
-          </div>
-        </div>
-      )}
+      <TeamDetailsModal
+        isOpen={!!selectedTeamCode}
+        onClose={handleCloseTeamModal}
+        teamDetails={teamDetails}
+        isLoading={isLoadingTeam}
+        error={teamError}
+        onMemberClick={(userId) => handleUserClick(userId)}
+      />
 
       {/* User Details Modal */}
-      {selectedUserId && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            onClick={handleCloseUserModal}
-          />
-          
-          {/* Modal Content */}
-          <div className="relative z-[111] w-full max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.15)] rounded-[20px] p-[32px] border border-[rgba(255,255,255,0.2)]">
-            <div className="flex items-center justify-between mb-[24px]">
-              <h2 className="text-[28px] text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-                User Profile
-              </h2>
-              <button
-                onClick={handleCloseUserModal}
-                className="text-white opacity-70 hover:opacity-100 transition-opacity"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            {isLoadingUser ? (
-              <div className="text-white text-center py-[40px]">Loading user details...</div>
-            ) : userDetails ? (
-              <div className="flex flex-col gap-[24px]">
-                <div className="flex items-start gap-[16px]">
-                  {userDetails.profile_picture ? (
-                    <img 
-                      src={userDetails.profile_picture} 
-                      alt={userDetails.name}
-                      className="w-20 h-20 rounded-full object-cover border-2 border-[rgba(255,255,255,0.2)]"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-[rgba(138,138,138,0.2)] border-2 border-[rgba(255,255,255,0.2)] flex items-center justify-center">
-                      <User className="w-10 h-10 text-white opacity-50" />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <h3 className="font-['Inter',sans-serif] text-[20px] text-white mb-[4px]">{userDetails.name}</h3>
-                    {userDetails.email && (
-                      <div className="flex items-center gap-[8px] mb-[4px]">
-                        <Mail className="w-4 h-4 text-white opacity-60" />
-                        <span className="font-['Inter',sans-serif] text-[14px] text-white opacity-70">{userDetails.email}</span>
-                      </div>
-                    )}
-                    {userDetails.phone && (
-                      <div className="flex items-center gap-[8px] mb-[4px]">
-                        <Phone className="w-4 h-4 text-white opacity-60" />
-                        <span className="font-['Inter',sans-serif] text-[14px] text-white opacity-70">{userDetails.phone}</span>
-                      </div>
-                    )}
-                    {userDetails.organisation && (
-                      <div className="flex items-center gap-[8px]">
-                        <Building className="w-4 h-4 text-white opacity-60" />
-                        <span className="font-['Inter',sans-serif] text-[14px] text-white opacity-70">{userDetails.organisation}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {userDetails.bio && (
-                  <div>
-                    <h4 className="font-['Inter',sans-serif] text-[16px] text-white mb-[8px]">Bio</h4>
-                    <p className="font-['Inter',sans-serif] text-[14px] text-white opacity-70">{userDetails.bio}</p>
-                  </div>
-                )}
-
-                {(userDetails.github_link || userDetails.linkedin_link || userDetails.resume_link || 
-                  userDetails.leetcode_profile || userDetails.codeforces_link || userDetails.kaggle_link ||
-                  userDetails.devfolio_link || userDetails.portfolio_link || userDetails.ctf_profile) && (
-                  <div>
-                    <h4 className="font-['Inter',sans-serif] text-[16px] text-white mb-[12px]">Links & Profiles</h4>
-                    <div className="flex flex-col gap-[8px]">
-                      {userDetails.github_link && (
-                        <a 
-                          href={userDetails.github_link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                        >
-                          <Github className="w-4 h-4 text-white opacity-70" />
-                          <span className="font-['Inter',sans-serif] text-[14px] text-white">GitHub</span>
-                          <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                        </a>
-                      )}
-                      {userDetails.linkedin_link && (
-                        <a 
-                          href={userDetails.linkedin_link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                        >
-                          <Linkedin className="w-4 h-4 text-white opacity-70" />
-                          <span className="font-['Inter',sans-serif] text-[14px] text-white">LinkedIn</span>
-                          <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                        </a>
-                      )}
-                      {userDetails.resume_link && (
-                        <a 
-                          href={userDetails.resume_link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                        >
-                          <FileText className="w-4 h-4 text-white opacity-70" />
-                          <span className="font-['Inter',sans-serif] text-[14px] text-white">Resume</span>
-                          <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                        </a>
-                      )}
-                      {userDetails.leetcode_profile && (
-                        <a 
-                          href={userDetails.leetcode_profile} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                        >
-                          <span className="font-['Inter',sans-serif] text-[14px] text-white">LeetCode</span>
-                          <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                        </a>
-                      )}
-                      {userDetails.codeforces_link && (
-                        <a 
-                          href={userDetails.codeforces_link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                        >
-                          <span className="font-['Inter',sans-serif] text-[14px] text-white">Codeforces</span>
-                          <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                        </a>
-                      )}
-                      {userDetails.kaggle_link && (
-                        <a 
-                          href={userDetails.kaggle_link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                        >
-                          <span className="font-['Inter',sans-serif] text-[14px] text-white">Kaggle</span>
-                          <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                        </a>
-                      )}
-                      {userDetails.devfolio_link && (
-                        <a 
-                          href={userDetails.devfolio_link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                        >
-                          <span className="font-['Inter',sans-serif] text-[14px] text-white">Devfolio</span>
-                          <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                        </a>
-                      )}
-                      {userDetails.portfolio_link && (
-                        <a 
-                          href={userDetails.portfolio_link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                        >
-                          <span className="font-['Inter',sans-serif] text-[14px] text-white">Portfolio</span>
-                          <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                        </a>
-                      )}
-                      {userDetails.ctf_profile && (
-                        <a 
-                          href={userDetails.ctf_profile} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                        >
-                          <span className="font-['Inter',sans-serif] text-[14px] text-white">CTF Profile</span>
-                          <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-white text-center py-[40px]">Failed to load user details</div>
-            )}
-          </div>
-        </div>
-      )}
+      <UserProfileModal
+        isOpen={!!selectedUserId}
+        onClose={handleCloseUserModal}
+        userDetails={userDetails}
+        isLoading={isLoadingUser}
+      />
     </div>
   );
 }

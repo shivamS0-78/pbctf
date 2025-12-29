@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from '@/hooks/use-auth';
 import { API_ENDPOINTS } from "@/lib/api-config";
-import { Home, Users, Upload, X, Award, Check, UserPlus, Trash2 } from "lucide-react";
+import { Home, Users, Upload, X, Award, Check, UserPlus, Trash2, User, ExternalLink } from "lucide-react";
 import { FormSection } from "./form-section";
 import { FormInput } from "./form-input";
 import { FormSelect } from "./form-select";
 import { Button } from "./button";
 import { StatusBadge } from "./status-badge";
 import { AlertBanner } from "./alert-banner";
+import { UserProfileModal, UserDetails } from "./user-profile-modal";
+import { Modal } from "./modal";
 
 interface TeamMember {
   uid: string;
@@ -34,15 +36,13 @@ interface Team {
 interface ProblemStatement {
   id: string;
   title: string;
+  description?: string;
 }
 
-interface TeamContainerProps {
-  onNavigate: (view: "dashboard" | "profile" | "team" | "submission") => void;
-}
-
-export function TeamContainer({ onNavigate }: TeamContainerProps) {
+export function TeamContainer() {
   const { user, isAuthenticated, getToken } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [team, setTeam] = useState<Team | null>(null);
   const [teamFormData, setTeamFormData] = useState({
     teamName: "",
@@ -50,12 +50,29 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
     lookingForMembers: false,
     joinCode: "",
   });
+
+  // Read joinCode from URL query params
+  useEffect(() => {
+    const joinCodeFromUrl = searchParams.get('joinCode');
+    if (joinCodeFromUrl) {
+      setTeamFormData(prev => ({ ...prev, joinCode: joinCodeFromUrl.toUpperCase() }));
+    }
+  }, [searchParams]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alert, setAlert] = useState<{ type: "success" | "error" | "warning" | "info"; message: string } | null>(null);
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [problemStatements, setProblemStatements] = useState<ProblemStatement[]>([]);
+  
+  // User details modal state
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(false);
+  
+  // Problem statement modal state
+  const [selectedProblemStatement, setSelectedProblemStatement] = useState<ProblemStatement | null>(null);
 
   useEffect(() => {
     // Fetch problem statements
@@ -83,8 +100,12 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
 
     const fetchTeamData = async () => {
       try {
+        setIsLoading(true);
         const token = await getToken();
-        if (!token) return;
+        if (!token) {
+          setIsLoading(false);
+          return;
+        }
 
         const userResponse = await fetch(API_ENDPOINTS.userProfile, {
           headers: {
@@ -137,6 +158,8 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
         }
       } catch (error) {
         console.error("Error fetching team data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -216,7 +239,7 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
       // Clear team state and redirect to dashboard
       setTeam(null);
       setTimeout(() => {
-        onNavigate("dashboard");
+        router.push("/dashboard");
       }, 1000);
     } catch (error) {
       console.error('Error deleting team:', error);
@@ -310,6 +333,39 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
       });
       setTimeout(() => setAlert(null), 3000);
     }
+  };
+
+  const handleUserClick = async (userId: string) => {
+    setSelectedUserId(userId);
+    setIsLoadingUser(true);
+    
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const response = await fetch(`/api/users/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === 'success' && data.user) {
+          setUserDetails(data.user);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    } finally {
+      setIsLoadingUser(false);
+    }
+  };
+
+  const handleCloseUserModal = () => {
+    setSelectedUserId(null);
+    setUserDetails(null);
   };
 
   const handleRespondToRequest = async (requestId: string, action: 'accept' | 'decline') => {
@@ -515,13 +571,21 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
 
   if (!user) return null;
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-white" style={{ fontFamily: 'var(--font-body)' }}>Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-[24px] max-w-[700px] w-full">
       <div className="flex items-center justify-between">
         <h1 className="text-[42px] text-white" style={{ fontFamily: 'var(--font-heading)' }}>
           Team Management
         </h1>
-        <Button onClick={() => onNavigate("dashboard")} variant="secondary">
+        <Button onClick={() => router.push("/dashboard")} variant="secondary">
           <Home className="w-4 h-4" />
           Back to Dashboard
         </Button>
@@ -540,24 +604,86 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
                 value={teamFormData.teamName}
                 onChange={(e) => setTeamFormData({ ...teamFormData, teamName: e.target.value })}
               />
-              <FormSelect
-                label="Problem Statement"
-                options={problemStatements.map(ps => ps.title)}
-                required
-                value={teamFormData.problemStatement}
-                onChange={(e) => setTeamFormData({ ...teamFormData, problemStatement: e.target.value })}
-              />
-              <div className="flex items-center gap-[12px]">
-                <input
-                  type="checkbox"
-                  id="lookingForMembers"
-                  checked={teamFormData.lookingForMembers}
-                  onChange={(e) => setTeamFormData({ ...teamFormData, lookingForMembers: e.target.checked })}
-                  className="w-5 h-5 rounded border-[rgba(255,255,255,0.38)] bg-[rgba(138,138,138,0.2)] accent-[#ff4d00] cursor-pointer"
-                />
-                <label htmlFor="lookingForMembers" className="text-[14px] text-white cursor-pointer" style={{ fontFamily: 'var(--font-body)' }}>
-                  Looking for team members
+              <div className="flex flex-col gap-[12px]">
+                <label className="text-[14px] text-white opacity-90" style={{ fontFamily: 'var(--font-body)' }}>
+                  Problem Statement <span className="text-red-400">*</span>
                 </label>
+                <div className="grid grid-cols-2 gap-[16px] relative">
+                  {problemStatements.map((ps, index) => {
+                    const isSelected = teamFormData.problemStatement === ps.title;
+                    return (
+                      <div
+                        key={ps.id}
+                        className={`
+                          relative p-[16px] rounded-[12px] border-2
+                          ${isSelected 
+                            ? 'border-[#ff4d00] bg-[rgba(255,77,0,0.15)] shadow-[0_0_20px_rgba(255,77,0,0.3)]' 
+                            : 'border-[rgba(255,255,255,0.2)] bg-[rgba(138,138,138,0.1)] hover:border-[rgba(255,255,255,0.3)] hover:bg-[rgba(138,138,138,0.15)]'
+                          }
+                          ${isSelected ? 'animate-selectSlide' : 'transition-all duration-300'}
+                        `}
+                      >
+                        <div
+                          onClick={() => setTeamFormData({ ...teamFormData, problemStatement: ps.title })}
+                          className="cursor-pointer"
+                        >
+                          <h3 className="text-[16px] font-semibold text-white mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>
+                            {ps.title}
+                          </h3>
+                          <p className="text-[13px] text-white opacity-70 line-clamp-3 mb-[12px]" style={{ fontFamily: 'var(--font-body)' }}>
+                            {ps.description || "description goes here"}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setSelectedProblemStatement(ps);
+                          }}
+                          className="w-full mt-[8px] flex items-center justify-center gap-[6px] px-[12px] py-[6px] bg-[rgba(255,77,0,0.2)] hover:bg-[rgba(255,77,0,0.3)] border border-[rgba(255,77,0,0.4)] rounded-[8px] text-[13px] text-white transition-colors"
+                          style={{ fontFamily: 'var(--font-body)' }}
+                        >
+                          <span>Read More</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="flex flex-col gap-[8px] p-[16px] rounded-[12px] border border-[rgba(255,255,255,0.1)] bg-[rgba(138,138,138,0.05)]">
+                <div 
+                  onClick={() => setTeamFormData({ ...teamFormData, lookingForMembers: !teamFormData.lookingForMembers })}
+                  className="flex items-center gap-[12px] cursor-pointer"
+                >
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      id="lookingForMembers"
+                      checked={teamFormData.lookingForMembers}
+                      onChange={(e) => setTeamFormData({ ...teamFormData, lookingForMembers: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <div className={`
+                      w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-300
+                      ${teamFormData.lookingForMembers 
+                        ? 'border-[#ff4d00] bg-[rgba(255,77,0,0.15)]' 
+                        : 'border-[rgba(255,255,255,0.38)] bg-[rgba(138,138,138,0.2)] hover:border-[rgba(255,255,255,0.5)]'
+                      }
+                    `}>
+                      {teamFormData.lookingForMembers && (
+                        <Check className="w-3 h-3 text-[#ff4d00] animate-selectSlide" />
+                      )}
+                    </div>
+                  </div>
+                  <label htmlFor="lookingForMembers" className="text-[14px] font-semibold text-white cursor-pointer" style={{ fontFamily: 'var(--font-body)' }}>
+                    Looking for team members
+                  </label>
+                </div>
+                <p className="text-[13px] text-white opacity-70 ml-[32px]" style={{ fontFamily: 'var(--font-body)' }}>
+                  Enable this to let others know your team is open to new members. Your team will appear in the "Discover" section for participants looking for teams.
+                </p>
               </div>
               <Button type="submit" variant="primary" disabled={isSubmitting}>
                 <Users className="w-4 h-4" />
@@ -658,7 +784,7 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
 
               <div className="flex gap-[12px]">
                 {team.leadId === user.uid && team.status === "in-team" && (
-                  <Button onClick={() => onNavigate("submission")} variant="primary">
+                  <Button onClick={() => router.push("/dashboard/submission")} variant="primary">
                     <Upload className="w-4 h-4" />
                     Submit Project
                   </Button>
@@ -690,18 +816,48 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
             <>
               <FormSection title="Team Management (Team Lead)">
                 <div className="flex flex-col gap-[12px]">
-                  <div className="flex items-center gap-[12px]">
-                    <input
-                      type="checkbox"
-                      id="teamLookingForMembers"
-                      checked={team.lookingForMembers}
-                      onChange={(e) => setTeam({ ...team, lookingForMembers: e.target.checked })}
-                      className="w-5 h-5 rounded border-[rgba(255,255,255,0.38)] bg-[rgba(138,138,138,0.2)] accent-[#ff4d00] cursor-pointer"
-                      disabled={team.status !== "in-team"}
-                    />
-                    <label htmlFor="teamLookingForMembers" className="text-[14px] text-white cursor-pointer" style={{ fontFamily: 'var(--font-body)' }}>
-                      Looking for team members
-                    </label>
+                  <div className="flex flex-col gap-[8px] p-[16px] rounded-[12px] border border-[rgba(255,255,255,0.1)] bg-[rgba(138,138,138,0.05)]">
+                    <div 
+                      onClick={() => {
+                        if (team.status === "in-team") {
+                          setTeam({ ...team, lookingForMembers: !team.lookingForMembers });
+                        }
+                      }}
+                      className={`flex items-center gap-[12px] ${team.status === "in-team" ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
+                    >
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          id="teamLookingForMembers"
+                          checked={team.lookingForMembers}
+                          onChange={(e) => {
+                            if (team.status === "in-team") {
+                              setTeam({ ...team, lookingForMembers: e.target.checked });
+                            }
+                          }}
+                          disabled={team.status !== "in-team"}
+                          className="sr-only"
+                        />
+                        <div className={`
+                          w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-300
+                          ${team.lookingForMembers 
+                            ? 'border-[#ff4d00] bg-[rgba(255,77,0,0.15)]' 
+                            : 'border-[rgba(255,255,255,0.38)] bg-[rgba(138,138,138,0.2)]'
+                          }
+                          ${team.status === "in-team" ? 'hover:border-[rgba(255,255,255,0.5)]' : ''}
+                        `}>
+                          {team.lookingForMembers && (
+                            <Check className="w-3 h-3 text-[#ff4d00] animate-selectSlide" />
+                          )}
+                        </div>
+                      </div>
+                      <label htmlFor="teamLookingForMembers" className={`text-[14px] font-semibold text-white ${team.status === "in-team" ? 'cursor-pointer' : 'cursor-not-allowed'}`} style={{ fontFamily: 'var(--font-body)' }}>
+                        Looking for team members
+                      </label>
+                    </div>
+                    <p className={`text-[13px] text-white opacity-70 ml-[32px] ${team.status !== "in-team" ? 'opacity-50' : ''}`} style={{ fontFamily: 'var(--font-body)' }}>
+                      Enable this to let others know your team is open to new members. Your team will appear in the "Discover" section for participants looking for teams.
+                    </p>
                   </div>
                   <p className="text-[13px] text-[rgba(255,255,255,0.6)]" style={{ fontFamily: 'var(--font-body)' }}>
                     Share your team code <span className="font-mono text-white">{team.code}</span> with others to invite them.
@@ -778,6 +934,13 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
                         </div>
                         <div className="flex gap-[8px]">
                           <Button
+                            onClick={() => handleUserClick(request.userId)}
+                            variant="secondary"
+                          >
+                            <User className="w-4 h-4" />
+                            View Profile
+                          </Button>
+                          <Button
                             onClick={() => handleRespondToRequest(request.requestId, 'accept')}
                             variant="primary"
                           >
@@ -801,6 +964,29 @@ export function TeamContainer({ onNavigate }: TeamContainerProps) {
           )}
         </>
       )}
+
+      {/* User Details Modal */}
+      <UserProfileModal
+        isOpen={!!selectedUserId}
+        onClose={handleCloseUserModal}
+        userDetails={userDetails}
+        isLoading={isLoadingUser}
+      />
+
+      {/* Problem Statement Details Modal */}
+      <Modal
+        isOpen={!!selectedProblemStatement}
+        onClose={() => setSelectedProblemStatement(null)}
+        title={selectedProblemStatement?.title || "Problem Statement"}
+      >
+        <div className="flex flex-col gap-[16px]">
+          <div>
+            <p className="text-[15px] text-white opacity-80 leading-relaxed whitespace-pre-wrap" style={{ fontFamily: 'var(--font-body)' }}>
+              {selectedProblemStatement?.description || "description goes here"}
+            </p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
