@@ -78,6 +78,7 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
   const router = useRouter();
   const [team, setTeam] = useState<Team | null>(null);
   const [profileCompleteness, setProfileCompleteness] = useState(0);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
   const [rsvpStatus, setRsvpStatus] = useState<"pending" | "confirmed" | "declined">("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -115,30 +116,43 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
           const profileData = userData.success ? userData.data : userData;
           
           if (profileData) {
-            // Calculate profile completeness based on required fields
-            const requiredFields = [
-              'name',           // Required
-              'email',          // Required
-              'phone',          // Required
-              'age',            // Required
-              'organisation',   // Required
-              'bio',            // Required
-              'github_link',    // Required
-              'linkedin_link',  // Required
-              'resume_link'     // Required (file upload)
+            // Calculate profile completeness based on ALL profile fields (excluding system fields)
+            // Define all profile fields with their human-readable labels
+            const profileFields = [
+              { key: 'name', label: 'Name' },
+              { key: 'email', label: 'Email' },
+              { key: 'phone', label: 'Phone' },
+              { key: 'age', label: 'Age' },
+              { key: 'organisation', label: 'Organisation' },
+              { key: 'bio', label: 'Bio' },
+              { key: 'profile_picture', label: 'Profile Picture' },
+              { key: 'resume_link', label: 'Resume' },
+              { key: 'github_link', label: 'GitHub' },
+              { key: 'linkedin_link', label: 'LinkedIn' },
+              { key: 'leetcode_profile', label: 'LeetCode' },
+              { key: 'codeforces_link', label: 'Codeforces' },
+              { key: 'kaggle_link', label: 'Kaggle' },
+              { key: 'devfolio_link', label: 'Devfolio' },
+              { key: 'portfolio_link', label: 'Portfolio' },
+              { key: 'ctf_profile', label: 'CTF Profile' },
             ];
             
             let completed = 0;
-            requiredFields.forEach((field) => {
-              const value = profileData[field];
+            const missing: string[] = [];
+            
+            profileFields.forEach((field) => {
+              const value = profileData[field.key];
               // Check if field exists and is not null/empty
               if (value && value !== null && value !== '') {
                 completed++;
+              } else {
+                missing.push(field.label);
               }
             });
             
-            const percentage = Math.round((completed / requiredFields.length) * 100);
+            const percentage = Math.round((completed / profileFields.length) * 100);
             setProfileCompleteness(percentage);
+            setMissingFields(missing);
 
             // Fetch team data if user has a teamCode
             if (profileData.teamCode) {
@@ -191,27 +205,39 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
 
     // Fallback: Calculate from user context if API fails
     const calculateProfileFromContext = () => {
-      const requiredFields = [
-        'name',
-        'email',
-        'phone',
-        'age',
-        'organisation',
-        'bio',
-        'github_link',
-        'linkedin_link',
-        'resume_link'
+      const profileFields = [
+        { key: 'name', label: 'Name' },
+        { key: 'email', label: 'Email' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'age', label: 'Age' },
+        { key: 'organisation', label: 'Organisation' },
+        { key: 'bio', label: 'Bio' },
+        { key: 'profile_picture', label: 'Profile Picture' },
+        { key: 'resume_link', label: 'Resume' },
+        { key: 'github_link', label: 'GitHub' },
+        { key: 'linkedin_link', label: 'LinkedIn' },
+        { key: 'leetcode_profile', label: 'LeetCode' },
+        { key: 'codeforces_link', label: 'Codeforces' },
+        { key: 'kaggle_link', label: 'Kaggle' },
+        { key: 'devfolio_link', label: 'Devfolio' },
+        { key: 'portfolio_link', label: 'Portfolio' },
+        { key: 'ctf_profile', label: 'CTF Profile' },
       ];
       
       let completed = 0;
-      requiredFields.forEach((field) => {
-        const value = user[field as keyof typeof user];
+      const missing: string[] = [];
+      
+      profileFields.forEach((field) => {
+        const value = user[field.key as keyof typeof user];
         if (value && value !== null && value !== '') {
           completed++;
+        } else {
+          missing.push(field.label);
         }
       });
       
-      setProfileCompleteness(Math.round((completed / requiredFields.length) * 100));
+      setProfileCompleteness(Math.round((completed / profileFields.length) * 100));
+      setMissingFields(missing);
     };
 
     fetchData();
@@ -536,6 +562,24 @@ export function DashboardContainer({ onNavigate }: DashboardContainerProps) {
               style={{ width: `${profileCompleteness}%` }}
             />
           </div>
+          {missingFields.length > 0 && (
+            <div className="flex flex-col gap-[8px]">
+              <p className="text-[12px] text-white opacity-70" style={{ fontFamily: 'var(--font-body)' }}>
+                Missing fields:
+              </p>
+              <div className="flex flex-wrap gap-[6px]">
+                {missingFields.map((field, index) => (
+                  <span
+                    key={index}
+                    className="text-[11px] text-white opacity-60 bg-[rgba(138,138,138,0.2)] px-[8px] py-[4px] rounded-[4px] border border-[rgba(255,255,255,0.1)]"
+                    style={{ fontFamily: 'var(--font-body)' }}
+                  >
+                    {field}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {profileCompleteness < 100 && (
             <Button onClick={() => onNavigate("profile")} variant="secondary">
               Complete Profile
