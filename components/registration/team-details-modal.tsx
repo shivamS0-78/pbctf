@@ -1,6 +1,7 @@
 "use client";
 
 import { User, Users } from "lucide-react";
+import { useEffect } from "react";
 import { Button } from "./button";
 
 export interface TeamDetails {
@@ -52,6 +53,18 @@ export function TeamDetailsModal({
   onSendRequest,
   isSendingRequest = false
 }: TeamDetailsModalProps) {
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   // For stacked modals, team modal uses z-100
   return (
     <div className={isOpen ? "fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none" : "hidden"}>
@@ -59,7 +72,16 @@ export function TeamDetailsModal({
         className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-auto"
         onClick={onClose}
       />
-      <div className="relative z-[101] w-full max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.15)] rounded-[20px] p-[32px] border border-[rgba(255,255,255,0.2)] pointer-events-auto">
+      <div className="relative z-[101] w-full max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.15)] rounded-[20px] p-[32px] border border-[rgba(255,255,255,0.2)] pointer-events-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style jsx global>{`
+          [style*="scrollbarWidth: 'none'"] {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          [style*="scrollbarWidth: 'none'"]::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
         <div className="flex items-center justify-between mb-[24px]">
           <h2 className="text-[28px] text-white" style={{ fontFamily: 'var(--font-heading)' }}>
             Team Details
@@ -84,9 +106,6 @@ export function TeamDetailsModal({
           <div className="flex flex-col gap-[24px]">
             <div>
               <h3 className="font-['Inter',sans-serif] text-[20px] text-white mb-[8px]">{teamDetails.teamName}</h3>
-              <p className="font-['Inter',sans-serif] text-[14px] text-white opacity-70">
-                Team Code: <span className="font-mono text-[#ff4d00]">{teamDetails.teamCode}</span>
-              </p>
               {teamDetails.appliedFor && (
                 <p className="font-['Inter',sans-serif] text-[14px] text-white opacity-70 mt-[4px]">
                   Problem Statement: {teamDetails.appliedFor.title}

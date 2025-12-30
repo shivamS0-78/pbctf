@@ -21,7 +21,7 @@ export function StatusBadge({
       case "accepted":
         return "bg-[rgba(0,200,0,0.2)] border-green-500";
       case "pending":
-      case "in-team":
+      case "active":
       case "under-review":
         return "bg-[rgba(255,204,0,0.2)] border-yellow-500";
       case "submitted":

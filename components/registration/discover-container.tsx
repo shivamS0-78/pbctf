@@ -11,6 +11,7 @@ import { Card } from "./card";
 import { SectionTab } from "./section-tab";
 import { TeamDetailsModal, TeamDetails } from "./team-details-modal";
 import { UserProfileModal, UserDetails } from "./user-profile-modal";
+import { useToast } from "@/hooks/use-toast";
 
 
 interface TeamLookingForMembers {
@@ -45,12 +46,14 @@ interface ParticipantLookingForTeam {
 export function DiscoverContainer() {
   const { user, getToken } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"teams" | "participants">("teams");
   const [teamsLookingForMembers, setTeamsLookingForMembers] = useState<TeamLookingForMembers[]>([]);
   const [participantsLookingForTeams, setParticipantsLookingForTeams] = useState<ParticipantLookingForTeam[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userRequests, setUserRequests] = useState<Record<string, string>>({}); // teamCode -> requestStatus
   const [sendingRequest, setSendingRequest] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Modal states
   const [selectedTeamCode, setSelectedTeamCode] = useState<string | null>(null);
@@ -183,9 +186,17 @@ export function DiscoverContainer() {
 
       // Update user requests map
       setUserRequests(prev => ({ ...prev, [teamCode]: 'pending' }));
+      toast({
+        title: "Request sent",
+        description: "Your join request has been sent successfully.",
+      });
     } catch (error) {
       console.error('Error sending join request:', error);
-      alert(error instanceof Error ? error.message : 'Failed to send request');
+      toast({
+        variant: "destructive",
+        title: "Failed to send request",
+        description: error instanceof Error ? error.message : 'Failed to send request',
+      });
     } finally {
       setSendingRequest(null);
     }
@@ -355,6 +366,29 @@ export function DiscoverContainer() {
     setUserDetails(null);
   };
 
+  // Filter teams based on search query
+  const filteredTeams = teamsLookingForMembers.filter(team => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      team.teamName.toLowerCase().includes(query) ||
+      team.teamCode.toLowerCase().includes(query) ||
+      team.problemStatement.toLowerCase().includes(query)
+    );
+  });
+
+  // Filter participants based on search query
+  const filteredParticipants = participantsLookingForTeams.filter(participant => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      participant.name.toLowerCase().includes(query) ||
+      participant.skills.toLowerCase().includes(query) ||
+      participant.interests.toLowerCase().includes(query) ||
+      (participant.university && participant.university.toLowerCase().includes(query))
+    );
+  });
+
   return (
     <div className="flex flex-col gap-[24px] w-full">
       <div className="flex items-center justify-between">
@@ -401,18 +435,31 @@ export function DiscoverContainer() {
                 />
               </div>
 
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white opacity-60" />
+                <input
+                  type="text"
+                  placeholder={`Search ${activeTab === "teams" ? "teams" : "participants"}...`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-[rgba(138,138,138,0.1)] border border-[rgba(255,255,255,0.2)] rounded-[12px] text-white placeholder-white/60 focus:outline-none focus:border-[#ff4d00] transition-colors"
+                  style={{ fontFamily: 'var(--font-body)' }}
+                />
+              </div>
+
           {/* Tab Content */}
           {activeTab === "teams" ? (
             <div>
         {isLoading ? (
           <div className="text-white text-center py-[40px]">Loading teams...</div>
-        ) : Array.isArray(teamsLookingForMembers) && teamsLookingForMembers.length === 0 ? (
+        ) : filteredTeams.length === 0 ? (
           <div className="text-white text-center py-[40px] opacity-70">
-            No teams are currently looking for members.
+            {searchQuery.trim() ? "No teams match your search." : "No teams are currently looking for members."}
           </div>
-        ) : Array.isArray(teamsLookingForMembers) && teamsLookingForMembers.length > 0 ? (
+        ) : (
           <div className="flex flex-col gap-[16px]">
-            {teamsLookingForMembers.map((team, idx) => (
+            {filteredTeams.map((team, idx) => (
               <div
                 key={idx}
                 className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-[rgba(255,77,0,0.2)]"
@@ -443,9 +490,6 @@ export function DiscoverContainer() {
                       <span className="font-['Inter',sans-serif] text-[12px] text-white opacity-60">
                         {team.currentMembers}/{team.maxMembers} members
                       </span>
-                      <span className="font-['Inter',sans-serif] text-[12px] text-white opacity-60">
-                        Code: <span className="font-mono text-[#ff4d00]">{team.teamCode}</span>
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -453,23 +497,19 @@ export function DiscoverContainer() {
               </div>
             ))}
           </div>
-        ) : (
-          <div className="text-white text-center py-[40px] opacity-70">
-            No teams are currently looking for members.
-          </div>
         )}
             </div>
           ) : (
             <div>
         {isLoading ? (
           <div className="text-white text-center py-[40px]">Loading participants...</div>
-        ) : Array.isArray(participantsLookingForTeams) && participantsLookingForTeams.length === 0 ? (
+        ) : filteredParticipants.length === 0 ? (
           <div className="text-white text-center py-[40px] opacity-70">
-            No participants are currently looking for teams.
+            {searchQuery.trim() ? "No participants match your search." : "No participants are currently looking for teams."}
           </div>
-        ) : Array.isArray(participantsLookingForTeams) && participantsLookingForTeams.length > 0 ? (
+        ) : (
           <div className="flex flex-col gap-[16px]">
-            {participantsLookingForTeams.map((participant, idx) => (
+            {filteredParticipants.map((participant, idx) => (
               <div
                 key={idx}
                 className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-[rgba(255,77,0,0.2)]"
@@ -495,10 +535,6 @@ export function DiscoverContainer() {
                 </Card>
               </div>
             ))}
-          </div>
-        ) : (
-          <div className="text-white text-center py-[40px] opacity-70">
-            No participants are currently looking for teams.
           </div>
         )}
             </div>

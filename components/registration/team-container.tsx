@@ -13,6 +13,17 @@ import { StatusBadge } from "./status-badge";
 import { AlertBanner } from "./alert-banner";
 import { UserProfileModal, UserDetails } from "./user-profile-modal";
 import { Modal } from "./modal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface TeamMember {
   uid: string;
@@ -30,7 +41,7 @@ interface Team {
   teamMembers?: TeamMember[];
   problemStatement: string;
   lookingForMembers: boolean;
-  status: "none" | "in-team" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined" | "withdrawn";
+  status: "none" | "active" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined" | "withdrawn";
 }
 
 interface ProblemStatement {
@@ -73,6 +84,14 @@ export function TeamContainer() {
   
   // Problem statement modal state
   const [selectedProblemStatement, setSelectedProblemStatement] = useState<ProblemStatement | null>(null);
+  
+  // Confirmation dialog state
+  const [deleteTeamDialogOpen, setDeleteTeamDialogOpen] = useState(false);
+  const [removeMemberDialogOpen, setRemoveMemberDialogOpen] = useState(false);
+  const [leaveTeamDialogOpen, setLeaveTeamDialogOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
+  
+  const { toast } = useToast();
 
   useEffect(() => {
     // Fetch problem statements
@@ -145,12 +164,12 @@ export function TeamContainer() {
                   })) || [],
                   problemStatement: teamInfo.appliedFor?.title || 'No problem statement selected',
                   lookingForMembers: teamInfo.isLooking || false,
-                  status: teamInfo.teamStatus === 'pending' ? 'in-team' :
+                  status: teamInfo.teamStatus === 'pending' ? 'active' :
                     teamInfo.teamStatus === 'submitted' ? 'submitted' :
                       teamInfo.teamStatus === 'shortlisted' ? 'shortlisted' :
                         teamInfo.teamStatus === 'rsvped' ? 'confirmed' :
                           teamInfo.teamStatus === 'rsvp_declined' ? 'declined' :
-                            teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'in-team',
+                            teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'active',
                 });
 
                 // Join requests will be fetched by useEffect when team state is set
@@ -200,12 +219,6 @@ export function TeamContainer() {
   const handleDeleteTeam = async () => {
     if (!team || !user) return;
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete the team "${team.name}"? This action cannot be undone. All team members will be removed from the team.`
-    );
-
-    if (!confirmed) return;
-
     try {
       const token = await getToken();
       if (!token) {
@@ -233,31 +246,35 @@ export function TeamContainer() {
         throw new Error(data.message || 'Failed to delete team');
       }
 
-      setAlert({
-        type: "success",
-        message: "Team deleted successfully",
+      toast({
+        title: "Team deleted",
+        description: "Team has been deleted successfully.",
       });
 
       // Clear team state and redirect to dashboard
       setTeam(null);
+      setDeleteTeamDialogOpen(false);
       setTimeout(() => {
         router.push("/dashboard");
       }, 1000);
     } catch (error) {
       console.error('Error deleting team:', error);
-      setAlert({
-        type: "error",
-        message: error instanceof Error ? error.message : "Failed to delete team",
+      toast({
+        variant: "destructive",
+        title: "Failed to delete team",
+        description: error instanceof Error ? error.message : "Failed to delete team",
       });
+      setDeleteTeamDialogOpen(false);
     }
   };
 
-  const handleRemoveMember = async (memberId: string, memberName: string) => {
-    if (!team || !user) return;
-    
-    if (!confirm(`Are you sure you want to remove ${memberName} from the team?`)) {
-      return;
-    }
+  const handleRemoveMemberClick = (memberId: string, memberName: string) => {
+    setMemberToRemove({ id: memberId, name: memberName });
+    setRemoveMemberDialogOpen(true);
+  };
+
+  const handleRemoveMember = async () => {
+    if (!team || !user || !memberToRemove) return;
 
     try {
       const token = await getToken();
@@ -277,7 +294,7 @@ export function TeamContainer() {
         },
         body: JSON.stringify({
           teamCode: team.code,
-          memberId,
+          memberId: memberToRemove.id,
           setTheirLookingStatus: true
         })
       });
@@ -288,11 +305,12 @@ export function TeamContainer() {
         throw new Error(data.message || 'Failed to remove member');
       }
 
-      setAlert({
-        type: "success",
-        message: `${memberName} has been removed from the team`,
+      toast({
+        title: "Member removed",
+        description: `${memberToRemove.name} has been removed from the team`,
       });
-      setTimeout(() => setAlert(null), 3000);
+      setRemoveMemberDialogOpen(false);
+      setMemberToRemove(null);
 
       // Refresh team data
       const teamResponse = await fetch(API_ENDPOINTS.getTeam(team.code), {
@@ -320,12 +338,12 @@ export function TeamContainer() {
             })) || [],
             problemStatement: teamInfo.appliedFor?.title || 'No problem statement selected',
             lookingForMembers: teamInfo.isLooking || false,
-            status: teamInfo.teamStatus === 'pending' ? 'in-team' :
+            status: teamInfo.teamStatus === 'pending' ? 'active' :
               teamInfo.teamStatus === 'submitted' ? 'submitted' :
                 teamInfo.teamStatus === 'shortlisted' ? 'shortlisted' :
                   teamInfo.teamStatus === 'rsvped' ? 'confirmed' :
                     teamInfo.teamStatus === 'rsvp_declined' ? 'declined' :
-                      teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'in-team',
+                      teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'active',
           });
         }
       }
@@ -336,6 +354,57 @@ export function TeamContainer() {
         message: error instanceof Error ? error.message : "Failed to remove member",
       });
       setTimeout(() => setAlert(null), 3000);
+    }
+  };
+
+  const handleLeaveTeam = async () => {
+    if (!team || !user) return;
+
+    try {
+      const token = await getToken();
+      if (!token) {
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please log in again to leave the team",
+        });
+        return;
+      }
+
+      const response = await fetch(API_ENDPOINTS.leaveTeam, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          teamCode: team.code
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to leave team');
+      }
+
+      toast({
+        title: "Left team",
+        description: "You have successfully left the team",
+      });
+      setLeaveTeamDialogOpen(false);
+      setTeam(null);
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1000);
+    } catch (error) {
+      console.error('Error leaving team:', error);
+      toast({
+        variant: "destructive",
+        title: "Failed to leave team",
+        description: error instanceof Error ? error.message : "Failed to leave team",
+      });
+      setLeaveTeamDialogOpen(false);
     }
   };
 
@@ -427,12 +496,12 @@ export function TeamContainer() {
               })) || [],
               problemStatement: teamInfo.appliedFor?.title || 'No problem statement selected',
               lookingForMembers: teamInfo.isLooking || false,
-              status: teamInfo.teamStatus === 'pending' ? 'in-team' :
+              status: teamInfo.teamStatus === 'pending' ? 'active' :
                 teamInfo.teamStatus === 'submitted' ? 'submitted' :
                   teamInfo.teamStatus === 'shortlisted' ? 'shortlisted' :
                     teamInfo.teamStatus === 'rsvped' ? 'confirmed' :
                       teamInfo.teamStatus === 'rsvp_declined' ? 'declined' :
-                        teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'in-team',
+                        teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'active',
             });
           }
         }
@@ -484,7 +553,44 @@ export function TeamContainer() {
       }
 
       if (data.success && data.data) {
-        setTeam(data.data);
+        const teamCode = data.data.teamCode;
+        
+        // Fetch full team data after creation
+        const teamResponse = await fetch(API_ENDPOINTS.getTeam(teamCode), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (teamResponse.ok) {
+          const teamData = await teamResponse.json();
+          if (teamData.success && teamData.data) {
+            const teamInfo = teamData.data;
+            setTeam({
+              id: teamInfo.teamCode,
+              name: teamInfo.teamName,
+              code: teamInfo.teamCode,
+              leadId: typeof teamInfo.teamLead === 'string' ? teamInfo.teamLead : teamInfo.teamLead?.id || '',
+              members: teamInfo.teamMembers?.map((m: any) => m.uid || m.id) || [],
+              teamMembers: teamInfo.teamMembers?.map((m: any) => ({
+                uid: m.uid,
+                name: m.name,
+                email: m.email,
+                role: m.role || 'Member',
+              })) || [],
+              problemStatement: teamInfo.appliedFor?.title || 'No problem statement selected',
+              lookingForMembers: teamInfo.isLooking || false,
+              status: teamInfo.teamStatus === 'pending' ? 'active' :
+                teamInfo.teamStatus === 'submitted' ? 'submitted' :
+                  teamInfo.teamStatus === 'shortlisted' ? 'shortlisted' :
+                    teamInfo.teamStatus === 'rsvped' ? 'confirmed' :
+                      teamInfo.teamStatus === 'rsvp_declined' ? 'declined' :
+                        teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'active',
+            });
+          }
+        }
+        
         setAlert({
           type: "success",
           message: `Team "${data.data.teamName}" created! Team code: ${data.data.teamCode}`,
@@ -537,12 +643,12 @@ export function TeamContainer() {
           members: teamInfo.teamMembers?.map((m: any) => m.uid || m.id) || [],
           problemStatement: teamInfo.appliedFor?.title || 'No problem statement selected',
           lookingForMembers: teamInfo.isLooking || false,
-          status: teamInfo.teamStatus === 'pending' ? 'in-team' :
+          status: teamInfo.teamStatus === 'pending' ? 'active' :
             teamInfo.teamStatus === 'submitted' ? 'submitted' :
               teamInfo.teamStatus === 'shortlisted' ? 'shortlisted' :
                 teamInfo.teamStatus === 'rsvped' ? 'confirmed' :
                   teamInfo.teamStatus === 'rsvp_declined' ? 'declined' :
-                    teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'in-team',
+                    teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'active',
         });
         setAlert({
           type: "success",
@@ -730,7 +836,7 @@ export function TeamContainer() {
         <>
           <FormSection
             title="Your Team"
-            status={<StatusBadge status={team.status} icon={team.status === "shortlisted" ? Award : Users} />}
+            status={team.status !== "active" ? <StatusBadge status={team.status} icon={team.status === "shortlisted" ? Award : Users} /> : undefined}
           >
             <div className="flex flex-col gap-[16px]">
               <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.1)] rounded-[15px] p-[20px] border border-[rgba(255,255,255,0.15)]">
@@ -791,25 +897,21 @@ export function TeamContainer() {
               )}
 
               <div className="flex gap-[12px]">
-                {team.leadId === user.uid && team.status === "in-team" && (
+                {team.leadId === user.uid && team.status === "active" && (
                   <Button onClick={() => router.push("/dashboard/submission")} variant="primary">
                     <Upload className="w-4 h-4" />
                     Submit Project
                   </Button>
                 )}
                 {team.leadId === user.uid && team.status !== "submitted" && team.status !== "shortlisted" && team.status !== "confirmed" && (
-                  <Button onClick={handleDeleteTeam} variant="danger">
+                  <Button onClick={() => setDeleteTeamDialogOpen(true)} variant="danger">
                     <Trash2 className="w-4 h-4" />
                     Delete Team
                   </Button>
                 )}
                 {team.leadId !== user.uid && (
                   <Button
-                    onClick={() => {
-                      setTeam(null);
-                      setAlert({ type: "info", message: "Left the team" });
-                      setTimeout(() => setAlert(null), 3000);
-                    }}
+                    onClick={() => setLeaveTeamDialogOpen(true)}
                     variant="danger"
                   >
                     <X className="w-4 h-4" />
@@ -827,11 +929,11 @@ export function TeamContainer() {
                   <div className="flex flex-col gap-[8px] p-[16px] rounded-[12px] border border-[rgba(255,255,255,0.1)] bg-[rgba(138,138,138,0.05)]">
                     <div 
                       onClick={() => {
-                        if (team.status === "in-team") {
+                        if (team.status === "active") {
                           setTeam({ ...team, lookingForMembers: !team.lookingForMembers });
                         }
                       }}
-                      className={`flex items-center gap-[12px] ${team.status === "in-team" ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
+                      className={`flex items-center gap-[12px] ${team.status === "active" ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
                     >
                       <div className="relative">
                         <input
@@ -839,11 +941,11 @@ export function TeamContainer() {
                           id="teamLookingForMembers"
                           checked={team.lookingForMembers}
                           onChange={(e) => {
-                            if (team.status === "in-team") {
+                            if (team.status === "active") {
                               setTeam({ ...team, lookingForMembers: e.target.checked });
                             }
                           }}
-                          disabled={team.status !== "in-team"}
+                          disabled={team.status !== "active"}
                           className="sr-only"
                         />
                         <div className={`
@@ -852,18 +954,18 @@ export function TeamContainer() {
                             ? 'border-[#ff4d00] bg-[rgba(255,77,0,0.15)]' 
                             : 'border-[rgba(255,255,255,0.38)] bg-[rgba(138,138,138,0.2)]'
                           }
-                          ${team.status === "in-team" ? 'hover:border-[rgba(255,255,255,0.5)]' : ''}
+                          ${team.status === "active" ? 'hover:border-[rgba(255,255,255,0.5)]' : ''}
                         `}>
                           {team.lookingForMembers && (
                             <Check className="w-3 h-3 text-[#ff4d00] animate-selectSlide" />
                           )}
                         </div>
                       </div>
-                      <label htmlFor="teamLookingForMembers" className={`text-[14px] font-semibold text-white ${team.status === "in-team" ? 'cursor-pointer' : 'cursor-not-allowed'}`} style={{ fontFamily: 'var(--font-body)' }}>
+                      <label htmlFor="teamLookingForMembers" className={`text-[14px] font-semibold text-white ${team.status === "active" ? 'cursor-pointer' : 'cursor-not-allowed'}`} style={{ fontFamily: 'var(--font-body)' }}>
                         Looking for team members
                       </label>
                     </div>
-                    <p className={`text-[13px] text-white opacity-70 ml-[32px] ${team.status !== "in-team" ? 'opacity-50' : ''}`} style={{ fontFamily: 'var(--font-body)' }}>
+                    <p className={`text-[13px] text-white opacity-70 ml-[32px] ${team.status !== "active" ? 'opacity-50' : ''}`} style={{ fontFamily: 'var(--font-body)' }}>
                       Enable this to let others know your team is open to new members. Your team will appear in the "Discover" section for participants looking for teams.
                     </p>
                   </div>
@@ -899,7 +1001,7 @@ export function TeamContainer() {
                         </div>
                         {member.uid !== user?.uid && team.status !== "submitted" && team.status !== "shortlisted" && team.status !== "confirmed" && (
                           <Button
-                            onClick={() => handleRemoveMember(member.uid, member.name)}
+                            onClick={() => handleRemoveMemberClick(member.uid, member.name)}
                             variant="danger"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -995,6 +1097,84 @@ export function TeamContainer() {
           </div>
         </div>
       </Modal>
+
+      {/* Delete Team Confirmation Dialog */}
+      <AlertDialog open={deleteTeamDialogOpen} onOpenChange={setDeleteTeamDialogOpen}>
+        <AlertDialogContent className="bg-[rgba(138,138,138,0.15)] backdrop-blur-[2.5px] border-[rgba(255,255,255,0.2)]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+              Delete Team
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/80" style={{ fontFamily: 'var(--font-body)' }}>
+              Are you sure you want to delete the team "{team?.name}"? This action cannot be undone. All team members will be removed from the team.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-white" style={{ fontFamily: 'var(--font-body)' }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTeam}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={removeMemberDialogOpen} onOpenChange={setRemoveMemberDialogOpen}>
+        <AlertDialogContent className="bg-[rgba(138,138,138,0.15)] backdrop-blur-[2.5px] border-[rgba(255,255,255,0.2)]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+              Remove Member
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/80" style={{ fontFamily: 'var(--font-body)' }}>
+              Are you sure you want to remove {memberToRemove?.name} from the team?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-white" style={{ fontFamily: 'var(--font-body)' }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveMember}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Leave Team Confirmation Dialog */}
+      <AlertDialog open={leaveTeamDialogOpen} onOpenChange={setLeaveTeamDialogOpen}>
+        <AlertDialogContent className="bg-[rgba(138,138,138,0.15)] backdrop-blur-[2.5px] border-[rgba(255,255,255,0.2)]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+              Leave Team
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/80" style={{ fontFamily: 'var(--font-body)' }}>
+              Are you sure you want to leave the team "{team?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-white" style={{ fontFamily: 'var(--font-body)' }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLeaveTeam}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              Leave Team
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

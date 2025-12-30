@@ -11,6 +11,17 @@ import { Button } from "./button";
 import { StatusBadge } from "./status-badge";
 import { AlertBanner } from "./alert-banner";
 import { API_ENDPOINTS } from "@/lib/api-config";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface Team {
   id: string;
@@ -18,12 +29,14 @@ interface Team {
   code: string;
   leadId: string;
   members: string[];
-  status: "none" | "in-team" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined" | "withdrawn";
+  status: "none" | "active" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined" | "withdrawn";
 }
 
 export function SubmissionContainer() {
   const { user, isAuthenticated, getToken } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [team, setTeam] = useState<Team | null>(null);
   const [submissionData, setSubmissionData] = useState({
     videoUrl: "",
@@ -79,12 +92,12 @@ export function SubmissionContainer() {
                   code: teamInfo.teamCode,
                   leadId: typeof teamInfo.teamLead === 'string' ? teamInfo.teamLead : teamInfo.teamLead?.id || '',
                   members: teamInfo.teamMembers?.map((m: any) => m.uid || m.id) || [],
-                  status: teamInfo.teamStatus === 'pending' ? 'in-team' :
+                  status: teamInfo.teamStatus === 'pending' ? 'active' :
                     teamInfo.teamStatus === 'submitted' ? 'submitted' :
                       teamInfo.teamStatus === 'shortlisted' ? 'shortlisted' :
                         teamInfo.teamStatus === 'rsvped' ? 'confirmed' :
                           teamInfo.teamStatus === 'rsvp_declined' ? 'declined' :
-                            teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'in-team',
+                            teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'active',
                 });
                 
                 // Set existing submission data if available
@@ -113,12 +126,6 @@ export function SubmissionContainer() {
 
   const handleWithdrawSubmission = async () => {
     if (!team || !user) return;
-
-    const confirmed = window.confirm(
-      `Are you sure you want to withdraw the submission? All submission details (video, PDF, links) will be permanently deleted.`
-    );
-
-    if (!confirmed) return;
 
     try {
       setIsSubmitting(true);
@@ -172,12 +179,12 @@ export function SubmissionContainer() {
             code: teamInfo.teamCode,
             leadId: typeof teamInfo.teamLead === 'string' ? teamInfo.teamLead : teamInfo.teamLead?.id || '',
             members: teamInfo.teamMembers?.map((m: any) => m.uid || m.id) || [],
-            status: teamInfo.teamStatus === 'pending' ? 'in-team' :
+            status: teamInfo.teamStatus === 'pending' ? 'active' :
               teamInfo.teamStatus === 'submitted' ? 'submitted' :
                 teamInfo.teamStatus === 'shortlisted' ? 'shortlisted' :
                   teamInfo.teamStatus === 'rsvped' ? 'confirmed' :
                     teamInfo.teamStatus === 'rsvp_declined' ? 'declined' :
-                      teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'in-team',
+                      teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'active',
           });
           
           // Clear submission data
@@ -191,11 +198,12 @@ export function SubmissionContainer() {
       }
     } catch (error) {
       console.error('Error withdrawing submission:', error);
-      setAlert({
-        type: "error",
-        message: error instanceof Error ? error.message : "Failed to withdraw submission",
+      toast({
+        variant: "destructive",
+        title: "Failed to withdraw submission",
+        description: error instanceof Error ? error.message : "Failed to withdraw submission",
       });
-      setTimeout(() => setAlert(null), 3000);
+      setWithdrawDialogOpen(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -325,7 +333,7 @@ export function SubmissionContainer() {
     );
   }
 
-  const isLocked = team.status !== "in-team" && team.status !== "submitted";
+  const isLocked = team.status !== "active" && team.status !== "submitted";
   const canWithdraw = team.status === "submitted" && !isLocked;
 
   return (
@@ -390,7 +398,7 @@ export function SubmissionContainer() {
             {team.status === "submitted" ? "Update Submission" : "Submit Project"}
           </Button>
           {canWithdraw && (
-            <Button onClick={handleWithdrawSubmission} variant="danger" disabled={isSubmitting}>
+            <Button onClick={() => setWithdrawDialogOpen(true)} variant="danger" disabled={isSubmitting}>
               <X className="w-4 h-4" />
               Withdraw Submission
             </Button>
@@ -400,6 +408,32 @@ export function SubmissionContainer() {
           </Button>
         </div>
       </form>
+
+      {/* Withdraw Submission Confirmation Dialog */}
+      <AlertDialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
+        <AlertDialogContent className="bg-[rgba(138,138,138,0.15)] backdrop-blur-[2.5px] border-[rgba(255,255,255,0.2)]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+              Withdraw Submission
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/80" style={{ fontFamily: 'var(--font-body)' }}>
+              Are you sure you want to withdraw your submission? All submission details (video, PDF, links) will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-white" style={{ fontFamily: 'var(--font-body)' }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleWithdrawSubmission}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              Withdraw
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

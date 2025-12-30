@@ -25,6 +25,17 @@ import { FormSection } from "./form-section";
 import { Button } from "./button";
 import { StatusBadge } from "./status-badge";
 import { AlertBanner } from "./alert-banner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface Team {
   teamCode: string;
@@ -72,6 +83,7 @@ interface Team {
 export function DashboardContainer() {
   const { user, isAuthenticated, getToken } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [team, setTeam] = useState<Team | null>(null);
   const [profileCompleteness, setProfileCompleteness] = useState(0);
   const [missingFields, setMissingFields] = useState<string[]>([]);
@@ -79,6 +91,8 @@ export function DashboardContainer() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [alert, setAlert] = useState<{ type: "success" | "error" | "warning" | "info"; message: string } | null>(null);
+  const [deleteTeamDialogOpen, setDeleteTeamDialogOpen] = useState(false);
+  const [leaveTeamDialogOpen, setLeaveTeamDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -239,18 +253,18 @@ export function DashboardContainer() {
     fetchData();
   }, [user, isAuthenticated, router, refreshTrigger]);
 
-  const getTeamStatus = (): "none" | "in-team" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined" => {
+  const getTeamStatus = (): "none" | "active" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined" => {
     if (!team || !team.teamStatus) return "none";
     // Map teamStatus from API to component status
-    const statusMap: Record<string, "none" | "in-team" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined"> = {
-      'pending': 'in-team',
+    const statusMap: Record<string, "none" | "active" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined"> = {
+      'pending': 'active',
       'submitted': 'submitted',
       'withdrawn': 'none',
       'shortlisted': 'shortlisted',
       'rsvped': 'confirmed',
       'rsvp_declined': 'declined',
     };
-    return statusMap[team.teamStatus] || 'in-team';
+    return statusMap[team.teamStatus] || 'active';
   };
 
   const isTeamLead = (): boolean => {
@@ -267,12 +281,6 @@ export function DashboardContainer() {
 
   const handleDeleteTeam = async () => {
     if (!team || !user) return;
-
-    const confirmed = window.confirm(
-      `Are you sure you want to delete the team "${team.teamName}"? This action cannot be undone. All team members will be removed from the team.`
-    );
-
-    if (!confirmed) return;
 
     try {
       const token = await getToken();
@@ -301,11 +309,11 @@ export function DashboardContainer() {
         throw new Error(data.message || 'Failed to delete team');
       }
 
-      setAlert({
-        type: "success",
-        message: "Team deleted successfully",
+      toast({
+        title: "Team deleted",
+        description: "Team has been deleted successfully.",
       });
-      setTimeout(() => setAlert(null), 3000);
+      setDeleteTeamDialogOpen(false);
 
       // Clear team state and refresh profile
       setTeam(null);
@@ -314,24 +322,28 @@ export function DashboardContainer() {
       }, 1000);
     } catch (error) {
       console.error('Error deleting team:', error);
-      setAlert({
-        type: "error",
-        message: error instanceof Error ? error.message : "Failed to delete team",
+      toast({
+        variant: "destructive",
+        title: "Failed to delete team",
+        description: error instanceof Error ? error.message : "Failed to delete team",
       });
-      setTimeout(() => setAlert(null), 3000);
+      setDeleteTeamDialogOpen(false);
     }
   };
 
   const handleLeaveTeam = async () => {
     if (!team || !user) return;
-    
-    if (!confirm("Are you sure you want to leave this team?")) {
-      return;
-    }
 
     try {
       const token = await getToken();
-      if (!token) return;
+      if (!token) {
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please log in again to leave the team",
+        });
+        return;
+      }
 
       const response = await fetch(API_ENDPOINTS.leaveTeam, {
         method: 'PUT',
@@ -339,7 +351,9 @@ export function DashboardContainer() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ setLookingStatus: false })
+        body: JSON.stringify({
+          teamCode: team.teamCode
+        })
       });
 
       const data = await response.json();
@@ -348,6 +362,12 @@ export function DashboardContainer() {
         throw new Error(data.message || 'Failed to leave team');
       }
 
+      toast({
+        title: "Left team",
+        description: "You have successfully left the team",
+      });
+      setLeaveTeamDialogOpen(false);
+      
       // Clear team state and refresh
       setTeam(null);
       
@@ -355,11 +375,12 @@ export function DashboardContainer() {
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error leaving team:', error);
-      setAlert({
-        type: "error",
-        message: error instanceof Error ? error.message : 'Failed to leave team',
+      toast({
+        variant: "destructive",
+        title: "Failed to leave team",
+        description: error instanceof Error ? error.message : "Failed to leave team",
       });
-      setTimeout(() => setAlert(null), 3000);
+      setLeaveTeamDialogOpen(false);
     }
   };
 
@@ -525,7 +546,7 @@ export function DashboardContainer() {
           <Users className="w-4 h-4" />
           Team
         </Button>
-        {team && isTeamLead() && getTeamStatus() === "in-team" && (
+        {team && isTeamLead() && getTeamStatus() === "active" && (
           <Button onClick={() => router.push("/dashboard/submission")} variant="secondary">
             <FileText className="w-4 h-4" />
             Submit Team
@@ -666,22 +687,24 @@ export function DashboardContainer() {
                     {isTeamLead() ? "Team Lead" : "Member"}
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                    Team Status
-                  </span>
-                  <StatusBadge
-                    status={team.teamStatus}
-                    icon={
-                      teamStatus === "shortlisted" || teamStatus === "confirmed"
-                        ? Award
-                        : Users
-                    }
-                  />
-                </div>
+                {teamStatus !== "active" && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                      Team Status
+                    </span>
+                    <StatusBadge
+                      status={team.teamStatus}
+                      icon={
+                        teamStatus === "shortlisted" || teamStatus === "confirmed"
+                          ? Award
+                          : Users
+                      }
+                    />
+                  </div>
+                )}
               </div>
 
-              {teamStatus === "in-team" && isTeamLead() && (
+              {teamStatus === "active" && isTeamLead() && (
                 <Button onClick={() => router.push("/dashboard/submission")} variant="primary">
                   <FileText className="w-4 h-4" />
                   Submit Team
@@ -765,7 +788,7 @@ export function DashboardContainer() {
 
               {/* Leave Team Button for Members */}
               {!isTeamLead() && teamStatus !== "submitted" && teamStatus !== "shortlisted" && teamStatus !== "confirmed" && (
-                <Button onClick={handleLeaveTeam} variant="danger">
+                <Button onClick={() => setLeaveTeamDialogOpen(true)} variant="danger">
                   <LogOut className="w-4 h-4" />
                   Leave Team
                 </Button>
@@ -838,6 +861,32 @@ export function DashboardContainer() {
           )}
         </div>
       </FormSection> */}
+
+      {/* Leave Team Confirmation Dialog */}
+      <AlertDialog open={leaveTeamDialogOpen} onOpenChange={setLeaveTeamDialogOpen}>
+        <AlertDialogContent className="bg-[rgba(138,138,138,0.15)] backdrop-blur-[2.5px] border-[rgba(255,255,255,0.2)]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+              Leave Team
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/80" style={{ fontFamily: 'var(--font-body)' }}>
+              Are you sure you want to leave the team "{team?.teamName}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-white" style={{ fontFamily: 'var(--font-body)' }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLeaveTeam}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              Leave Team
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -39,7 +39,7 @@ export function UserProfileModal({ isOpen, onClose, userDetails, isLoading }: Us
         className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-auto"
         onClick={onClose}
       />
-      <div className="relative z-[111] w-full max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.15)] rounded-[20px] p-[32px] border border-[rgba(255,255,255,0.2)] pointer-events-auto">
+      <div className="relative z-[111] w-full max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.15)] rounded-[20px] p-[32px] border border-[rgba(255,255,255,0.2)] pointer-events-auto no-scrollbar">
         <div className="flex items-center justify-between mb-[24px]">
           <h2 className="text-[28px] text-white" style={{ fontFamily: 'var(--font-heading)' }}>
             User Profile

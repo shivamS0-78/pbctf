@@ -152,12 +152,24 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
       newErrors.bio = "Bio is required";
     }
     
+    // GitHub URL validation
     if (!registerData.github.trim()) {
       newErrors.github = "GitHub link is required";
+    } else {
+      const githubPattern = /^(https?:\/\/)?(www\.)?github\.com\/[\w-]+(\/)?$/i;
+      if (!githubPattern.test(registerData.github.trim())) {
+        newErrors.github = "Please enter a valid GitHub URL (e.g., https://github.com/username)";
+      }
     }
     
+    // LinkedIn URL validation
     if (!registerData.linkedin.trim()) {
       newErrors.linkedin = "LinkedIn link is required";
+    } else {
+      const linkedinPattern = /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|profile)\/[\w-]+(\/)?$/i;
+      if (!linkedinPattern.test(registerData.linkedin.trim())) {
+        newErrors.linkedin = "Please enter a valid LinkedIn URL (e.g., https://linkedin.com/in/username)";
+      }
     }
     
     if (!resume) {
@@ -441,6 +453,9 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
                 {errors.resume}
               </span>
             )}
+            <p className="text-[12px] text-white opacity-70 bg-[rgba(255,77,0,0.1)] border border-[rgba(255,77,0,0.3)] rounded-[8px] p-[12px]" style={{ fontFamily: 'var(--font-body)' }}>
+              ⚠️ <strong>Privacy Notice:</strong> Your resume will be publicly visible and discoverable by other participants. Please redact any sensitive personal information (e.g., phone numbers, addresses, personal email addresses) before uploading.
+            </p>
             <FormFileUpload
               label="Profile Photo"
               accept="image/*"
