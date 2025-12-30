@@ -103,7 +103,7 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
   const submitted = hasSubmitted || teamStatus === 'submitted' || teamStatus === 'shortlisted' || teamStatus === 'rsvped';
 
   return (
-    <div className={`w-full p-[20px] rounded-[16px] border ${
+    <div className={`w-full p-[20px] rounded-[16px] border flex flex-col items-center justify-center text-center ${
       isExpired 
         ? 'bg-[rgba(239,68,68,0.1)] border-[rgba(239,68,68,0.3)]' 
         : submitted
@@ -111,7 +111,7 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
           : 'bg-[rgba(251,191,36,0.1)] border-[rgba(251,191,36,0.3)]'
     }`}>
       {/* Header */}
-      <div className="flex items-center gap-[12px] mb-[16px]">
+      <div className="flex items-center justify-center gap-[12px] mb-[16px] w-full">
         {isExpired ? (
           <AlertTriangle className="w-5 h-5 text-red-400" />
         ) : submitted ? (
@@ -135,14 +135,14 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
 
       {/* Countdown or Status Message */}
       {isExpired ? (
-        <p className="text-[14px] text-red-300/80" style={{ fontFamily: 'var(--font-body)' }}>
+        <p className="text-[14px] text-red-300/80 text-center w-full" style={{ fontFamily: 'var(--font-body)' }}>
           The submission deadline has passed. No new submissions are being accepted.
         </p>
       ) : (
-        <>
+        <div className="flex flex-col items-center w-full">
           {/* Countdown Display */}
           {timeRemaining && (
-            <div className="flex gap-[12px] mb-[12px]">
+            <div className="flex justify-center gap-[12px] mb-[12px] w-full">
               {[
                 { value: timeRemaining.days, label: 'Days' },
                 { value: timeRemaining.hours, label: 'Hours' },
@@ -172,7 +172,7 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
 
           {/* Status Message */}
           <p 
-            className={`text-[13px] ${submitted ? 'text-green-300/80' : 'text-amber-300/80'}`}
+            className={`text-[13px] text-center w-full ${submitted ? 'text-green-300/80' : 'text-amber-300/80'}`}
             style={{ fontFamily: 'var(--font-body)' }}
           >
             {submitted 
@@ -182,12 +182,12 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
 
           {/* Deadline Date */}
           <p 
-            className="text-[12px] text-white/50 mt-[8px]"
+            className="text-[12px] text-white/50 mt-[8px] text-center w-full"
             style={{ fontFamily: 'var(--font-body)' }}
           >
             Deadline: January 20, 2026 at 11:59 PM IST
           </p>
-        </>
+        </div>
       )}
     </div>
   );

@@ -45,6 +45,12 @@ export function QuickActionsCard({
     teamStatus !== "confirmed";
   const canWithdraw = isLead && teamStatus === "submitted" && !isEvaluated && !isShortlisted;
 
+  const hasActions = canSubmit || canEditSubmission || canDiscover || canDelete || canLeave || canWithdraw;
+
+  if (!hasActions) {
+    return null;
+  }
+
   return (
     <FormSection title="Quick Actions">
       <div className="flex flex-col gap-[12px]">
