@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { User, Mail, MessageSquare, Building, FileText, Github, Linkedin, ExternalLink } from "lucide-react";
 
 interface UserDetails {
@@ -30,6 +31,18 @@ interface UserProfileModalProps {
 }
 
 export function UserProfileModal({ isOpen, onClose, userDetails, isLoading }: UserProfileModalProps) {
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   // For stacked modals, user modal uses z-110 to appear above team modal
   if (!isOpen) return null;
   
