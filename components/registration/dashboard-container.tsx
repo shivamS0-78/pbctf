@@ -95,6 +95,7 @@ export function DashboardContainer() {
   const [deleteTeamDialogOpen, setDeleteTeamDialogOpen] = useState(false);
   const [leaveTeamDialogOpen, setLeaveTeamDialogOpen] = useState(false);
   const [invites, setInvites] = useState<any[]>([]);
+  const [teamRequests, setTeamRequests] = useState<any[]>([]);
   const [isDeadlineExpired, setIsDeadlineExpired] = useState(false);
   const [withdrawSubmissionDialogOpen, setWithdrawSubmissionDialogOpen] = useState(false);
   const [removeMemberDialogOpen, setRemoveMemberDialogOpen] = useState(false);
@@ -240,46 +241,69 @@ export function DashboardContainer() {
                   const teamData = await teamResponse.json();
                   if (teamData.success && teamData.data) {
                     setTeam(teamData.data);
+                    
+                    // Fetch team requests if lead
+                    const teamInfo = teamData.data;
+                    const teamCode = teamInfo.teamCode;
+                    if (teamInfo.teamLead === user.uid || (typeof teamInfo.teamLead === 'object' && teamInfo.teamLead.id === user.uid)) {
+                      try {
+                        const requestsResponse = await fetch(`${API_ENDPOINTS.joinRequest}?teamCode=${teamCode}&type=team`, {
+                          headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                          }
+                        });
+                        if (requestsResponse.ok) {
+                          const requestsData = await requestsResponse.json();
+                          if (requestsData.success && requestsData.data && requestsData.data.requests) {
+                             setTeamRequests(requestsData.data.requests.filter((r: any) => r.type === 'request' && r.status === 'pending'));
+                          }
+                        }
+                      } catch (error) {
+                        console.error("Error fetching team requests:", error);
+                        toast({
+                          variant: "destructive",
+                          title: "Error",
+                          description: "Failed to load team join requests."
+                        });
+                      }
+                    }
                   } else {
-                    // Clear team if response doesn't have expected structure
                     setTeam(null);
                   }
                 } else {
-                  // Team fetch failed (not found, unauthorized, etc.), clear team state
                   setTeam(null);
                 }
               } catch (error) {
                 console.error('Error fetching team data:', error);
-                // Team fetch failed, clear team state
                 setTeam(null);
               }
             } else {
-              // User doesn't have a teamCode, clear team state
               setTeam(null);
+            }
 
-              // Fetch invites
-              try {
-                const invitesResponse = await fetch(`${API_ENDPOINTS.joinRequest}?type=user`, {
-                  headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                  }
-                });
-
-                if (invitesResponse.ok) {
-                  const invitesData = await invitesResponse.json();
-                  if (invitesData.success && invitesData.data && invitesData.data.requests) {
-                    setInvites(invitesData.data.requests.filter((r: any) => r.type === 'invite' && r.status === 'pending'));
-                  }
+            // Always fetch invites (Team -> User) regardless of team status
+            try {
+              const invitesResponse = await fetch(`${API_ENDPOINTS.joinRequest}?type=user`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
                 }
-              } catch (error) {
-                console.error("Error fetching invites:", error);
-                toast({
-                  variant: "destructive",
-                  title: "Error",
-                  description: "Failed to load team invitations."
-                });
+              });
+
+              if (invitesResponse.ok) {
+                const invitesData = await invitesResponse.json();
+                if (invitesData.success && invitesData.data && invitesData.data.requests) {
+                  setInvites(invitesData.data.requests.filter((r: any) => r.type === 'invite' && r.status === 'pending'));
+                }
               }
+            } catch (error) {
+              console.error("Error fetching invites:", error);
+              toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to load team invitations."
+              });
             }
           } else {
             // If API doesn't return expected format, calculate from context user
@@ -329,6 +353,7 @@ export function DashboardContainer() {
       const missing: string[] = [];
       
       profileFields.forEach((field) => {
+        if (!user) return;
         const value = user[field.key as keyof typeof user];
         if (value && value !== null && value !== '') {
           completed++;
@@ -762,8 +787,45 @@ export function DashboardContainer() {
             />
           )}
 
-          {/* Team Invitations */}
-          {invites.length > 0 && !team && (
+          {/* Pending Join Requests (for Team Leads) */}
+          {teamRequests.length > 0 && (
+            <FormSection title="Pending Join Requests">
+              <div className="flex flex-col gap-[12px]">
+                {teamRequests.map((request) => (
+                  <div
+                    key={request.requestId}
+                    className="flex flex-col gap-[8px] p-[12px] bg-[rgba(138,138,138,0.1)] rounded-[12px] border border-[rgba(255,255,255,0.1)]"
+                  >
+                    <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+                      <span className="font-semibold">{request.userName}</span> wants to join your team
+                    </span>
+                    <span className="text-[12px] text-white opacity-50" style={{ fontFamily: 'var(--font-body)' }}>
+                      Email: {request.userEmail}
+                    </span>
+                    <div className="flex gap-[8px]">
+                      <Button
+                        onClick={() => handleRespondToInvite(request.requestId, 'accept')}
+                        variant="primary"
+                        className="flex-1"
+                      >
+                        <Check className="w-4 h-4 mr-2" /> Accept
+                      </Button>
+                      <Button
+                        onClick={() => handleRespondToInvite(request.requestId, 'decline')}
+                        variant="danger"
+                        className="flex-1"
+                      >
+                        <X className="w-4 h-4 mr-2" /> Decline
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </FormSection>
+          )}
+
+          {/* Team Invitations (for Users) */}
+          {invites.length > 0 && (
             <FormSection title="Team Invitations">
               <div className="flex flex-col gap-[12px]">
                 {invites.map((invite) => (
@@ -772,7 +834,7 @@ export function DashboardContainer() {
                     className="flex flex-col gap-[8px] p-[12px] bg-[rgba(138,138,138,0.1)] rounded-[12px] border border-[rgba(255,255,255,0.1)]"
                   >
                     <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                      <span className="font-semibold">{invite.teamName || invite.teamCode}</span>
+                      Invited to join <span className="font-semibold">{invite.teamName || invite.teamCode}</span>
                     </span>
                     <span className="text-[12px] text-white opacity-50" style={{ fontFamily: 'var(--font-body)' }}>
                       Code: <span className="font-mono">{invite.teamCode}</span>
@@ -781,14 +843,16 @@ export function DashboardContainer() {
                       <Button
                         onClick={() => handleRespondToInvite(invite.requestId, 'accept')}
                         variant="primary"
+                        className="flex-1"
                       >
-                        <Check className="w-4 h-4" /> Accept
+                        <Check className="w-4 h-4 mr-2" /> Accept
                       </Button>
                       <Button
                         onClick={() => handleRespondToInvite(invite.requestId, 'decline')}
                         variant="danger"
+                        className="flex-1"
                       >
-                        <X className="w-4 h-4" /> Decline
+                        <X className="w-4 h-4 mr-2" /> Decline
                       </Button>
                     </div>
                   </div>
