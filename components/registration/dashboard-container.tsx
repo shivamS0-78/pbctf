@@ -700,12 +700,6 @@ export function DashboardContainer() {
           {/* Compact Profile Status */}
           <FormSection
             title="Profile Status"
-            status={
-              <StatusBadge
-                status={profileCompleteness === 100 ? "Completed" : "Pending"}
-                icon={profileCompleteness === 100 ? CheckCircle : Clock}
-              />
-            }
           >
             <div className="flex flex-col gap-[12px]">
               <div className="flex justify-between items-center">

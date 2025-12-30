@@ -271,7 +271,7 @@ export function ProfileContainer() {
       )}
 
       <form onSubmit={handleUpdateProfile} className="flex flex-col gap-[24px]">
-        <fieldset disabled={isProfileLocked} className="flex flex-col gap-[24px] disabled:opacity-70 disabled:pointer-events-none">
+        <div className={`flex flex-col gap-[24px] ${isProfileLocked ? 'opacity-70 pointer-events-none' : ''}`}>
           <FormSection title="Personal Information">
             <FormInput
               label="Full Name"
@@ -315,6 +315,7 @@ export function ProfileContainer() {
               required
               value={profileData.discord_username}
               onChange={(e) => setProfileData({ ...profileData, discord_username: e.target.value })}
+              disabled={isProfileLocked}
             />
             <FormInput
               label="Organisation"
@@ -322,6 +323,7 @@ export function ProfileContainer() {
               required
               value={profileData.organisation}
               onChange={(e) => setProfileData({ ...profileData, organisation: e.target.value })}
+              disabled={isProfileLocked}
             />
             <FormTextarea
               label="Bio"
@@ -330,6 +332,7 @@ export function ProfileContainer() {
               value={profileData.bio}
               onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
               rows={3}
+              disabled={isProfileLocked}
             />
           </FormSection>
 
@@ -364,18 +367,21 @@ export function ProfileContainer() {
               placeholder="https://github.com/username"
               value={profileData.github}
               onChange={(e) => setProfileData({ ...profileData, github: e.target.value })}
+              disabled={isProfileLocked}
             />
             <FormInput
               label="LinkedIn"
               placeholder="https://linkedin.com/in/username"
               value={profileData.linkedin}
               onChange={(e) => setProfileData({ ...profileData, linkedin: e.target.value })}
+              disabled={isProfileLocked}
             />
             <FormInput
               label="Portfolio"
               placeholder="https://yourportfolio.com"
               value={profileData.portfolio}
               onChange={(e) => setProfileData({ ...profileData, portfolio: e.target.value })}
+              disabled={isProfileLocked}
             />
           </FormSection>
 
@@ -383,7 +389,7 @@ export function ProfileContainer() {
             {isSubmitting && <Spinner size="sm" className="mr-2" />}
             {isSubmitting ? "Saving..." : isProfileLocked ? "Profile Locked" : "Save Changes"}
           </Button>
-        </fieldset>
+        </div>
       </form>
     </div>
   );
