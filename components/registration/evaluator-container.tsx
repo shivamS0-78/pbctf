@@ -11,6 +11,7 @@ import { Button } from "./button";
 import { Card } from "./card";
 import { StatusBadge } from "./status-badge";
 import { StickyAlert } from "./sticky-alert";
+import { Spinner } from "@/components/ui/spinner";
 
 interface AssignedTeam {
   teamCode: string;
@@ -157,7 +158,9 @@ export function EvaluatorContainer() {
 
       <FormSection title="Assigned Teams">
         {isLoading ? (
-          <div className="text-white text-center py-[40px]">Loading assigned teams...</div>
+          <div className="flex justify-center py-[40px]">
+            <Spinner size="lg" />
+          </div>
         ) : assignedTeams.length === 0 ? (
           <div className="text-white text-center py-[40px] opacity-70">
             No teams have been assigned to you yet.
@@ -231,6 +234,7 @@ export function EvaluatorContainer() {
             />
             <div className="flex gap-[12px]">
               <Button type="submit" variant="primary" disabled={isSubmitting}>
+                {isSubmitting && <Spinner size="sm" className="mr-2" />}
                 Submit Evaluation
               </Button>
               <Button 

@@ -34,6 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";
 
 interface Team {
@@ -583,7 +584,7 @@ export function DashboardContainer() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-white" style={{ fontFamily: 'var(--font-body)' }}>Loading...</div>
+        <Spinner size="lg" />
       </div>
     );
   }

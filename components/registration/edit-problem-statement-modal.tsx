@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ExternalLink, X, Check } from "lucide-react";
 import { Modal } from "./modal";
 import { Button } from "./button";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ProblemStatement {
   id: string;
@@ -143,6 +144,7 @@ export function EditProblemStatementModal({
             variant="primary" 
             disabled={!selectedId || isLoading}
           >
+            {isLoading && <Spinner size="sm" className="mr-2" />}
             {isLoading ? 'Saving...' : 'Confirm Change'}
           </Button>
         </div>

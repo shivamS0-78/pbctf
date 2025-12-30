@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Spinner } from "@/components/ui/spinner";
 
 interface Team {
   id: string;
@@ -304,7 +305,7 @@ export function SubmissionContainer() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-white" style={{ fontFamily: 'var(--font-body)' }}>Loading...</div>
+        <Spinner size="lg" />
       </div>
     );
   }

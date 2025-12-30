@@ -8,14 +8,17 @@ interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Spinner({ className, size = "md", ...props }: SpinnerProps) {
   const sizeClasses = {
     sm: "h-4 w-4",
-    md: "h-6 w-6",
-    lg: "h-8 w-8",
-    xl: "h-12 w-12",
+    md: "h-8 w-8",
+    lg: "h-12 w-12",
+    xl: "h-16 w-16",
   };
 
   return (
     <div className={cn("flex justify-center items-center", className)} {...props}>
-      <Loader2 className={cn("animate-spin text-primary", sizeClasses[size])} />
+      <div className={cn("relative", sizeClasses[size])}>
+        <div className="absolute inset-0 rounded-full border-2 border-[#ff4d00]/20"></div>
+        <div className="absolute inset-0 rounded-full border-t-2 border-[#ff4d00] animate-spin"></div>
+      </div>
     </div>
   );
 }

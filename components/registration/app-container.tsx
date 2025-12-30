@@ -17,6 +17,7 @@ import { ProblemStatementsContainer } from "./problem-statements-container";
 import { DiscoverContainer } from "./discover-container";
 import { EvaluatorContainer } from "./evaluator-container";
 import { AdminContainer } from "./admin-container";
+import { Spinner } from "@/components/ui/spinner";
 
 type View = "landing" | "login" | "register" | "problem-statements" | "dashboard" | "profile" | "team" | "submission" | "discover" | "evaluator" | "admin";
 
@@ -81,7 +82,7 @@ export function AppContainer() {
   if (isLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-[#171717]">
-        <div className="text-white" style={{ fontFamily: 'var(--font-body)' }}>Loading...</div>
+        <Spinner size="lg" />
       </div>
     );
   }

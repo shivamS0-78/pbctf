@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { User, Mail, MessageSquare, Building, FileText, Github, Linkedin, ExternalLink } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 interface UserDetails {
   uid: string;
@@ -67,7 +68,9 @@ export function UserProfileModal({ isOpen, onClose, userDetails, isLoading }: Us
           </button>
         </div>
       {isLoading ? (
-        <div className="text-white text-center py-[40px]">Loading user details...</div>
+        <div className="flex justify-center py-[40px]">
+          <Spinner size="lg" />
+        </div>
       ) : userDetails ? (
         <div className="flex flex-col gap-[24px]">
           <div className="flex items-start gap-[16px]">

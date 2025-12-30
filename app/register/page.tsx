@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { RegistrationContainer } from "@/components/registration/registration-container";
 import { DotPattern } from "@/components/registration/dot-pattern";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function RegisterPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -21,7 +22,9 @@ export default function RegisterPage() {
   if (isLoading || isAuthenticated) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-[#171717]">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#171717]">
+        <Spinner size="lg" />
+      </div>
       </div>
     );
   }

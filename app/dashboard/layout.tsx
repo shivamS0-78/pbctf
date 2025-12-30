@@ -7,6 +7,7 @@ import { NavBar } from "@/components/registration/navbar";
 import { DotPattern } from "@/components/registration/dot-pattern";
 import { StickyAlert } from "@/components/registration/sticky-alert";
 import { useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function DashboardLayout({
   children,
@@ -52,7 +53,7 @@ export default function DashboardLayout({
   if (isLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-[#171717]">
-        <div className="text-white" style={{ fontFamily: 'var(--font-body)' }}>Loading...</div>
+        <Spinner size="lg" />
       </div>
     );
   }

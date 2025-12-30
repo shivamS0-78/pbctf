@@ -11,6 +11,7 @@ import { FormFileUpload } from "./form-file-upload";
 import { FormSection } from "./form-section";
 import { Button } from "./button";
 import { StickyAlert } from "./sticky-alert";
+import { Spinner } from "@/components/ui/spinner";
 
 // PRODUCTION MODE - Debug features disabled
 const DEBUG_MODE = false;
@@ -574,6 +575,7 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
               />
             </div>
             <Button type="submit" variant="primary" disabled={isSubmitting}>
+              {isSubmitting && <Spinner size="sm" className="mr-2" />}
               {isSubmitting ? "Creating Account..." : "Create Account"}
             </Button>
           </form>

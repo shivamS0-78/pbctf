@@ -9,6 +9,7 @@ import { FormInput } from "./form-input";
 import { Button } from "./button";
 import { Card } from "./card";
 import { StickyAlert } from "./sticky-alert";
+import { Spinner } from "@/components/ui/spinner";
 
 interface AdminStats {
   totalUsers: number;
@@ -256,7 +257,9 @@ export function AdminContainer() {
 
       <FormSection title="Manage Teams">
         {isLoading ? (
-          <div className="text-white text-center py-[40px]">Loading teams...</div>
+          <div className="flex justify-center py-[40px]">
+            <Spinner size="lg" />
+          </div>
         ) : filteredTeams.length === 0 ? (
           <div className="text-white text-center py-[40px] opacity-70">
             No teams found.

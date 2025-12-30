@@ -7,6 +7,7 @@ import { Eye, UserPlus } from "lucide-react";
 import { FormSection } from "./form-section";
 import { Button } from "./button";
 import { Card } from "./card";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ProblemStatement {
   id: string;
@@ -109,7 +110,9 @@ export function ProblemStatementsContainer({ onNavigate }: ProblemStatementsCont
 
       <FormSection title="All Challenges">
         {isLoading ? (
-          <div className="text-white text-center py-[40px]">Loading challenges...</div>
+          <div className="flex justify-center py-[40px]">
+            <Spinner size="lg" />
+          </div>
         ) : (
           <div className="flex flex-col gap-[16px]">
             {Array.isArray(problemStatements) && problemStatements.length > 0 ? (

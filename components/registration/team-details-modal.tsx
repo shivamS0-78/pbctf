@@ -3,6 +3,7 @@
 import { User, Users } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "./button";
+import { Spinner } from "@/components/ui/spinner";
 
 export interface TeamDetails {
   teamCode: string;
@@ -96,7 +97,9 @@ export function TeamDetailsModal({
           </button>
         </div>
         {isLoading ? (
-          <div className="text-white text-center py-[40px]">Loading team details...</div>
+          <div className="flex justify-center py-[40px]">
+            <Spinner size="lg" />
+          </div>
         ) : error ? (
           <div className="text-white text-center py-[40px]">
             <p className="text-red-400 mb-[8px]">Error loading team details</p>
@@ -145,7 +148,7 @@ export function TeamDetailsModal({
                     }}
                     disabled={isSendingRequest}
                   >
-                    <Users className="w-4 h-4" />
+                    {isSendingRequest ? <Spinner size="sm" className="mr-2" /> : <Users className="w-4 h-4" />}
                     {isSendingRequest ? 'Sending...' : 'Send Request'}
                   </Button>
                 )}

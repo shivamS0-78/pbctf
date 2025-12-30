@@ -8,7 +8,8 @@ import { FormSection } from "@/components/registration/form-section";
 import { Button } from "@/components/registration/button";
 import { StickyAlert } from "@/components/registration/sticky-alert";
 import { DotPattern } from "@/components/registration/dot-pattern";
-import { CheckCircle2, XCircle, Loader2, ArrowRight } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function AuthActionPage() {
     const searchParams = useSearchParams();
@@ -127,7 +128,7 @@ export default function AuthActionPage() {
 
                     {status === "loading" && (
                         <div className="flex flex-col items-center gap-6 py-8">
-                            <Loader2 className="h-16 w-16 text-[#ff4d00] animate-spin" />
+                            <Spinner size="xl" />
                             <h1 className="font-['Instrument_Serif',serif] text-4xl">Verifying...</h1>
                         </div>
                     )}

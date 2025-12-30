@@ -7,6 +7,7 @@ import { NavBar } from "@/components/registration/navbar";
 import { DotPattern } from "@/components/registration/dot-pattern";
 import { FormSection } from "@/components/registration/form-section";
 import { StickyAlert } from "@/components/registration/sticky-alert";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ProblemStatement {
     id: string;
@@ -61,7 +62,7 @@ export default function ProblemStatementsPage() {
     if (loading || (authLoading && !loading)) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#171717] text-white">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ff4d00]"></div>
+                <Spinner size="lg" />
             </div>
         );
     }

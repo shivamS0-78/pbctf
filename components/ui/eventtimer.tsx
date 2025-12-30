@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Oxanium } from "next/font/google";
+import { Spinner } from "@/components/ui/spinner";
 
 const oxan = Oxanium ({
     weight: "400",
@@ -52,7 +53,7 @@ const EventTimer: React.FC<EventTimerProps> = ({ targetDate }) => {
   }, [targetDate]);
 
   if (!mounted || !timeLeft) {
-    return <div className="h-24 flex items-center justify-center">Loading...</div>;
+    return <div className="h-24 flex items-center justify-center"><Spinner size="lg" /></div>;
   }
 
   return (

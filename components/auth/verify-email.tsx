@@ -4,6 +4,7 @@ import { Button } from "@/components/registration/button";
 import { DotPattern } from "@/components/registration/dot-pattern";
 import { LogOut, RefreshCw, Mail } from "lucide-react";
 import { StickyAlert } from "@/components/registration/sticky-alert";
+import { Spinner } from "@/components/ui/spinner";
 
 interface VerifyEmailProps {
     email: string;
@@ -86,6 +87,7 @@ export function VerifyEmail({ email, onResend, onLogout }: VerifyEmailProps) {
                                         disabled={loading || sent}
                                         type="button"
                                     >
+                                        {loading && <Spinner size="sm" className="mr-2" />}
                                         {loading ? "Sending..." : sent ? "Email Sent" : "Resend Verification Email"}
                                     </Button>
 

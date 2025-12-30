@@ -8,6 +8,7 @@ import { FormInput } from "@/components/registration/form-input";
 import { Button } from "@/components/registration/button";
 import { StickyAlert } from "@/components/registration/sticky-alert";
 import { DotPattern } from "@/components/registration/dot-pattern";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function LoginPage() {
   const { login, isAuthenticated, isLoading } = useAuth();
@@ -46,7 +47,9 @@ export default function LoginPage() {
   if (isLoading || isAuthenticated) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-[#171717]">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#171717]">
+        <Spinner size="lg" />
+      </div>
       </div>
     );
   }
