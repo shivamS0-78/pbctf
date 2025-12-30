@@ -921,7 +921,7 @@ export function TeamContainer() {
                       Members
                     </span>
                     <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                      {(team.members || []).length} / 5
+                      {(team.members || []).length} / 4
                     </span>
                   </div>
                   <div className="flex justify-between">

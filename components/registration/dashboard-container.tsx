@@ -8,23 +8,20 @@ import {
   Home,
   UserCircle,
   Users,
-  FileText,
-  Upload,
-  Edit,
   CheckCircle,
   Clock,
-  Award,
   AlertCircle,
   X,
   Check,
-  Search,
-  Trash2,
-  LogOut,
 } from "lucide-react";
 import { FormSection } from "./form-section";
 import { Button } from "./button";
 import { StatusBadge } from "./status-badge";
 import { AlertBanner } from "./alert-banner";
+import { TeamOverviewCard } from "./team-overview-card";
+import { TeamMembersCard } from "./team-members-card";
+import { QuickActionsCard } from "./quick-actions-card";
+import { SubmissionStatusCard } from "./submission-status-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -582,8 +579,10 @@ export function DashboardContainer() {
   const teamStatus = getTeamStatus();
 
   return (
-    <div className="flex flex-col gap-[24px] max-w-[900px] w-full">
+    <div className="flex flex-col gap-[24px] max-w-[1100px] w-full">
       {alert && <AlertBanner type={alert.type} message={alert.message} />}
+      
+      {/* Header */}
       <div className="flex flex-col gap-[12px] items-center text-center">
         <h1 className="text-[48px] text-white leading-[52px] tracking-[-1px]" style={{ fontFamily: 'var(--font-heading)' }}>
           Welcome, {user.name}!
@@ -607,366 +606,166 @@ export function DashboardContainer() {
           <Users className="w-4 h-4" />
           Team
         </Button>
-        {(team && isTeamLead() && team.memberCount < 4) && (
-          <Button onClick={() => router.push("/dashboard/discover")} variant="secondary">
-            <Search className="w-4 h-4" />
-            Discover
-          </Button>
-        )}
-        {/* {team && isTeamLead() && getTeamStatus() === "active" && (
-          <Button onClick={() => router.push("/dashboard/submission")} variant="secondary">
-            <FileText className="w-4 h-4" />
-            Submit Team
-          </Button>
-        )} */}
       </div>
 
-      {/* Profile Completeness */}
-      <FormSection
-        title="Profile Status"
-        status={
-          <StatusBadge
-            status={profileCompleteness === 100 ? "Completed" : "Pending"}
-            icon={profileCompleteness === 100 ? CheckCircle : Clock}
-          />
-        }
-      >
-        <div className="flex flex-col gap-[12px]">
-          <div className="flex justify-between items-center">
-            <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-              Profile Completeness
-            </span>
-            <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-              {profileCompleteness}%
-            </span>
-          </div>
-          <div className="w-full bg-[rgba(138,138,138,0.2)] rounded-full h-[8px] overflow-hidden">
-            <div
-              className="bg-gradient-to-r from-[#ff4d00] to-[#ff8800] h-full transition-all duration-500"
-              style={{ width: `${profileCompleteness}%` }}
+      {/* Two-Column Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-[24px]">
+        {/* Left Column - 2/3 width */}
+        <div className="lg:col-span-2 flex flex-col gap-[24px]">
+          {/* Team Status for Users Without a Team */}
+          {teamStatus === "none" && (
+            <FormSection
+              title="Team Status"
+              status={<StatusBadge status="none" icon={AlertCircle} />}
+            >
+              <div className="flex flex-col gap-[16px]">
+                <AlertBanner 
+                  type="warning" 
+                  message="Important: Even if you want to participate alone, you still need to create a team to submit your project." 
+                />
+                <p className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                  You're not part of a team yet. Create or join a team to participate in the hackathon.
+                </p>
+                <div className="flex gap-[12px]">
+                  <Button onClick={() => router.push("/dashboard/team")} variant="primary">
+                    <Users className="w-4 h-4" />
+                    Create / Join Team
+                  </Button>
+                </div>
+              </div>
+            </FormSection>
+          )}
+
+          {/* Team Overview Card */}
+          {team && teamStatus !== "none" && (
+            <TeamOverviewCard
+              team={{
+                teamName: team.teamName,
+                teamCode: team.teamCode,
+                memberCount: team.memberCount,
+                maxMembers: 4,
+                problemStatement: team.appliedFor?.title,
+              }}
+              isLead={isTeamLead()}
+              status={teamStatus}
             />
-          </div>
-          {missingFields.length > 0 && (
-            <div className="flex flex-col gap-[8px]">
-              <p className="text-[12px] text-white opacity-70" style={{ fontFamily: 'var(--font-body)' }}>
-                Missing fields:
-              </p>
-              <div className="flex flex-wrap gap-[6px]">
-                {missingFields.map((field, index) => (
-                  <span
-                    key={index}
-                    className="text-[11px] text-white opacity-60 bg-[rgba(138,138,138,0.2)] px-[8px] py-[4px] rounded-[4px] border border-[rgba(255,255,255,0.1)]"
-                    style={{ fontFamily: 'var(--font-body)' }}
+          )}
+
+          {/* Team Members Card */}
+          {team && team.teamMembers && team.teamMembers.length > 0 && (
+            <TeamMembersCard
+              members={team.teamMembers}
+              isLead={isTeamLead()}
+              teamStatus={teamStatus}
+              currentUserId={user.uid}
+              onRemoveMember={handleRemoveMember}
+            />
+          )}
+
+          {/* Submission Status Card (for submitted/shortlisted teams) */}
+          {team && (teamStatus === "submitted" || teamStatus === "under-review" || teamStatus === "shortlisted" || teamStatus === "confirmed" || teamStatus === "declined") && (
+            <SubmissionStatusCard
+              status={teamStatus as "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined"}
+              rsvpStatus={rsvpStatus}
+              submittedAt={team.submittedAt}
+              onRSVP={handleRSVP}
+            />
+          )}
+        </div>
+
+        {/* Right Column - 1/3 width */}
+        <div className="flex flex-col gap-[24px]">
+          {/* Compact Profile Status */}
+          <FormSection
+            title="Profile Status"
+            status={
+              <StatusBadge
+                status={profileCompleteness === 100 ? "Completed" : "Pending"}
+                icon={profileCompleteness === 100 ? CheckCircle : Clock}
+              />
+            }
+          >
+            <div className="flex flex-col gap-[12px]">
+              <div className="flex justify-between items-center">
+                <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+                  Completeness
+                </span>
+                <span className="text-[14px] text-white font-semibold" style={{ fontFamily: 'var(--font-body)' }}>
+                  {profileCompleteness}%
+                </span>
+              </div>
+              <div className="w-full bg-[rgba(138,138,138,0.2)] rounded-full h-[8px] overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-[#ff4d00] to-[#ff8800] h-full transition-all duration-500"
+                  style={{ width: `${profileCompleteness}%` }}
+                />
+              </div>
+              {profileCompleteness < 100 && (
+                <p 
+                  onClick={() => router.push("/dashboard/profile")} 
+                  className="text-[12px] text-[#ff8800] opacity-80 cursor-pointer hover:opacity-100 transition-opacity"
+                  style={{ fontFamily: 'var(--font-body)' }}
+                >
+                  {missingFields.length} fields missing → Complete now
+                </p>
+              )}
+            </div>
+          </FormSection>
+
+          {/* Quick Actions Card */}
+          {team && teamStatus !== "none" && (
+            <QuickActionsCard
+              isLead={isTeamLead()}
+              teamStatus={teamStatus}
+              isEvaluated={team.isEvaluated}
+              isShortlisted={team.isShortlisted}
+              memberCount={team.memberCount}
+              maxMembers={4}
+              onNavigate={(path) => router.push(path)}
+              onDeleteTeam={() => setDeleteTeamDialogOpen(true)}
+              onLeaveTeam={() => setLeaveTeamDialogOpen(true)}
+              onWithdrawSubmission={handleWithdrawSubmission}
+            />
+          )}
+
+          {/* Team Invitations */}
+          {invites.length > 0 && !team && (
+            <FormSection title="Team Invitations">
+              <div className="flex flex-col gap-[12px]">
+                {invites.map((invite) => (
+                  <div
+                    key={invite.requestId}
+                    className="flex flex-col gap-[8px] p-[12px] bg-[rgba(138,138,138,0.1)] rounded-[12px] border border-[rgba(255,255,255,0.1)]"
                   >
-                    {field}
-                  </span>
+                    <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+                      <span className="font-semibold">{invite.teamName || invite.teamCode}</span>
+                    </span>
+                    <span className="text-[12px] text-white opacity-50" style={{ fontFamily: 'var(--font-body)' }}>
+                      Code: <span className="font-mono">{invite.teamCode}</span>
+                    </span>
+                    <div className="flex gap-[8px]">
+                      <Button
+                        onClick={() => handleRespondToInvite(invite.requestId, 'accept')}
+                        variant="primary"
+                      >
+                        <Check className="w-4 h-4" /> Accept
+                      </Button>
+                      <Button
+                        onClick={() => handleRespondToInvite(invite.requestId, 'decline')}
+                        variant="danger"
+                      >
+                        <X className="w-4 h-4" /> Decline
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
-          )}
-          {profileCompleteness < 100 && (
-            <Button onClick={() => router.push("/dashboard/profile")} variant="secondary">
-              Complete Profile
-            </Button>
+            </FormSection>
           )}
         </div>
-      </FormSection>
+      </div>
 
-      {/* Team Invitations */}
-      {invites.length > 0 && !team && (
-        <FormSection
-          title="Team Invitations"
-        >
-          <div className="flex flex-col gap-[12px]">
-            {invites.map((invite) => (
-              <div
-                key={invite.requestId}
-                className="flex items-center justify-between p-[16px] bg-[rgba(138,138,138,0.1)] rounded-[12px] border border-[rgba(255,255,255,0.1)]"
-              >
-                <div className="flex flex-col gap-[4px]">
-                  <span className="text-[14px] text-white opacity-90" style={{ fontFamily: 'var(--font-body)' }}>
-                    You have been invited to join team <span className="font-bold">{invite.teamName || invite.teamCode}</span>
-                  </span>
-                  <span className="text-[12px] text-white opacity-50" style={{ fontFamily: 'var(--font-body)' }}>
-                    Code: <span className="font-mono">{invite.teamCode}</span> • Invited {new Date(invite.requestedAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="flex gap-[8px]">
-                  <Button
-                    onClick={() => handleRespondToInvite(invite.requestId, 'accept')}
-                    variant="primary"
-                  >
-                    <Check className="w-4 h-4" /> Accept
-                  </Button>
-                  <Button
-                    onClick={() => handleRespondToInvite(invite.requestId, 'decline')}
-                    variant="danger"
-                  >
-                    <X className="w-4 h-4" /> Decline
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </FormSection>
-      )}
-
-      {/* Team Status */}
-      <FormSection
-        title="Team Status"
-        status={
-          <StatusBadge
-            status={teamStatus}
-            icon={
-              teamStatus === "none"
-                ? AlertCircle
-                : teamStatus === "shortlisted" || teamStatus === "confirmed"
-                  ? Award
-                  : Users
-            }
-          />
-        }
-      >
-        <div className="flex flex-col gap-[16px]">
-          {teamStatus === "none" ? (
-            <>
-              <AlertBanner 
-                type="warning" 
-                message="Important: Even if you want to participate alone, you still need to create a team to submit your project." 
-              />
-              <p className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                You're not part of a team yet. Create or join a team to participate in the hackathon.
-              </p>
-              <div className="flex gap-[12px]">
-                <Button onClick={() => router.push("/dashboard/team")} variant="primary">
-                  <Users className="w-4 h-4" />
-                  Create / Join Team
-                </Button>
-                <Button onClick={() => router.push("/dashboard/discover")} variant="secondary">
-                  <Search className="w-4 h-4" />
-                  Discover Teams
-                </Button>
-              </div>
-            </>
-          ) : team ? (
-            <>
-              <div className="flex flex-col gap-[8px]">
-                <div className="flex justify-between">
-                  <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                    Team Name
-                  </span>
-                  <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                    {team.teamName}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                    Team Code
-                  </span>
-                  <span className="text-[14px] text-white font-mono" style={{ fontFamily: 'var(--font-body)' }}>
-                    {team.teamCode}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                    Members
-                  </span>
-                  <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                    {team.memberCount} / 4
-                  </span>
-                </div>
-                {team.appliedFor && (
-                  <div className="flex justify-between">
-                    <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                      Problem Statement
-                    </span>
-                    <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                      {team.appliedFor.title}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                    Your Role
-                  </span>
-                  <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                    {isTeamLead() ? "Team Lead" : "Member"}
-                  </span>
-                </div>
-                {teamStatus !== "active" && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                      Team Status
-                    </span>
-                    <StatusBadge
-                      status={team.teamStatus}
-                      icon={
-                        teamStatus === "shortlisted" || teamStatus === "confirmed"
-                          ? Award
-                          : Users
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-
-              {teamStatus === "active" && isTeamLead() && (
-                <Button onClick={() => router.push("/dashboard/submission")} variant="primary">
-                  <FileText className="w-4 h-4" />
-                  Submit Team
-                </Button>
-              )}
-
-              {teamStatus === "submitted" && (
-                <AlertBanner type="yellow" message="Project submitted! Waiting for evaluation." />
-              )}
-
-              {teamStatus === "under-review" && (
-                <AlertBanner type="warning" message="Your project is under review by evaluators." />
-              )}
-
-              {teamStatus === "shortlisted" && rsvpStatus === "pending" && (
-                <div className="flex flex-col gap-[12px]">
-                  <AlertBanner type="success" message="🎉 Congratulations! Your team has been shortlisted!" />
-                  <p className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                    Please confirm your participation:
-                  </p>
-                  <div className="flex gap-[12px]">
-                    <Button onClick={() => handleRSVP("confirmed")} variant="primary">
-                      <Check className="w-4 h-4" />
-                      Confirm Participation
-                    </Button>
-                    <Button onClick={() => handleRSVP("declined")} variant="danger">
-                      <X className="w-4 h-4" />
-                      Decline
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {teamStatus === "confirmed" && (
-                <AlertBanner type="success" message="✅ RSVP Confirmed! See you at the event!" />
-              )}
-
-              {/* Team Members List - Admin can edit */}
-              {team.teamMembers && team.teamMembers.length > 0 && (
-                <div className="flex flex-col gap-[12px]">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                      Team Members
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-[8px]">
-                    {team.teamMembers.map((member: any) => (
-                      <div
-                        key={member.uid}
-                        className="flex items-center justify-between p-[12px] bg-[rgba(138,138,138,0.1)] rounded-[8px] border border-[rgba(255,255,255,0.1)]"
-                      >
-                        <div className="flex flex-col gap-[4px]">
-                          <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                            {member.name}
-                            {member.role === 'Team Lead' && (
-                              <span className="ml-[8px] text-[12px] text-[#ff4d00] opacity-80">
-                                (Lead)
-                              </span>
-                            )}
-                          </span>
-                          {member.email && (
-                            <span className="text-[12px] text-white opacity-60" style={{ fontFamily: 'var(--font-body)' }}>
-                              {member.email}
-                            </span>
-                          )}
-                        </div>
-                        {(isAdmin() || isTeamLead()) && member.uid !== user?.uid && teamStatus !== "submitted" && teamStatus !== "shortlisted" && teamStatus !== "confirmed" && (
-                          <Button
-                            onClick={() => handleRemoveMember(member.uid, member.name)}
-                            variant="danger"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Remove
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Leave Team Button for Members */}
-              {!isTeamLead() && teamStatus !== "submitted" && teamStatus !== "shortlisted" && teamStatus !== "confirmed" && (
-                <Button onClick={() => setLeaveTeamDialogOpen(true)} variant="danger">
-                  <LogOut className="w-4 h-4" />
-                  Leave Team
-                </Button>
-              )}
-
-              {/* Edit Team Details and Delete Team Buttons - Only for Team Lead */}
-              {isTeamLead() && (
-                <div className="flex gap-[12px] flex-wrap">
-                  <Button onClick={() => router.push("/dashboard/team")} variant="secondary">
-                    <Edit className="w-4 h-4" />
-                    Edit Team Details
-                  </Button>
-                  {teamStatus === "submitted" && !team.isEvaluated && !team.isShortlisted && (
-                    <Button onClick={() => router.push("/dashboard/submission")} variant="secondary">
-                      <FileText className="w-4 h-4" />
-                      Edit Submission
-                    </Button>
-                  )}
-                  {teamStatus !== "submitted" && teamStatus !== "shortlisted" && teamStatus !== "confirmed" && (
-                    <Button onClick={handleDeleteTeam} variant="danger">
-                      <Trash2 className="w-4 h-4" />
-                      Delete Team
-                    </Button>
-                  )}
-                </div>
-              )}
-            </>
-          ) : null}
-        </div>
-      </FormSection>
-
-      {/* Quick Actions */}
-      {/* <FormSection title="Quick Actions">
-        <div className="grid grid-cols-2 gap-[12px]">
-          <Button onClick={() => router.push("/dashboard/profile")} variant="secondary">
-            <Edit className="w-4 h-4" />
-            Edit Profile
-          </Button>
-          <Button onClick={() => router.push("/dashboard/discover")} variant="secondary">
-            <Search className="w-4 h-4" />
-            Discover
-          </Button>
-          {!team && (
-            <Button onClick={() => router.push("/dashboard/team")} variant="secondary">
-              <Users className="w-4 h-4" />
-              Team Management
-            </Button>
-          )}
-          {team && isTeamLead() && (
-            <>
-              {team.teamStatus === "submitted" && !team.isEvaluated && !team.isShortlisted && (
-                <>
-                  <Button onClick={() => router.push("/dashboard/submission")} variant="secondary">
-                    <Edit className="w-4 h-4" />
-                    Edit Submission
-                  </Button>
-                  <Button onClick={handleWithdrawSubmission} variant="danger">
-                    <X className="w-4 h-4" />
-                    Withdraw Submission
-                  </Button>
-                </>
-              )}
-              {team.teamStatus !== "submitted" && (
-                <Button onClick={() => router.push("/dashboard/submission")} variant="secondary">
-                  <Upload className="w-4 h-4" />
-                  Submit Project
-                </Button>
-              )}
-            </>
-          )}
-        </div>
-      </FormSection> */}
+      {/* Commented out Quick Actions - now using QuickActionsCard */}
 
       {/* Leave Team Confirmation Dialog */}
       <AlertDialog open={leaveTeamDialogOpen} onOpenChange={setLeaveTeamDialogOpen}>
