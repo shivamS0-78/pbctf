@@ -180,7 +180,9 @@ export function TeamDetailsModal({
               <div>
                 <h4 className="font-['Inter',sans-serif] text-[16px] text-white mb-[12px]">Team Members</h4>
                 <div className="flex flex-col gap-[8px]">
-                  {teamDetails.teamMembers.map((member) => (
+                  {teamDetails.teamMembers
+                    .filter(member => member.uid !== (teamDetails.teamLead.uid || teamDetails.teamLead.id))
+                    .map((member) => (
                     <div
                       key={member.uid}
                       className="p-[12px] bg-[rgba(138,138,138,0.1)] rounded-[8px] border border-[rgba(255,255,255,0.1)] cursor-pointer hover:bg-[rgba(138,138,138,0.2)] transition-colors"

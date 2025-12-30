@@ -526,14 +526,14 @@ export function DiscoverContainer() {
                     active={activeTab === "teams"}
                     onClick={() => setActiveTab("teams")}
                     icon={Users}
-                    label="Teams Looking for Members"
+                    label="Teams"
                   />
                 )}
                 <SectionTab
                   active={activeTab === "participants"}
                   onClick={() => setActiveTab("participants")}
                   icon={Search}
-                  label="Participants Looking for Teams"
+                  label="Participants"
                 />
               </div>
 
