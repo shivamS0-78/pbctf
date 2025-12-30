@@ -13,6 +13,7 @@ import { TeamDetailsModal, TeamDetails } from "./team-details-modal";
 import { UserProfileModal, UserDetails } from "./user-profile-modal";
 import { useToast } from "@/hooks/use-toast";
 import { Spinner } from "@/components/ui/spinner";
+import { AlertBanner } from "./alert-banner";
 
 
 interface TeamLookingForMembers {
@@ -511,6 +512,13 @@ export function DiscoverContainer() {
         </div>
       ) : (
         <>
+          {!user?.teamCode && (
+            <AlertBanner
+              type="info"
+              message="Want to invite members? You need to create a team first to send invitations."
+              className="mb-6"
+            />
+          )}
           <FormSection title={isTeamLead ? "Find Team Members" : "What are you looking for?"}>
             <div className="flex flex-col gap-[24px]">
               {/* Tab Navigation */}
