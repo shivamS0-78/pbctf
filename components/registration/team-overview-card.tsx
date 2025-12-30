@@ -50,7 +50,7 @@ export function TeamOverviewCard({ team, isLead, status }: TeamOverviewCardProps
           <span className="text-[12px] text-white opacity-60 uppercase tracking-wider" style={{ fontFamily: 'var(--font-body)' }}>
             Team Name
           </span>
-          <span className="text-[24px] text-white font-semibold" style={{ fontFamily: 'var(--font-heading)' }}>
+          <span className="text-[24px] text-white font-semibold" style={{ fontFamily: 'var(--font-body)' }}>
             {team.teamName}
           </span>
         </div>
