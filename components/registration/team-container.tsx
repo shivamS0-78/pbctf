@@ -573,8 +573,7 @@ export function TeamContainer() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
 
-  const handleInviteMember = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendInvite = async (email: string) => {
     if (!team) return;
     setIsInviting(true);
     setAlert(null);
@@ -592,7 +591,7 @@ export function TeamContainer() {
         body: JSON.stringify({
           teamCode: team.code,
           type: 'invite',
-          email: inviteEmail
+          email: email
         })
       });
 
@@ -619,6 +618,11 @@ export function TeamContainer() {
     } finally {
       setIsInviting(false);
     }
+  };
+
+  const handleInviteMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await sendInvite(inviteEmail);
   };
 
   const handleToggleLookingForMembers = async (value: boolean) => {
@@ -1383,7 +1387,12 @@ export function TeamContainer() {
         onClose={handleCloseUserModal}
         userDetails={userDetails}
         isLoading={isLoadingUser}
-        onInvite={handleInviteUser}
+        onInvite={() => {
+          if (userDetails?.email) {
+            setInviteEmail(userDetails.email);
+            sendInvite(userDetails.email);
+          }
+        }}
         isInviting={userDetails ? isInviting && inviteEmail === userDetails.email : false}
         isInvited={false} // Team container doesn't track sent invites per user easily
         canInvite={false} // Invite logic is different in team container (by email)
