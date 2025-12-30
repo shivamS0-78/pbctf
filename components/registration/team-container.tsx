@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 
 interface TeamMember {
@@ -957,30 +958,13 @@ export function TeamContainer() {
                   )}
                 </div>
                 <div className="flex flex-col gap-[8px] p-[16px] rounded-[12px] border border-[rgba(255,255,255,0.1)] bg-[rgba(138,138,138,0.05)]">
-                  <div 
-                    onClick={() => setTeamFormData({ ...teamFormData, lookingForMembers: !teamFormData.lookingForMembers })}
-                    className="flex items-center gap-[12px] cursor-pointer"
-                  >
-                    <div className="relative">
-                      <input
-                        type="checkbox"
+                    <div className="flex items-center gap-[12px]">
+                      <Switch
                         id="lookingForMembers"
                         checked={teamFormData.lookingForMembers}
-                        onChange={(e) => setTeamFormData({ ...teamFormData, lookingForMembers: e.target.checked })}
-                        className="sr-only"
+                        onCheckedChange={(checked) => setTeamFormData({ ...teamFormData, lookingForMembers: checked })}
+                        className="data-[state=checked]:bg-green-500 border-green-500"
                       />
-                      <div className={`
-                        w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-300
-                        ${teamFormData.lookingForMembers 
-                          ? 'border-[#ff4d00] bg-[rgba(255,77,0,0.15)]' 
-                          : 'border-[rgba(255,255,255,0.38)] bg-[rgba(138,138,138,0.2)] hover:border-[rgba(255,255,255,0.5)]'
-                        }
-                      `}>
-                        {teamFormData.lookingForMembers && (
-                          <Check className="w-3 h-3 text-[#ff4d00] animate-selectSlide" />
-                        )}
-                      </div>
-                    </div>
                     <label htmlFor="lookingForMembers" className="text-[14px] font-semibold text-white cursor-pointer" style={{ fontFamily: 'var(--font-body)' }}>
                       Looking for team members
                     </label>
@@ -1152,40 +1136,18 @@ export function TeamContainer() {
               <FormSection title="Team Management (Team Lead)">
                 <div className="flex flex-col gap-[12px]">
                   <div className="flex flex-col gap-[8px] p-[16px] rounded-[12px] border border-[rgba(255,255,255,0.1)] bg-[rgba(138,138,138,0.05)]">
-                    <div 
-                      onClick={() => {
-                        if (team.status === "active") {
-                          handleToggleLookingForMembers(!team.lookingForMembers);
-                        }
-                      }}
-                      className={`flex items-center gap-[12px] ${team.status === "active" ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
-                    >
-                      <div className="relative">
-                        <input
-                          type="checkbox"
-                          id="teamLookingForMembers"
-                          checked={team.lookingForMembers}
-                          onChange={(e) => {
-                            if (team.status === "active") {
-                              handleToggleLookingForMembers(e.target.checked);
-                            }
-                          }}
-                          disabled={team.status !== "active"}
-                          className="sr-only"
-                        />
-                        <div className={`
-                          w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-300
-                          ${team.lookingForMembers 
-                            ? 'border-[#ff4d00] bg-[rgba(255,77,0,0.15)]' 
-                            : 'border-[rgba(255,255,255,0.38)] bg-[rgba(138,138,138,0.2)]'
+                    <div className="flex items-center gap-[12px]">
+                      <Switch
+                        id="teamLookingForMembers"
+                        checked={team.lookingForMembers}
+                        onCheckedChange={(checked) => {
+                          if (team.status === "active") {
+                            handleToggleLookingForMembers(checked);
                           }
-                          ${team.status === "active" ? 'hover:border-[rgba(255,255,255,0.5)]' : ''}
-                        `}>
-                          {team.lookingForMembers && (
-                            <Check className="w-3 h-3 text-[#ff4d00] animate-selectSlide" />
-                          )}
-                        </div>
-                      </div>
+                        }}
+                        disabled={team.status !== "active"}
+                        className="data-[state=checked]:bg-green-500 border-green-500"
+                      />
                       <label htmlFor="teamLookingForMembers" className={`text-[14px] font-semibold text-white ${team.status === "active" ? 'cursor-pointer' : 'cursor-not-allowed'}`} style={{ fontFamily: 'var(--font-body)' }}>
                         Looking for team members
                       </label>
