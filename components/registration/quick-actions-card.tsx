@@ -15,6 +15,7 @@ interface QuickActionsCardProps {
   onDeleteTeam: () => void;
   onLeaveTeam: () => void;
   onWithdrawSubmission?: () => void;
+  isDeadlineExpired?: boolean;
 }
 
 export function QuickActionsCard({
@@ -28,6 +29,7 @@ export function QuickActionsCard({
   onDeleteTeam,
   onLeaveTeam,
   onWithdrawSubmission,
+  isDeadlineExpired = false,
 }: QuickActionsCardProps) {
   const canSubmit = isLead && teamStatus === "active";
   const canEditSubmission = isLead && teamStatus === "submitted" && !isEvaluated && !isShortlisted;
@@ -48,9 +50,14 @@ export function QuickActionsCard({
       <div className="flex flex-col gap-[12px]">
         {/* Primary Actions */}
         {canSubmit && (
-          <Button onClick={() => onNavigate("/dashboard/submission")} variant="primary">
+          <Button 
+            onClick={() => onNavigate("/dashboard/submission")} 
+            variant="primary"
+            disabled={isDeadlineExpired}
+            className={isDeadlineExpired ? "opacity-50 cursor-not-allowed" : ""}
+          >
             <Upload className="w-4 h-4" />
-            Submit Team
+            {isDeadlineExpired ? "Submission Closed" : "Submit Team"}
           </Button>
         )}
 

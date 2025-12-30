@@ -99,6 +99,15 @@ export async function POST(request: NextRequest) {
       return createAuthErrorResponse(emailError);
     }
 
+    // Check if submission deadline has passed
+    const SUBMISSION_DEADLINE = new Date('2026-01-20T23:59:59+05:30');
+    if (new Date() > SUBMISSION_DEADLINE) {
+      return NextResponse.json(
+        { message: "Submission deadline has passed. Submissions are no longer accepted." },
+        { status: 403 }
+      );
+    }
+
     // Parse multipart form data
     const { fields, files } = await parseForm(request);
     const { teamCode, videoURL, anyOtherLink } = fields;

@@ -23,6 +23,7 @@ import { TeamOverviewCard } from "./team-overview-card";
 import { TeamMembersCard } from "./team-members-card";
 import { QuickActionsCard } from "./quick-actions-card";
 import { SubmissionStatusCard } from "./submission-status-card";
+import { DeadlineTimer } from "./deadline-timer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -93,6 +94,7 @@ export function DashboardContainer() {
   const [deleteTeamDialogOpen, setDeleteTeamDialogOpen] = useState(false);
   const [leaveTeamDialogOpen, setLeaveTeamDialogOpen] = useState(false);
   const [invites, setInvites] = useState<any[]>([]);
+  const [isDeadlineExpired, setIsDeadlineExpired] = useState(false);
 
   const handleRespondToInvite = async (requestId: string, action: 'accept' | 'decline') => {
     try {
@@ -157,6 +159,17 @@ export function DashboardContainer() {
             'Content-Type': 'application/json'
           }
         });
+
+        // Fetch deadline status
+        try {
+          const deadlineResponse = await fetch('/api/config/deadline');
+          const deadlineData = await deadlineResponse.json();
+          if (deadlineData.success && deadlineData.data) {
+            setIsDeadlineExpired(deadlineData.data.isExpired);
+          }
+        } catch (error) {
+          console.error("Error fetching deadline:", error);
+        }
 
         if (userResponse.ok) {
           const userData = await userResponse.json();
@@ -609,6 +622,9 @@ export function DashboardContainer() {
         </Button>
       </div>
 
+      {/* Submission Deadline Timer */}
+      <DeadlineTimer teamStatus={team?.teamStatus} hasSubmitted={teamStatus === 'submitted' || teamStatus === 'shortlisted' || teamStatus === 'confirmed'} />
+
       {/* Two-Column Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-[24px]">
         {/* Left Column - 2/3 width */}
@@ -730,6 +746,7 @@ export function DashboardContainer() {
               onDeleteTeam={() => setDeleteTeamDialogOpen(true)}
               onLeaveTeam={() => setLeaveTeamDialogOpen(true)}
               onWithdrawSubmission={handleWithdrawSubmission}
+              isDeadlineExpired={isDeadlineExpired}
             />
           )}
 
