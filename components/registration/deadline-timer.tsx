@@ -22,6 +22,7 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
   const [isExpired, setIsExpired] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [serverOffset, setServerOffset] = useState(0);
+  const [error, setError] = useState(false);
 
   // Fetch deadline and server time from API
   useEffect(() => {
@@ -40,6 +41,7 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
         }
       } catch (error) {
         console.error("Failed to fetch deadline:", error);
+        setError(true);
       } finally {
         setIsLoading(false);
       }
@@ -84,6 +86,16 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
     return (
       <div className="w-full p-[16px] rounded-[16px] bg-[rgba(138,138,138,0.1)] border border-[rgba(255,255,255,0.1)] animate-pulse">
         <div className="h-[60px] bg-[rgba(255,255,255,0.05)] rounded-[8px]" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full p-[16px] rounded-[16px] bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.3)]">
+        <p className="text-[14px] text-red-300 text-center" style={{ fontFamily: 'var(--font-body)' }}>
+          Failed to load deadline timer
+        </p>
       </div>
     );
   }

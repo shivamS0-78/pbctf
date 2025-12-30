@@ -8,6 +8,7 @@ import { FormSection } from "./form-section";
 import { Button } from "./button";
 import { Card } from "./card";
 import { Spinner } from "@/components/ui/spinner";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProblemStatement {
   id: string;
@@ -26,6 +27,7 @@ interface ProblemStatementsContainerProps {
 
 export function ProblemStatementsContainer({ onNavigate }: ProblemStatementsContainerProps) {
   const { isAuthenticated, getToken } = useAuth();
+  const { toast } = useToast();
   const [problemStatements, setProblemStatements] = useState<ProblemStatement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -79,6 +81,11 @@ export function ProblemStatementsContainer({ onNavigate }: ProblemStatementsCont
         }
       } catch (error) {
         console.error('Failed to fetch problem statements:', error);
+        toast({
+          variant: "destructive",
+          title: "Warning",
+          description: "Failed to load problem statements. Showing offline data."
+        });
         // Fallback to mock data
         setProblemStatements([
           { id: '1', title: 'AI-Powered Healthcare Assistant', description: 'Build an AI solution for healthcare diagnostics', category: 'AI/ML', difficulty: 'Advanced', active: true },

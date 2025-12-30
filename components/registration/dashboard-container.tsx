@@ -96,6 +96,9 @@ export function DashboardContainer() {
   const [leaveTeamDialogOpen, setLeaveTeamDialogOpen] = useState(false);
   const [invites, setInvites] = useState<any[]>([]);
   const [isDeadlineExpired, setIsDeadlineExpired] = useState(false);
+  const [withdrawSubmissionDialogOpen, setWithdrawSubmissionDialogOpen] = useState(false);
+  const [removeMemberDialogOpen, setRemoveMemberDialogOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
 
   const handleRespondToInvite = async (requestId: string, action: 'accept' | 'decline') => {
     try {
@@ -170,6 +173,11 @@ export function DashboardContainer() {
           }
         } catch (error) {
           console.error("Error fetching deadline:", error);
+          toast({
+            variant: "destructive",
+            title: "Warning",
+            description: "Failed to load deadline information."
+          });
         }
 
         if (userResponse.ok) {
@@ -266,6 +274,11 @@ export function DashboardContainer() {
                 }
               } catch (error) {
                 console.error("Error fetching invites:", error);
+                toast({
+                  variant: "destructive",
+                  title: "Error",
+                  description: "Failed to load team invitations."
+                });
               }
             }
           } else {
@@ -278,6 +291,11 @@ export function DashboardContainer() {
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load dashboard data. Please refresh the page."
+        });
         // Calculate from context user as fallback
         calculateProfileFromContext();
       } finally {
@@ -457,14 +475,12 @@ export function DashboardContainer() {
     }
   };
 
-  const handleWithdrawSubmission = async () => {
+  const handleWithdrawSubmission = () => {
+    setWithdrawSubmissionDialogOpen(true);
+  };
+
+  const executeWithdrawSubmission = async () => {
     if (!team || !user) return;
-
-    const confirmed = window.confirm(
-      `Are you sure you want to withdraw the submission for "${team.teamName}"? All submission details (video, PDF, links) will be permanently deleted.`
-    );
-
-    if (!confirmed) return;
 
     try {
       const token = await getToken();
@@ -523,12 +539,13 @@ export function DashboardContainer() {
     }
   };
 
-  const handleRemoveMember = async (memberId: string, memberName: string) => {
-    if (!team || !user) return;
-    
-    if (!confirm(`Are you sure you want to remove ${memberName} from the team?`)) {
-      return;
-    }
+  const handleRemoveMember = (memberId: string, memberName: string) => {
+    setMemberToRemove({ id: memberId, name: memberName });
+    setRemoveMemberDialogOpen(true);
+  };
+
+  const executeRemoveMember = async () => {
+    if (!team || !user || !memberToRemove) return;
 
     try {
       const token = await getToken();
@@ -542,7 +559,7 @@ export function DashboardContainer() {
         },
         body: JSON.stringify({
           teamCode: team.teamCode,
-          memberId,
+          memberId: memberToRemove.id,
           setTheirLookingStatus: true
         })
       });
@@ -805,6 +822,58 @@ export function DashboardContainer() {
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Delete Team
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Withdraw Submission Confirmation Dialog */}
+      <AlertDialog open={withdrawSubmissionDialogOpen} onOpenChange={setWithdrawSubmissionDialogOpen}>
+        <AlertDialogContent className="bg-[rgba(138,138,138,0.15)] backdrop-blur-[2.5px] border-[rgba(255,255,255,0.2)]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+              Withdraw Submission
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/80" style={{ fontFamily: 'var(--font-body)' }}>
+              Are you sure you want to withdraw the submission for "{team?.teamName}"? All submission details (video, PDF, links) will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-white" style={{ fontFamily: 'var(--font-body)' }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeWithdrawSubmission}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              Withdraw Submission
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={removeMemberDialogOpen} onOpenChange={setRemoveMemberDialogOpen}>
+        <AlertDialogContent className="bg-[rgba(138,138,138,0.15)] backdrop-blur-[2.5px] border-[rgba(255,255,255,0.2)]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+              Remove Member
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/80" style={{ fontFamily: 'var(--font-body)' }}>
+              Are you sure you want to remove {memberToRemove?.name} from the team?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-white" style={{ fontFamily: 'var(--font-body)' }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeRemoveMember}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              Remove Member
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

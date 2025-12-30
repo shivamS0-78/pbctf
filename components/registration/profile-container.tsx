@@ -95,6 +95,11 @@ export function ProfileContainer() {
         }
       } catch (error) {
         console.error("Error loading profile:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load profile data. Please refresh the page."
+        });
       }
     };
 

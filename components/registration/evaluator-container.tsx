@@ -68,6 +68,10 @@ export function EvaluatorContainer() {
         }
       } catch (error) {
         console.error('Failed to fetch assigned teams:', error);
+        setAlert({
+          type: "error",
+          message: "Failed to load assigned teams. Please refresh the page."
+        });
       } finally {
         setIsLoading(false);
       }

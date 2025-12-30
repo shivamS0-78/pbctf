@@ -91,6 +91,10 @@ export function AdminContainer() {
         }
       } catch (error) {
         console.error('Failed to fetch admin data:', error);
+        setAlert({
+          type: "error",
+          message: "Failed to load admin data. Please refresh the page."
+        });
       } finally {
         setIsLoading(false);
       }

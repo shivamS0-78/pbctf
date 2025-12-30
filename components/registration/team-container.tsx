@@ -83,6 +83,7 @@ export function TeamContainer() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
+  const [userError, setUserError] = useState<string | null>(null);
   
   // Problem statement modal state
   const [selectedProblemStatement, setSelectedProblemStatement] = useState<ProblemStatement | null>(null);
@@ -129,6 +130,11 @@ export function TeamContainer() {
         }
       } catch (error) {
         console.error("Error fetching problem statements:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load problem statements. Please refresh the page."
+        });
       }
     };
     fetchProblemStatements();
@@ -202,6 +208,11 @@ export function TeamContainer() {
         }
       } catch (error) {
         console.error("Error fetching team data:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load team data. Please try again."
+        });
       } finally {
         setIsLoading(false);
       }
@@ -233,6 +244,11 @@ export function TeamContainer() {
       }
     } catch (error) {
       console.error('Error fetching join requests:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load join requests."
+      });
       setJoinRequests([]);
     } finally {
       setIsLoadingRequests(false);
@@ -434,10 +450,15 @@ export function TeamContainer() {
   const handleUserClick = async (userId: string) => {
     setSelectedUserId(userId);
     setIsLoadingUser(true);
+    setUserError(null);
     
     try {
       const token = await getToken();
-      if (!token) return;
+      if (!token) {
+        setUserError("Authentication required");
+        setIsLoadingUser(false);
+        return;
+      }
 
       const response = await fetch(`/api/users/${userId}`, {
         headers: {
@@ -450,10 +471,16 @@ export function TeamContainer() {
         const data = await response.json();
         if (data.status === 'success' && data.user) {
           setUserDetails(data.user);
+        } else {
+          setUserError(data.message || "Failed to load user details");
         }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setUserError(errorData.message || "Failed to fetch user details");
       }
     } catch (error) {
       console.error('Error fetching user details:', error);
+      setUserError("Network error. Please try again.");
     } finally {
       setIsLoadingUser(false);
     }
@@ -462,6 +489,7 @@ export function TeamContainer() {
   const handleCloseUserModal = () => {
     setSelectedUserId(null);
     setUserDetails(null);
+    setUserError(null);
   };
 
   const handleRespondToRequest = async (requestId: string, action: 'accept' | 'decline') => {
@@ -1355,6 +1383,11 @@ export function TeamContainer() {
         onClose={handleCloseUserModal}
         userDetails={userDetails}
         isLoading={isLoadingUser}
+        onInvite={handleInviteUser}
+        isInviting={userDetails ? isInviting && inviteEmail === userDetails.email : false}
+        isInvited={false} // Team container doesn't track sent invites per user easily
+        canInvite={false} // Invite logic is different in team container (by email)
+        error={userError}
       />
 
       {/* Problem Statement Details Modal */}

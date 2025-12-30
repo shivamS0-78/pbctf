@@ -78,6 +78,7 @@ export function DiscoverContainer() {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
   const [teamError, setTeamError] = useState<string | null>(null);
+  const [userError, setUserError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -452,10 +453,15 @@ export function DiscoverContainer() {
   const handleUserClick = async (userId: string) => {
     setSelectedUserId(userId);
     setIsLoadingUser(true);
+    setUserError(null);
     
     try {
       const token = await getToken();
-      if (!token) return;
+      if (!token) {
+        setUserError("Authentication required");
+        setIsLoadingUser(false);
+        return;
+      }
 
       const response = await fetch(`/api/users/${userId}`, {
         headers: {
@@ -468,10 +474,16 @@ export function DiscoverContainer() {
         const data = await response.json();
         if (data.status === 'success' && data.user) {
           setUserDetails(data.user);
+        } else {
+          setUserError(data.message || "Failed to load user details");
         }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setUserError(errorData.message || "Failed to fetch user details");
       }
     } catch (error) {
       console.error('Error fetching user details:', error);
+      setUserError("Network error. Please try again.");
     } finally {
       setIsLoadingUser(false);
     }
@@ -480,6 +492,7 @@ export function DiscoverContainer() {
   const handleCloseUserModal = () => {
     setSelectedUserId(null);
     setUserDetails(null);
+    setUserError(null);
   };
 
 
@@ -680,6 +693,7 @@ export function DiscoverContainer() {
             isInviting={userDetails ? invitingUser === userDetails.uid : false}
             isInvited={userDetails ? sentInvites.has(userDetails.uid) : false}
             canInvite={isTeamLead}
+            error={userError}
           />
         </>
       )}

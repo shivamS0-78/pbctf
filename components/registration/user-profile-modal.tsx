@@ -34,6 +34,7 @@ interface UserProfileModalProps {
   isInviting?: boolean;
   isInvited?: boolean;
   canInvite?: boolean;
+  error?: string | null;
 }
 
 export function UserProfileModal({ 
@@ -44,7 +45,8 @@ export function UserProfileModal({
   onInvite,
   isInviting = false,
   isInvited = false,
-  canInvite = false
+  canInvite = false,
+  error
 }: UserProfileModalProps) {
   // Prevent background scrolling when modal is open
   useEffect(() => {
@@ -84,6 +86,11 @@ export function UserProfileModal({
       {isLoading ? (
         <div className="flex justify-center py-[40px]">
           <Spinner size="lg" />
+        </div>
+      ) : error ? (
+        <div className="text-white text-center py-[40px]">
+          <p className="text-red-400 mb-[8px]">Error loading user details</p>
+          <p className="text-white opacity-70 text-[14px]">{error}</p>
         </div>
       ) : userDetails ? (
         <div className="flex flex-col gap-[24px]">
