@@ -92,6 +92,13 @@ export function ProfileContainer() {
               });
             }
           }
+        } else {
+          console.error("Failed to fetch profile:", response.status);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load profile data."
+          });
         }
       } catch (error) {
         console.error("Error loading profile:", error);

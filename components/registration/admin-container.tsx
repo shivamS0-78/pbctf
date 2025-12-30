@@ -74,6 +74,12 @@ export function AdminContainer() {
               totalUsers: participantsData.data.length || 0,
             }));
           }
+        } else {
+          console.error("Failed to fetch participants:", participantsResponse.status);
+          setAlert({
+            type: "warning",
+            message: "Failed to load participants data."
+          });
         }
 
         if (teamsResponse.ok) {
@@ -88,6 +94,12 @@ export function AdminContainer() {
             }));
             setTeams(teamsList);
           }
+        } else {
+          console.error("Failed to fetch teams:", teamsResponse.status);
+          setAlert({
+            type: "warning",
+            message: "Failed to load teams data."
+          });
         }
       } catch (error) {
         console.error('Failed to fetch admin data:', error);

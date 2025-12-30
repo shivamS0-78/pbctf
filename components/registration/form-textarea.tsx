@@ -7,6 +7,7 @@ interface FormTextareaProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   rows?: number;
+  disabled?: boolean;
 }
 
 export function FormTextarea({
@@ -16,6 +17,7 @@ export function FormTextarea({
   value,
   onChange,
   rows = 4,
+  disabled = false,
 }: FormTextareaProps) {
   return (
     <div className="flex flex-col gap-[8px] w-full">
@@ -29,7 +31,8 @@ export function FormTextarea({
         value={value}
         onChange={onChange}
         rows={rows}
-        className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.2)] border border-[rgba(255,255,255,0.38)] border-solid rounded-[15px] px-[18px] py-[12px] text-white text-[14px] placeholder:text-[rgba(255,255,255,0.5)] focus:outline-none focus:border-[#ff4d00] focus:shadow-[0px_0px_10px_0px_rgba(255,77,0,0.3)] transition-all resize-none"
+        disabled={disabled}
+        className={`backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.2)] border border-[rgba(255,255,255,0.38)] border-solid rounded-[15px] px-[18px] py-[12px] text-white text-[14px] placeholder:text-[rgba(255,255,255,0.5)] focus:outline-none focus:border-[#ff4d00] focus:shadow-[0px_0px_10px_0px_rgba(255,77,0,0.3)] transition-all resize-none ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         style={{ fontFamily: 'var(--font-body)' }}
       />
     </div>

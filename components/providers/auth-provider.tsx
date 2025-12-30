@@ -52,10 +52,13 @@ const AuthContext = createContext<AuthContextType>({
     sendVerificationEmail: async () => { },
 });
 
+import { useToast } from "@/hooks/use-toast";
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const { toast } = useToast();
 
     const fetchUserProfile = async (currentUser: FirebaseUser) => {
         try {
@@ -86,10 +89,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 console.error("Failed to fetch user profile:", response.status, response.statusText);
                 // If 404, maybe they are registered in Firebase but not MongoDB yet (registration flow)
                 setUser(null);
+                if (response.status !== 404) {
+                    toast({
+                        variant: "destructive",
+                        title: "Error fetching profile",
+                        description: "Failed to load user profile. Please try refreshing the page."
+                    });
+                }
             }
         } catch (error) {
             console.error("Error fetching user profile:", error);
             setUser(null);
+            toast({
+                variant: "destructive",
+                title: "Connection Error",
+                description: "Could not connect to the server. Please check your internet connection."
+            });
         }
     };
 

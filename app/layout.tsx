@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Instrument_Serif } from 'next/font/google';
 import { AuthProvider } from '@/components/providers/auth-provider';
+import { Toaster } from "@/components/ui/toaster";
 
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body className={instrumentSerif.variable} style={{ fontFamily: 'var(--font-body)', background: '#171717' }}>
         <AuthProvider>
           {children}
+          <Toaster />
         </AuthProvider>
       </body>
     </html>

@@ -276,6 +276,11 @@ export function DashboardContainer() {
                 }
               } catch (error) {
                 console.error('Error fetching team data:', error);
+                toast({
+                  variant: "destructive",
+                  title: "Error",
+                  description: "Failed to load team details."
+                });
                 setTeam(null);
               }
             } else {

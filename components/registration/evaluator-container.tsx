@@ -65,6 +65,12 @@ export function EvaluatorContainer() {
           if (data.success && data.data) {
             setAssignedTeams(data.data);
           }
+        } else {
+          console.error("Failed to fetch assigned teams:", response.status);
+          setAlert({
+            type: "warning",
+            message: "Failed to load assigned teams."
+          });
         }
       } catch (error) {
         console.error('Failed to fetch assigned teams:', error);

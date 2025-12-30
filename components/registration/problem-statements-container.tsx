@@ -72,6 +72,12 @@ export function ProblemStatementsContainer({ onNavigate }: ProblemStatementsCont
           }
         } else {
           // Fallback to mock data if API fails
+          console.error('Failed to fetch problem statements:', response.status);
+          toast({
+            variant: "destructive",
+            title: "Warning",
+            description: "Failed to load problem statements from server. Showing offline data."
+          });
           setProblemStatements([
             { id: '1', title: 'AI-Powered Healthcare Assistant', description: 'Build an AI solution for healthcare diagnostics', category: 'AI/ML', difficulty: 'Advanced', active: true },
             { id: '2', title: 'Sustainable Smart City Platform', description: 'Create a platform for managing smart city infrastructure', category: 'IoT', difficulty: 'Intermediate', active: true },
