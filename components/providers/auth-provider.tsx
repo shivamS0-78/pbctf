@@ -72,12 +72,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const data = await response.json();
                 // Handle both direct object return and { success: true, data: ... } format
                 const userData = data.success ? data.data : data;
-                setUser({
-                    ...userData,
-                    emailVerified: currentUser.emailVerified
-                });
+                
+                if (userData) {
+                    setUser({
+                        ...userData,
+                        emailVerified: currentUser.emailVerified
+                    });
+                } else {
+                    console.error("User data is empty");
+                    setUser(null);
+                }
             } else {
-                console.error("Failed to fetch user profile");
+                console.error("Failed to fetch user profile:", response.status, response.statusText);
                 // If 404, maybe they are registered in Firebase but not MongoDB yet (registration flow)
                 setUser(null);
             }
@@ -102,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = async (email: string, password: string) => {
         try {
+            setLoading(true); // Start loading immediately
             const response = await fetch(API_ENDPOINTS.login, {
                 method: 'POST',
                 headers: {
@@ -113,6 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const data = await response.json();
 
             if (!response.ok) {
+                setLoading(false); // Stop loading on error
                 if (response.status === 401) {
                     throw new Error(data.message || 'Invalid email or password.');
                 } else if (response.status === 404) {
@@ -125,20 +133,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             if (data.status !== 'success' && !data.token) {
+                setLoading(false); // Stop loading on error
                 if (!data.token) {
                     throw new Error(data.message || 'Login failed. Please try again.');
                 }
             }
 
             await signInWithEmailAndPassword(auth, email, password);
+            // Don't set loading to false here; let onAuthStateChanged handle it
         } catch (error) {
             console.error('Login error:', error);
+            setLoading(false); // Ensure loading is stopped on error
             throw error;
         }
     };
 
     const register = async (formData: FormData) => {
         try {
+            setLoading(true); // Start loading immediately
             const response = await fetch(API_ENDPOINTS.register, {
                 method: 'POST',
                 body: formData,
@@ -147,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const data = await response.json();
 
             if (!response.ok) {
+                setLoading(false); // Stop loading on error
                 if (response.status === 400) {
                     throw new Error(data.message || 'Invalid registration data. Please check all fields.');
                 } else if (response.status === 409) {
@@ -165,16 +178,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 if (email && password) {
                     await signInWithEmailAndPassword(auth, email, password);
+                    // Don't set loading to false here; let onAuthStateChanged handle it
                 } else {
                     if (data.user) {
+                        // Handle case where we might not have password (e.g. if we change flow)
+                        setLoading(false);
                     }
                 }
                 return;
             }
 
+            setLoading(false);
             throw new Error(data.message || 'Registration failed. Please try again.');
         } catch (error) {
             console.error('Registration error:', error);
+            setLoading(false); // Ensure loading is stopped on error
             throw error;
         }
     };

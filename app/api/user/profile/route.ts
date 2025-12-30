@@ -130,7 +130,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json(responseData);
+    return NextResponse.json({
+      success: true,
+      data: responseData
+    });
   } catch (error: any) {
     console.error("Get profile error:", error);
     return NextResponse.json(

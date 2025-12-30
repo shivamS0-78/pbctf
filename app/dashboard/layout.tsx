@@ -39,9 +39,9 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, user, isLoading, router, pathname]);
 
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
+  const handleLogout = async () => {
+    await logout();
+    // router.push("/login"); // logout() already handles redirect, but keeping this as backup is fine if we await
     setAlert({
       type: "info",
       message: "Logged out successfully",
