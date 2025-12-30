@@ -12,6 +12,7 @@ import { SectionTab } from "./section-tab";
 import { TeamDetailsModal, TeamDetails } from "./team-details-modal";
 import { UserProfileModal, UserDetails } from "./user-profile-modal";
 import { useToast } from "@/hooks/use-toast";
+import { Spinner } from "@/components/ui/spinner";
 
 
 interface TeamLookingForMembers {
@@ -548,7 +549,9 @@ export function DiscoverContainer() {
               {activeTab === "teams" && !isTeamLead ? (
                 <div>
                   {isLoading ? (
-                    <div className="text-white text-center py-[40px]">Loading teams...</div>
+                    <div className="flex justify-center py-[40px]">
+                      <Spinner size="lg" />
+                    </div>
                   ) : teamsLookingForMembers.length === 0 ? (
                     <div className="text-white text-center py-[40px] opacity-70">
                       {searchQuery.trim() ? "No teams match your search." : "No teams are currently looking for members."}
@@ -598,7 +601,9 @@ export function DiscoverContainer() {
               ) : (
                 <div>
                   {isLoading ? (
-                    <div className="text-white text-center py-[40px]">Loading participants...</div>
+                    <div className="flex justify-center py-[40px]">
+                      <Spinner size="lg" />
+                    </div>
                   ) : participantsLookingForTeams.length === 0 ? (
                     <div className="text-white text-center py-[40px] opacity-70">
                       {searchQuery.trim() ? "No participants match your search." : "No participants are currently looking for teams."}
@@ -640,6 +645,7 @@ export function DiscoverContainer() {
                                     onClick={() => handleInviteUser(participant.email!, participant.id)}
                                     disabled={invitingUser === participant.id || sentInvites.has(participant.id)}
                                   >
+                                    {invitingUser === participant.id ? <Spinner size="sm" className="mr-2" /> : null}
                                     {sentInvites.has(participant.id) ? "Invited" : invitingUser === participant.id ? "Sending..." : "Invite"}
                                   </Button>
                                 </div>

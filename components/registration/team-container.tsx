@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
+import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";
 
 interface TeamMember {
@@ -846,7 +847,7 @@ export function TeamContainer() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-white" style={{ fontFamily: 'var(--font-body)' }}>Loading...</div>
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -974,7 +975,7 @@ export function TeamContainer() {
                   </p>
                 </div>
                 <Button type="submit" variant="primary" disabled={isSubmitting || !teamFormData.problemStatement}>
-                  <Users className="w-4 h-4" />
+                  {isSubmitting ? <Spinner size="sm" className="mr-2" /> : <Users className="w-4 h-4" />}
                   {isSubmitting ? 'Creating...' : 'Create Team'}
                 </Button>
               </form>
@@ -996,6 +997,7 @@ export function TeamContainer() {
                   Ask your team leader for the team code to join their team.
                 </p>
                 <Button type="submit" variant="primary" disabled={isSubmitting}>
+                  {isSubmitting && <Spinner size="sm" className="mr-2" />}
                   {isSubmitting ? 'Joining...' : 'Join Team'}
                 </Button>
               </form>
@@ -1238,8 +1240,8 @@ export function TeamContainer() {
                       />
                     </div>
                     <Button type="submit" variant="primary" disabled={isInviting}>
+                      {isInviting ? <Spinner size="sm" className="mr-2" /> : <UserPlus className="w-4 h-4 ml-2" />}
                       {isInviting ? "Inviting..." : "Invite"}
-                      <UserPlus className="w-4 h-4 ml-2" />
                     </Button>
                   </form>
                 </FormSection>
@@ -1248,8 +1250,8 @@ export function TeamContainer() {
               {/* Incoming Join Requests */}
               <FormSection title="Incoming Requests">
                 {isLoadingRequests ? (
-                  <div className="text-white text-center py-[20px] opacity-70" style={{ fontFamily: 'var(--font-body)' }}>
-                    Loading requests...
+                  <div className="flex justify-center py-[20px]">
+                    <Spinner size="md" />
                   </div>
                 ) : incomingRequests.length === 0 ? (
                   <div className="text-white text-center py-[20px] opacity-70" style={{ fontFamily: 'var(--font-body)' }}>
@@ -1306,8 +1308,8 @@ export function TeamContainer() {
               {team.leadId === user.uid && (
                 <FormSection title="Sent Invitations">
                   {isLoadingRequests ? (
-                    <div className="text-white text-center py-[20px] opacity-70" style={{ fontFamily: 'var(--font-body)' }}>
-                      Loading invitations...
+                    <div className="flex justify-center py-[20px]">
+                      <Spinner size="md" />
                     </div>
                   ) : sentInvites.length === 0 ? (
                     <div className="text-white text-center py-[20px] opacity-70" style={{ fontFamily: 'var(--font-body)' }}>

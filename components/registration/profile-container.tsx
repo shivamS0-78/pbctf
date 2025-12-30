@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from '@/hooks/use-auth';
-import { Home, Check } from "lucide-react";
+import { Home } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Spinner } from "@/components/ui/spinner";
 import { FormSection } from "./form-section";
 import { FormInput } from "./form-input";
 import { FormTextarea } from "./form-textarea";
@@ -251,31 +253,13 @@ export function ProfileContainer() {
 
       {!profileData.teamCode && (
         <div className="flex flex-col gap-[8px] p-[16px] rounded-[12px] border border-[rgba(255,255,255,0.1)] bg-[rgba(138,138,138,0.05)]">
-          <div
-            onClick={handleToggleLooking}
-            className="flex items-center gap-[12px] cursor-pointer"
-          >
-            <div className="relative">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-[12px]">
+              <Switch
                 id="profileLookingForTeam"
                 checked={profileData.isLooking}
-                onChange={handleToggleLooking}
-                className="sr-only"
+                onCheckedChange={handleToggleLooking}
+                className="data-[state=checked]:bg-green-500 border-green-500"
               />
-              <div className={`
-                w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-300
-                ${profileData.isLooking
-                  ? 'border-[#ff4d00] bg-[rgba(255,77,0,0.15)]'
-                  : 'border-[rgba(255,255,255,0.38)] bg-[rgba(138,138,138,0.2)]'
-                }
-                hover:border-[rgba(255,255,255,0.5)]
-              `}>
-                {profileData.isLooking && (
-                  <Check className="w-3 h-3 text-[#ff4d00]" />
-                )}
-              </div>
-            </div>
             <label htmlFor="profileLookingForTeam" className="text-[14px] font-semibold text-white cursor-pointer" style={{ fontFamily: 'var(--font-body)' }}>
               Looking for a Team?
             </label>
@@ -396,6 +380,7 @@ export function ProfileContainer() {
           </FormSection>
 
           <Button type="submit" variant="primary" disabled={isSubmitting || isProfileLocked}>
+            {isSubmitting && <Spinner size="sm" className="mr-2" />}
             {isSubmitting ? "Saving..." : isProfileLocked ? "Profile Locked" : "Save Changes"}
           </Button>
         </fieldset>
