@@ -13,6 +13,7 @@ import {
   AlertCircle,
   X,
   Check,
+  Search,
 } from "lucide-react";
 import { FormSection } from "./form-section";
 import { Button } from "./button";
@@ -630,6 +631,10 @@ export function DashboardContainer() {
                   <Button onClick={() => router.push("/dashboard/team")} variant="primary">
                     <Users className="w-4 h-4" />
                     Create / Join Team
+                  </Button>
+                  <Button onClick={() => router.push("/dashboard/discover")} variant="secondary">
+                    <Search className="w-4 h-4" />
+                    Discover Teams
                   </Button>
                 </div>
               </div>

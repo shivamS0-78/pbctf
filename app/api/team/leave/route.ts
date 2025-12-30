@@ -113,11 +113,12 @@ export async function PUT(request: NextRequest) {
         isLooking: Boolean(setLookingStatus) 
       }
     );
+    // Cancel pending requests AND mark accepted request as cancelled (user left)
     await TeamJoinRequest.updateMany(
       {
         userId: authResult.user.uid,
         teamCode: team.teamCode,
-        status: 'pending',
+        status: { $in: ['pending', 'accepted'] },
       },
       {
         status: 'cancelled',

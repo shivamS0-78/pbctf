@@ -4,6 +4,7 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Team from "@/models/Team";
 import ProblemStatement from "@/models/ProblemStatement";
+import TeamJoinRequest from "@/models/TeamJoinRequest";
 
 // Configure route
 export const dynamic = 'force-dynamic';
@@ -174,6 +175,18 @@ export async function POST(request: NextRequest) {
     if (appliedFor) {
       await ProblemStatement.findByIdAndUpdate(appliedFor, { $inc: { teamCount: 1 } });
     }
+
+    // Cancel all pending join requests and invitations for this user
+    await TeamJoinRequest.updateMany(
+      {
+        userId: authResult.user.uid,
+        status: 'pending',
+      },
+      {
+        status: 'cancelled',
+        respondedAt: new Date(),
+      }
+    );
 
     return NextResponse.json({
       success: true,

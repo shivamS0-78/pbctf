@@ -4,6 +4,7 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Team from "@/models/Team";
 import ProblemStatement from "@/models/ProblemStatement";
+import TeamJoinRequest from "@/models/TeamJoinRequest";
 
 export const dynamic = 'force-dynamic';
 
@@ -75,6 +76,18 @@ export async function DELETE(request: NextRequest) {
     if (team.appliedFor) {
       await ProblemStatement.findByIdAndUpdate(team.appliedFor, { $inc: { teamCount: -1 } });
     }
+
+    // Cancel all pending and accepted join requests/invites for this team
+    await TeamJoinRequest.updateMany(
+      {
+        teamCode: team.teamCode,
+        status: { $in: ['pending', 'accepted'] },
+      },
+      {
+        status: 'cancelled',
+        respondedAt: new Date(),
+      }
+    );
 
     // Delete the team
     await Team.deleteOne({ teamCode });
