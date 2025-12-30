@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { User, Mail, MessageSquare, Building, FileText, Github, Linkedin, ExternalLink } from "lucide-react";
+import { User, Mail, MessageSquare, Building, FileText, Github, Linkedin, ExternalLink, UserPlus, Check } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "./button";
 
 interface UserDetails {
   uid: string;
@@ -29,9 +30,22 @@ interface UserProfileModalProps {
   onClose: () => void;
   userDetails: UserDetails | null;
   isLoading: boolean;
+  onInvite?: (email: string, uid: string) => void;
+  isInviting?: boolean;
+  isInvited?: boolean;
+  canInvite?: boolean;
 }
 
-export function UserProfileModal({ isOpen, onClose, userDetails, isLoading }: UserProfileModalProps) {
+export function UserProfileModal({ 
+  isOpen, 
+  onClose, 
+  userDetails, 
+  isLoading,
+  onInvite,
+  isInviting = false,
+  isInvited = false,
+  canInvite = false
+}: UserProfileModalProps) {
   // Prevent background scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -224,6 +238,34 @@ export function UserProfileModal({ isOpen, onClose, userDetails, isLoading }: Us
                   </a>
                 )}
               </div>
+            </div>
+          )}
+
+          {canInvite && userDetails.email && onInvite && (
+            <div className="mt-[12px] pt-[24px] border-t border-[rgba(255,255,255,0.1)] flex justify-end">
+              <Button
+                variant="primary"
+                onClick={() => onInvite(userDetails.email!, userDetails.uid)}
+                disabled={isInviting || isInvited}
+                className="w-full sm:w-auto"
+              >
+                {isInviting ? (
+                  <>
+                    <Spinner size="sm" className="mr-2" />
+                    Sending Invite...
+                  </>
+                ) : isInvited ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Invited
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Invite to Team
+                  </>
+                )}
+              </Button>
             </div>
           )}
         </div>

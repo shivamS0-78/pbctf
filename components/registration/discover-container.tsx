@@ -645,19 +645,7 @@ export function DiscoverContainer() {
                                 </div>
                               </div>
 
-                              {/* Invite Button for Team Leads */}
-                              {isTeamLead && participant.email && (
-                                <div className="ml-[16px] flex items-center">
-                                  <Button
-                                    variant="primary"
-                                    onClick={() => handleInviteUser(participant.email!, participant.id)}
-                                    disabled={invitingUser === participant.id || sentInvites.has(participant.id)}
-                                  >
-                                    {invitingUser === participant.id ? <Spinner size="sm" className="mr-2" /> : null}
-                                    {sentInvites.has(participant.id) ? "Invited" : invitingUser === participant.id ? "Sending..." : "Invite"}
-                                  </Button>
-                                </div>
-                              )}
+                              {/* Invite Button removed from here and moved to UserProfileModal */}
                             </div>
                           </Card>
                         </div>
@@ -688,6 +676,10 @@ export function DiscoverContainer() {
             onClose={handleCloseUserModal}
             userDetails={userDetails}
             isLoading={isLoadingUser}
+            onInvite={handleInviteUser}
+            isInviting={userDetails ? invitingUser === userDetails.uid : false}
+            isInvited={userDetails ? sentInvites.has(userDetails.uid) : false}
+            canInvite={isTeamLead}
           />
         </>
       )}
