@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from '@/hooks/use-auth';
 import { API_ENDPOINTS } from "@/lib/api-config";
-import { Home, Users, Upload, X, Award, Check, UserPlus, Trash2, User, ExternalLink } from "lucide-react";
+import { Home, Users, Upload, X, Award, Check, UserPlus, Trash2, User, ExternalLink, Copy, Edit, ChevronDown, ChevronUp } from "lucide-react";
 import { FormSection } from "./form-section";
 import { FormInput } from "./form-input";
-import { FormSelect } from "./form-select";
 import { Button } from "./button";
 import { StatusBadge } from "./status-badge";
 import { AlertBanner } from "./alert-banner";
 import { UserProfileModal, UserDetails } from "./user-profile-modal";
 import { Modal } from "./modal";
+import { EditProblemStatementModal } from "./edit-problem-statement-modal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,7 +91,28 @@ export function TeamContainer() {
   const [leaveTeamDialogOpen, setLeaveTeamDialogOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
   
+  // Tabbed UI state for Create/Join
+  const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
+  
+  // Copy state for team code
+  const [copied, setCopied] = useState(false);
+  
+  // Edit problem statement modal state
+  const [editPsModalOpen, setEditPsModalOpen] = useState(false);
+  const [isUpdatingPs, setIsUpdatingPs] = useState(false);
+  
+  // Collapsible requests state
+  const [requestsExpanded, setRequestsExpanded] = useState(false);
+  
   const { toast } = useToast();
+
+  // Memoized filtered requests
+  const incomingRequests = useMemo(() => 
+    joinRequests.filter(r => r.type === 'request'), [joinRequests]
+  );
+  const sentInvites = useMemo(() => 
+    joinRequests.filter(r => r.type === 'invite'), [joinRequests]
+  );
 
   useEffect(() => {
     // Fetch problem statements
@@ -570,6 +591,91 @@ export function TeamContainer() {
     }
   };
 
+  const handleToggleLookingForMembers = async (value: boolean) => {
+    if (!team) return;
+    
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const response = await fetch(API_ENDPOINTS.lookingForMembers, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          teamCode: team.code, 
+          isLooking: value 
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update setting');
+      }
+
+      setTeam({ ...team, lookingForMembers: value });
+      toast({ 
+        title: value ? "Team visible in Discover" : "Team hidden from Discover",
+        description: value 
+          ? "Other participants can now find and request to join your team" 
+          : "Your team is now hidden from the Discover section"
+      });
+    } catch (error) {
+      console.error('Error toggling looking for members:', error);
+      toast({
+        variant: "destructive",
+        title: "Failed to update",
+        description: error instanceof Error ? error.message : "Could not update setting"
+      });
+    }
+  };
+
+  const handleUpdateProblemStatement = async (problemStatementId: string, title: string) => {
+    if (!team) return;
+    
+    setIsUpdatingPs(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const response = await fetch(API_ENDPOINTS.updateProblemStatement, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          teamCode: team.code, 
+          problemStatementId 
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update problem statement');
+      }
+
+      setTeam({ ...team, problemStatement: title });
+      toast({ 
+        title: "Problem statement updated",
+        description: `Changed to: ${title}`
+      });
+    } catch (error) {
+      console.error('Error updating problem statement:', error);
+      toast({
+        variant: "destructive",
+        title: "Failed to update",
+        description: error instanceof Error ? error.message : "Could not update problem statement"
+      });
+    } finally {
+      setIsUpdatingPs(false);
+    }
+  };
+
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -760,128 +866,157 @@ export function TeamContainer() {
 
       {!team ? (
         <>
-          <FormSection title="Create a Team">
-            <form onSubmit={handleCreateTeam} className="flex flex-col gap-[20px]">
-              <FormInput
-                label="Team Name"
-                placeholder="Enter a creative team name"
-                required
-                value={teamFormData.teamName}
-                onChange={(e) => setTeamFormData({ ...teamFormData, teamName: e.target.value })}
-              />
-              <div className="flex flex-col gap-[12px]">
-                <label className="text-[14px] text-white opacity-90" style={{ fontFamily: 'var(--font-body)' }}>
-                  Select a Problem Statement <span className="text-red-400">*</span>
-                </label>
-                <div className="grid grid-cols-2 gap-[16px] relative">
-                  {problemStatements.map((ps, index) => {
-                    const isSelected = teamFormData.problemStatement === ps.title;
-                    return (
-                      <div
-                        key={ps.id}
-                        className={`
-                          relative p-[16px] rounded-[12px] border-2
-                          ${isSelected 
-                            ? 'border-[#ff4d00] bg-[rgba(255,77,0,0.15)] shadow-[0_0_20px_rgba(255,77,0,0.3)]' 
-                            : 'border-[rgba(255,255,255,0.2)] bg-[rgba(138,138,138,0.1)] hover:border-[rgba(255,255,255,0.3)] hover:bg-[rgba(138,138,138,0.15)]'
-                          }
-                          ${isSelected ? 'animate-selectSlide' : 'transition-all duration-300'}
-                        `}
-                      >
-                        <div
-                          onClick={() => setTeamFormData({ ...teamFormData, problemStatement: ps.title })}
-                          className="cursor-pointer"
-                        >
-                          <h3 className="text-[16px] font-semibold text-white mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>
-                            {ps.title}
-                          </h3>
-                          <p className="text-[13px] text-white opacity-70 line-clamp-3 mb-[12px]" style={{ fontFamily: 'var(--font-body)' }}>
-                            {ps.description || "description goes here"}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            setSelectedProblemStatement(ps);
-                          }}
-                          className="w-full mt-[8px] flex items-center justify-center gap-[6px] px-[12px] py-[6px] bg-[rgba(255,77,0,0.2)] hover:bg-[rgba(255,77,0,0.3)] border border-[rgba(255,77,0,0.4)] rounded-[8px] text-[13px] text-white transition-colors"
-                          style={{ fontFamily: 'var(--font-body)' }}
-                        >
-                          <span>Read More</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="flex flex-col gap-[8px] p-[16px] rounded-[12px] border border-[rgba(255,255,255,0.1)] bg-[rgba(138,138,138,0.05)]">
-                <div 
-                  onClick={() => setTeamFormData({ ...teamFormData, lookingForMembers: !teamFormData.lookingForMembers })}
-                  className="flex items-center gap-[12px] cursor-pointer"
-                >
-                  <div className="relative">
-                    <input
-                      type="checkbox"
-                      id="lookingForMembers"
-                      checked={teamFormData.lookingForMembers}
-                      onChange={(e) => setTeamFormData({ ...teamFormData, lookingForMembers: e.target.checked })}
-                      className="sr-only"
-                    />
-                    <div className={`
-                      w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-300
-                      ${teamFormData.lookingForMembers 
-                        ? 'border-[#ff4d00] bg-[rgba(255,77,0,0.15)]' 
-                        : 'border-[rgba(255,255,255,0.38)] bg-[rgba(138,138,138,0.2)] hover:border-[rgba(255,255,255,0.5)]'
-                      }
-                    `}>
-                      {teamFormData.lookingForMembers && (
-                        <Check className="w-3 h-3 text-[#ff4d00] animate-selectSlide" />
-                      )}
-                    </div>
-                  </div>
-                  <label htmlFor="lookingForMembers" className="text-[14px] font-semibold text-white cursor-pointer" style={{ fontFamily: 'var(--font-body)' }}>
-                    Looking for team members
-                  </label>
-                </div>
-                <p className="text-[13px] text-white opacity-70 ml-[32px]" style={{ fontFamily: 'var(--font-body)' }}>
-                  Enable this to let others know your team is open to new members. Your team will appear in the "Discover" section for participants looking for teams.
-                </p>
-              </div>
-              <Button type="submit" variant="primary" disabled={isSubmitting}>
-                <Users className="w-4 h-4" />
-                Create Team
-              </Button>
-            </form>
-          </FormSection>
-
-          <div className="flex items-center gap-[16px]">
-            <div className="flex-1 h-[1px] bg-[rgba(255,255,255,0.2)]" />
-            <span className="text-[14px] text-white opacity-60" style={{ fontFamily: 'var(--font-body)' }}>
-              OR
-            </span>
-            <div className="flex-1 h-[1px] bg-[rgba(255,255,255,0.2)]" />
+          {/* Tab Navigation */}
+          <div className="flex gap-[4px] p-[4px] bg-[rgba(138,138,138,0.1)] rounded-[12px] border border-[rgba(255,255,255,0.1)]">
+            <button
+              onClick={() => setActiveTab('create')}
+              className={`flex-1 py-[12px] px-[20px] rounded-[8px] text-[14px] font-medium transition-all duration-300 ${
+                activeTab === 'create'
+                  ? 'bg-gradient-to-r from-[#ff4d00] to-[#ff8800] text-white shadow-[0_4px_15px_rgba(255,77,0,0.3)]'
+                  : 'text-white opacity-70 hover:opacity-100'
+              }`}
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              Create Team
+            </button>
+            <button
+              onClick={() => setActiveTab('join')}
+              className={`flex-1 py-[12px] px-[20px] rounded-[8px] text-[14px] font-medium transition-all duration-300 ${
+                activeTab === 'join'
+                  ? 'bg-gradient-to-r from-[#ff4d00] to-[#ff8800] text-white shadow-[0_4px_15px_rgba(255,77,0,0.3)]'
+                  : 'text-white opacity-70 hover:opacity-100'
+              }`}
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              Join Team
+            </button>
           </div>
 
-          <FormSection title="Join a Team">
-            <form onSubmit={handleJoinTeam} className="flex flex-col gap-[20px]">
-              <FormInput
-                label="Team Code"
-                placeholder="Enter 6-digit team code"
-                required
-                value={teamFormData.joinCode}
-                onChange={(e) => setTeamFormData({ ...teamFormData, joinCode: e.target.value.toUpperCase() })}
-              />
-              <p className="text-[13px] text-[rgba(255,255,255,0.6)]" style={{ fontFamily: 'var(--font-body)' }}>
-                Ask your team leader for the team code to join their team.
-              </p>
-              <Button type="submit" variant="primary" disabled={isSubmitting}>
-                Join Team
-              </Button>
-            </form>
-          </FormSection>
+          {/* Create Team Form */}
+          {activeTab === 'create' && (
+            <FormSection title="Create a Team">
+              <form onSubmit={handleCreateTeam} className="flex flex-col gap-[20px]">
+                <FormInput
+                  label="Team Name"
+                  placeholder="Enter a creative team name"
+                  required
+                  value={teamFormData.teamName}
+                  onChange={(e) => setTeamFormData({ ...teamFormData, teamName: e.target.value })}
+                />
+                <div className="flex flex-col gap-[12px]">
+                  <label className="text-[14px] text-white opacity-90" style={{ fontFamily: 'var(--font-body)' }}>
+                    Select a Problem Statement <span className="text-red-400">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-[16px] relative">
+                    {problemStatements.map((ps, index) => {
+                      const isSelected = teamFormData.problemStatement === ps.title;
+                      return (
+                        <div
+                          key={ps.id}
+                          className={`
+                            relative p-[16px] rounded-[12px] border-2
+                            ${isSelected 
+                              ? 'border-[#ff4d00] bg-[rgba(255,77,0,0.15)] shadow-[0_0_20px_rgba(255,77,0,0.3)]' 
+                              : 'border-[rgba(255,255,255,0.2)] bg-[rgba(138,138,138,0.1)] hover:border-[rgba(255,255,255,0.3)] hover:bg-[rgba(138,138,138,0.15)]'
+                            }
+                            ${isSelected ? 'animate-selectSlide' : 'transition-all duration-300'}
+                          `}
+                        >
+                          <div
+                            onClick={() => setTeamFormData({ ...teamFormData, problemStatement: ps.title })}
+                            className="cursor-pointer"
+                          >
+                            <h3 className="text-[16px] font-semibold text-white mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>
+                              {ps.title}
+                            </h3>
+                            <p className="text-[13px] text-white opacity-70 line-clamp-3 mb-[12px]" style={{ fontFamily: 'var(--font-body)' }}>
+                              {ps.description || "description goes here"}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              setSelectedProblemStatement(ps);
+                            }}
+                            className="w-full mt-[8px] flex items-center justify-center gap-[6px] px-[12px] py-[6px] bg-[rgba(255,77,0,0.2)] hover:bg-[rgba(255,77,0,0.3)] border border-[rgba(255,77,0,0.4)] rounded-[8px] text-[13px] text-white transition-colors"
+                            style={{ fontFamily: 'var(--font-body)' }}
+                          >
+                            <span>Read More</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {!teamFormData.problemStatement && (
+                    <p className="text-[12px] text-red-400" style={{ fontFamily: 'var(--font-body)' }}>
+                      Please select a problem statement to continue
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-[8px] p-[16px] rounded-[12px] border border-[rgba(255,255,255,0.1)] bg-[rgba(138,138,138,0.05)]">
+                  <div 
+                    onClick={() => setTeamFormData({ ...teamFormData, lookingForMembers: !teamFormData.lookingForMembers })}
+                    className="flex items-center gap-[12px] cursor-pointer"
+                  >
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        id="lookingForMembers"
+                        checked={teamFormData.lookingForMembers}
+                        onChange={(e) => setTeamFormData({ ...teamFormData, lookingForMembers: e.target.checked })}
+                        className="sr-only"
+                      />
+                      <div className={`
+                        w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-300
+                        ${teamFormData.lookingForMembers 
+                          ? 'border-[#ff4d00] bg-[rgba(255,77,0,0.15)]' 
+                          : 'border-[rgba(255,255,255,0.38)] bg-[rgba(138,138,138,0.2)] hover:border-[rgba(255,255,255,0.5)]'
+                        }
+                      `}>
+                        {teamFormData.lookingForMembers && (
+                          <Check className="w-3 h-3 text-[#ff4d00] animate-selectSlide" />
+                        )}
+                      </div>
+                    </div>
+                    <label htmlFor="lookingForMembers" className="text-[14px] font-semibold text-white cursor-pointer" style={{ fontFamily: 'var(--font-body)' }}>
+                      Looking for team members
+                    </label>
+                  </div>
+                  <p className="text-[13px] text-white opacity-70 ml-[32px]" style={{ fontFamily: 'var(--font-body)' }}>
+                    Enable this to let others know your team is open to new members. Your team will appear in the "Discover" section for participants looking for teams.
+                  </p>
+                </div>
+                <Button type="submit" variant="primary" disabled={isSubmitting || !teamFormData.problemStatement}>
+                  <Users className="w-4 h-4" />
+                  {isSubmitting ? 'Creating...' : 'Create Team'}
+                </Button>
+              </form>
+            </FormSection>
+          )}
+
+          {/* Join Team Form */}
+          {activeTab === 'join' && (
+            <FormSection title="Join a Team">
+              <form onSubmit={handleJoinTeam} className="flex flex-col gap-[20px]">
+                <FormInput
+                  label="Team Code"
+                  placeholder="Enter 6-digit team code"
+                  required
+                  value={teamFormData.joinCode}
+                  onChange={(e) => setTeamFormData({ ...teamFormData, joinCode: e.target.value.toUpperCase() })}
+                />
+                <p className="text-[13px] text-[rgba(255,255,255,0.6)]" style={{ fontFamily: 'var(--font-body)' }}>
+                  Ask your team leader for the team code to join their team.
+                </p>
+                <Button type="submit" variant="primary" disabled={isSubmitting}>
+                  {isSubmitting ? 'Joining...' : 'Join Team'}
+                </Button>
+              </form>
+            </FormSection>
+          )}
         </>
       ) : (
         <>
@@ -890,48 +1025,87 @@ export function TeamContainer() {
             status={team.status !== "active" ? <StatusBadge status={team.status} icon={team.status === "shortlisted" ? Award : Users} /> : undefined}
           >
             <div className="flex flex-col gap-[16px]">
-              <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.1)] rounded-[15px] p-[20px] border border-[rgba(255,255,255,0.15)]">
-                <div className="flex flex-col gap-[12px]">
-                  <div className="flex justify-between">
-                    <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                      Team Name
-                    </span>
-                    <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                      {team.name}
-                    </span>
+              {/* Two-column grid for Team Info + Problem Statement */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
+                {/* Team Info Card */}
+                <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.1)] rounded-[12px] p-[16px] border border-[rgba(255,255,255,0.15)]">
+                  <h3 className="text-[12px] uppercase tracking-wider text-white opacity-50 mb-[12px]" style={{ fontFamily: 'var(--font-body)' }}>
+                    Team Info
+                  </h3>
+                  <div className="flex flex-col gap-[10px]">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[13px] text-white opacity-70" style={{ fontFamily: 'var(--font-body)' }}>Name</span>
+                      <span className="text-[14px] text-white font-medium" style={{ fontFamily: 'var(--font-body)' }}>{team.name}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[13px] text-white opacity-70" style={{ fontFamily: 'var(--font-body)' }}>Code</span>
+                      <div className="flex items-center gap-[6px]">
+                        <span className="text-[14px] text-white font-mono bg-[rgba(138,138,138,0.2)] px-[8px] py-[2px] rounded-[4px]">{team.code}</span>
+                        <button
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(team.code);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                            toast({ title: "Team code copied!" });
+                          }}
+                          className="p-[4px] rounded-[4px] hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+                          title="Copy team code"
+                        >
+                          {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3 text-white opacity-60" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[13px] text-white opacity-70" style={{ fontFamily: 'var(--font-body)' }}>Members</span>
+                      <div className="flex items-center gap-[6px]">
+                        <div className="flex -space-x-2">
+                          {(team.teamMembers || []).slice(0, 4).map((member, i) => (
+                            <div 
+                              key={member.uid}
+                              className="w-[24px] h-[24px] rounded-full bg-gradient-to-br from-[#ff4d00] to-[#ff8800] flex items-center justify-center text-[10px] text-white font-semibold border-2 border-[#1a1a1a]"
+                              title={member.name}
+                            >
+                              {member.name.charAt(0).toUpperCase()}
+                            </div>
+                          ))}
+                        </div>
+                        <span className="text-[13px] text-white opacity-60">{(team.members || []).length}/4</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[13px] text-white opacity-70" style={{ fontFamily: 'var(--font-body)' }}>Role</span>
+                      <span className={`text-[12px] px-[8px] py-[2px] rounded-full ${team.leadId === user.uid ? 'bg-[rgba(255,77,0,0.2)] text-[#ff8800]' : 'bg-[rgba(138,138,138,0.2)] text-white opacity-70'}`} style={{ fontFamily: 'var(--font-body)' }}>
+                        {team.leadId === user.uid ? "Team Lead" : "Member"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                      Team Code
-                    </span>
-                    <span className="text-[14px] text-white font-mono" style={{ fontFamily: 'var(--font-body)' }}>
-                      {team.code}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                </div>
+
+                {/* Problem Statement Card */}
+                <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.1)] rounded-[12px] p-[16px] border border-[rgba(255,255,255,0.15)] flex flex-col">
+                  <div className="flex justify-between items-start mb-[8px]">
+                    <h3 className="text-[12px] uppercase tracking-wider text-white opacity-50" style={{ fontFamily: 'var(--font-body)' }}>
                       Problem Statement
-                    </span>
-                    <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                      {team.problemStatement}
-                    </span>
+                    </h3>
+                    {team.leadId === user.uid && team.status === "active" && (
+                      <button
+                        onClick={() => setEditPsModalOpen(true)}
+                        className="flex items-center gap-[4px] text-[11px] text-[#ff8800] hover:text-[#ff4d00] transition-colors"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                      >
+                        <Edit className="w-3 h-3" />
+                        Change
+                      </button>
+                    )}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                      Members
-                    </span>
-                    <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                      {(team.members || []).length} / 4
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                      Your Role
-                    </span>
-                    <span className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-                      {team.leadId === user.uid ? "Team Lead" : "Member"}
-                    </span>
-                  </div>
+                  <h4 className="text-[15px] text-white font-semibold mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>
+                    {team.problemStatement}
+                  </h4>
+                  <p className="text-[12px] text-white opacity-50 mt-auto" style={{ fontFamily: 'var(--font-body)' }}>
+                    {team.status === "active" 
+                      ? "You can change this before submitting" 
+                      : "Locked after submission"}
+                  </p>
                 </div>
               </div>
 
@@ -981,7 +1155,7 @@ export function TeamContainer() {
                     <div 
                       onClick={() => {
                         if (team.status === "active") {
-                          setTeam({ ...team, lookingForMembers: !team.lookingForMembers });
+                          handleToggleLookingForMembers(!team.lookingForMembers);
                         }
                       }}
                       className={`flex items-center gap-[12px] ${team.status === "active" ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
@@ -993,7 +1167,7 @@ export function TeamContainer() {
                           checked={team.lookingForMembers}
                           onChange={(e) => {
                             if (team.status === "active") {
-                              setTeam({ ...team, lookingForMembers: e.target.checked });
+                              handleToggleLookingForMembers(e.target.checked);
                             }
                           }}
                           disabled={team.status !== "active"}
@@ -1020,8 +1194,30 @@ export function TeamContainer() {
                       Enable this to let others know your team is open to new members. Your team will appear in the "Discover" section for participants looking for teams.
                     </p>
                   </div>
-                  <p className="text-[13px] text-[rgba(255,255,255,0.6)]" style={{ fontFamily: 'var(--font-body)' }}>
-                    Share your team code <span className="font-mono text-white">{team.code}</span> with others to invite them.
+                  <p className="text-[13px] text-[rgba(255,255,255,0.6)] flex items-center gap-[8px]" style={{ fontFamily: 'var(--font-body)' }}>
+                    Share your team code 
+                    <span className="font-mono text-white bg-[rgba(138,138,138,0.2)] px-[8px] py-[4px] rounded-[4px]">{team.code}</span>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(team.code);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                          toast({ title: "Team code copied!" });
+                        } catch (err) {
+                          console.error("Failed to copy:", err);
+                        }
+                      }}
+                      className="p-[6px] rounded-[4px] bg-[rgba(138,138,138,0.2)] hover:bg-[rgba(138,138,138,0.3)] transition-colors"
+                      title={copied ? "Copied!" : "Copy team code"}
+                    >
+                      {copied ? (
+                        <Check className="w-3 h-3 text-green-400" />
+                      ) : (
+                        <Copy className="w-3 h-3 text-white" />
+                      )}
+                    </button>
+                    with others to invite them.
                   </p>
                 </div>
               </FormSection>
@@ -1093,13 +1289,13 @@ export function TeamContainer() {
                   <div className="text-white text-center py-[20px] opacity-70" style={{ fontFamily: 'var(--font-body)' }}>
                     Loading requests...
                   </div>
-                ) : joinRequests.filter(r => r.type === 'request').length === 0 ? (
+                ) : incomingRequests.length === 0 ? (
                   <div className="text-white text-center py-[20px] opacity-70" style={{ fontFamily: 'var(--font-body)' }}>
                     No incoming join requests
                   </div>
                 ) : (
                   <div className="flex flex-col gap-[12px]">
-                    {joinRequests.filter(r => r.type === 'request').map((request) => (
+                    {incomingRequests.map((request) => (
                       <div
                         key={request.requestId}
                         className="flex items-center justify-between p-[12px] bg-[rgba(138,138,138,0.1)] rounded-[8px] border border-[rgba(255,255,255,0.1)]"
@@ -1151,13 +1347,13 @@ export function TeamContainer() {
                     <div className="text-white text-center py-[20px] opacity-70" style={{ fontFamily: 'var(--font-body)' }}>
                       Loading invitations...
                     </div>
-                  ) : joinRequests.filter(r => r.type === 'invite').length === 0 ? (
+                  ) : sentInvites.length === 0 ? (
                     <div className="text-white text-center py-[20px] opacity-70" style={{ fontFamily: 'var(--font-body)' }}>
                       No pending invitations
                     </div>
                   ) : (
                     <div className="flex flex-col gap-[12px]">
-                      {joinRequests.filter(r => r.type === 'invite').map((request) => (
+                      {sentInvites.map((request) => (
                         <div
                           key={request.requestId}
                           className="flex items-center justify-between p-[12px] bg-[rgba(138,138,138,0.1)] rounded-[8px] border border-[rgba(255,255,255,0.1)]"
@@ -1289,6 +1485,16 @@ export function TeamContainer() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Problem Statement Modal */}
+      <EditProblemStatementModal
+        isOpen={editPsModalOpen}
+        onClose={() => setEditPsModalOpen(false)}
+        currentStatement={team?.problemStatement || ""}
+        problemStatements={problemStatements}
+        onSubmit={handleUpdateProblemStatement}
+        isLoading={isUpdatingPs}
+      />
     </div>
   );
 }

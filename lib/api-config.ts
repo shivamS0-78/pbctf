@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
   submitApplication: '/api/team/submit-application',   // POST
   updateSubmission: '/api/team/update-submission',     // PUT
   withdrawSubmission: '/api/team/withdraw-submission', // PUT
+  updateProblemStatement: '/api/team/update-problem-statement', // PUT
   deleteTeam: '/api/team/delete',                      // DELETE
   getTeam: (teamCode: string) => `/api/team/${teamCode}`,  // GET
   getTeamMembers: (teamCode: string) => `/api/team/${teamCode}/members`,  // GET (for users looking for teams)
