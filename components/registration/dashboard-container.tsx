@@ -607,18 +607,18 @@ export function DashboardContainer() {
           <Users className="w-4 h-4" />
           Team
         </Button>
-        {/* {(!team || (isTeamLead() && team.memberCount < 4)) && (
+        {(team && isTeamLead() && team.memberCount < 4) && (
           <Button onClick={() => router.push("/dashboard/discover")} variant="secondary">
             <Search className="w-4 h-4" />
             Discover
           </Button>
-        )} */}
-        {team && isTeamLead() && getTeamStatus() === "active" && (
+        )}
+        {/* {team && isTeamLead() && getTeamStatus() === "active" && (
           <Button onClick={() => router.push("/dashboard/submission")} variant="secondary">
             <FileText className="w-4 h-4" />
             Submit Team
           </Button>
-        )}
+        )} */}
       </div>
 
       {/* Profile Completeness */}
@@ -676,7 +676,6 @@ export function DashboardContainer() {
       {invites.length > 0 && !team && (
         <FormSection
           title="Team Invitations"
-          status={<StatusBadge status="active" icon={Users} />}
         >
           <div className="flex flex-col gap-[12px]">
             {invites.map((invite) => (
