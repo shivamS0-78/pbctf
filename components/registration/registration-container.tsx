@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from '@/hooks/use-auth';
-import { LogIn, UserPlus, Zap } from "lucide-react";
+import { useToast } from '@/hooks/use-toast';
+import { LogIn, UserPlus, Zap, Info } from "lucide-react";
 import { FormInput } from "./form-input";
 import { FormTextarea } from "./form-textarea";
 import { FormSelect } from "./form-select";
 import { FormFileUpload } from "./form-file-upload";
 import { FormSection } from "./form-section";
 import { Button } from "./button";
+import { Card } from "./card";
 import { StickyAlert } from "./sticky-alert";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -23,6 +25,7 @@ interface RegistrationContainerProps {
 export function RegistrationContainer({ onSuccess }: RegistrationContainerProps) {
   const router = useRouter();
   const { register } = useAuth();
+  const { toast } = useToast();
   const [authMode, setAuthMode] = useState<"login" | "register">("register");
   const [alert, setAlert] = useState<{
     type: "success" | "error" | "warning" | "info";
@@ -212,7 +215,13 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
       if (registerData.referralCode) formData.append('referral_code', registerData.referralCode);
 
       // Register user - This will store user data
-      await register(formData);
+      try {
+        await register(formData);
+      } catch (registerError) {
+        // Re-throw to be caught by outer catch block
+        console.error('Register function error:', registerError);
+        throw registerError;
+      }
 
       setAlert({
         type: "success",
@@ -229,10 +238,41 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
         }
       }, 1500);
     } catch (error) {
+      // Extract error message - handle various error types
+      let errorMessage = "Registration failed. Please try again.";
+      
+      console.error('Registration catch block - error:', error);
+      console.error('Registration catch block - error type:', typeof error);
+      console.error('Registration catch block - error instanceof Error:', error instanceof Error);
+      
+      if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+        console.error('Registration catch block - error.message:', error.message);
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = String(error.message);
+      }
+      
+      console.error('Registration catch block - final errorMessage:', errorMessage);
+      
+      // Show alert with error message - errors are always shown and don't auto-hide quickly
       setAlert({
         type: "error",
-        message: error instanceof Error ? error.message : "Registration failed. Please try again.",
+        message: errorMessage,
       });
+      
+      // Also show toast notification as backup to ensure error is visible
+      toast({
+        variant: "destructive",
+        title: "Registration Failed",
+        description: errorMessage,
+      });
+      
+      console.log('Registration catch block - alert set with:', { type: "error", message: errorMessage });
+      
+      // Keep alert visible for longer so user can read it
+      // The StickyAlert component will auto-hide after 10 seconds for errors
     } finally {
       setIsSubmitting(false);
     }
@@ -242,10 +282,18 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
     const files = e.target.files;
     if (files && files[0]) {
       const file = files[0];
+      const maxSize = 1 * 1024 * 1024; // 1MB
+      
       if (file.type !== 'application/pdf') {
         setErrors({ ...errors, resume: "Please upload a PDF file" });
         return;
       }
+      
+      if (file.size > maxSize) {
+        setErrors({ ...errors, resume: "Resume file size must be under 1MB" });
+        return;
+      }
+      
       setResume(file);
       setResumeFileName(file.name);
       if (errors.resume) {
@@ -259,8 +307,26 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
   const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files[0]) {
-      setProfilePhoto(files[0]);
-      setProfilePhotoFileName(files[0].name);
+      const file = files[0];
+      const maxSize = 1 * 1024 * 1024; // 1MB
+      
+      if (!file.type.includes('image')) {
+        setErrors({ ...errors, profilePhoto: "Please upload an image file" });
+        return;
+      }
+      
+      if (file.size > maxSize) {
+        setErrors({ ...errors, profilePhoto: "Profile photo file size must be under 1MB" });
+        return;
+      }
+      
+      setProfilePhoto(file);
+      setProfilePhotoFileName(file.name);
+      if (errors.profilePhoto) {
+        const newErrors = { ...errors };
+        delete newErrors.profilePhoto;
+        setErrors(newErrors);
+      }
     }
   };
 
@@ -304,13 +370,25 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
           Register
         </Button>
         {DEBUG_MODE && (
-          <Button
-            onClick={handleAutoFill}
-            variant="secondary"
-          >
-            <Zap className="w-4 h-4" />
-            Auto-Fill (Debug)
-          </Button>
+          <>
+            <Button onClick={handleAutoFill} variant="secondary">
+              <Zap className="w-4 h-4" />
+              Auto-Fill (Debug)
+            </Button>
+            <Button
+              onClick={() => {
+                toast({
+                  title: "Debug Toast",
+                  description: "If you can see this, toasts are working.",
+                  variant: "destructive",
+                });
+              }}
+              variant="secondary"
+            >
+              <Zap className="w-4 h-4" />
+              Show Toast (Debug)
+            </Button>
+          </>
         )}
       </div>
 
@@ -321,6 +399,21 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
           onClose={() => setAlert(null)}
         />
       )}
+
+      {/* Card about filling more fields */}
+      <Card className="bg-[rgba(255,165,0,0.1)] border-orange-500/30">
+        <div className="flex items-start gap-[12px]">
+          <Info className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+          <div className="flex flex-col gap-[4px]">
+            <p className="text-[14px] text-white font-semibold" style={{ fontFamily: 'var(--font-body)' }}>
+              💡 Complete Your Profile
+            </p>
+            <p className="text-[13px] text-white/80" style={{ fontFamily: 'var(--font-body)' }}>
+              Filling out more fields increases your chances of being selected by teams. The more complete your profile, the more likely you are to stand out to potential team members!
+            </p>
+          </div>
+        </div>
+      </Card>
 
       {DEBUG_MODE && (
         <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(255,165,0,0.2)] border border-orange-500 rounded-[15px] p-[12px] flex items-center gap-[12px]">
@@ -368,7 +461,7 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
             <FormInput
               label="Password"
               type="password"
-              placeholder="Create a strong password (min 6 characters)"
+              placeholder="8+ characters with uppercase, lowercase, number, special character"
               required
               value={registerData.password}
               onChange={(e) =>
@@ -474,15 +567,17 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
                 {errors.resume}
               </span>
             )}
-            <p className="text-[12px] text-white opacity-70 bg-[rgba(255,77,0,0.1)] border border-[rgba(255,77,0,0.3)] rounded-[8px] p-[12px]" style={{ fontFamily: 'var(--font-body)' }}>
-              ⚠️ <strong>Privacy Notice:</strong> Your resume will be publicly visible and discoverable by other participants. Please redact any sensitive personal information (e.g., phone numbers, addresses, personal email addresses) before uploading.
-            </p>
             <FormFileUpload
               label="Profile Photo"
               accept="image/*"
               onChange={handleProfilePhotoChange}
               currentFile={profilePhotoFileName}
             />
+            {errors.profilePhoto && (
+              <span className="text-[12px] text-red-400" style={{ fontFamily: 'var(--font-body)' }}>
+                {errors.profilePhoto}
+              </span>
+            )}
             <div className="flex flex-col gap-[12px]">
               <p className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
                 Professional Links (Required)

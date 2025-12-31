@@ -18,16 +18,17 @@ export function StickyAlert({
   const [isAtTop, setIsAtTop] = useState(true);
 
   useEffect(() => {
-    // Auto-hide after duration
-    if (duration > 0) {
+    // Auto-hide after duration - errors stay longer so users can read them
+    const effectiveDuration = type === 'error' ? Math.max(duration, 10000) : duration; // Errors stay at least 10 seconds
+    if (effectiveDuration > 0) {
       const timer = setTimeout(() => {
         setIsVisible(false);
         setTimeout(onClose, 300); // Wait for animation to finish
-      }, duration);
+      }, effectiveDuration);
 
       return () => clearTimeout(timer);
     }
-  }, [duration, onClose]);
+  }, [duration, onClose, type]);
 
   useEffect(() => {
     // Check scroll position

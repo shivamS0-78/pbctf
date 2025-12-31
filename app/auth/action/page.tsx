@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { applyActionCode, onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/Firebase";
 import { FormSection } from "@/components/registration/form-section";
 import { Button } from "@/components/registration/button";
-import { StickyAlert } from "@/components/registration/sticky-alert";
 import { DotPattern } from "@/components/registration/dot-pattern";
-import { CheckCircle2, XCircle, ArrowRight } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight, Mail } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function AuthActionPage() {
@@ -17,6 +16,22 @@ export default function AuthActionPage() {
     const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
     const [message, setMessage] = useState("Verifying your request...");
     const [mode, setMode] = useState<string | null>(null);
+    const [countdown, setCountdown] = useState(3);
+    const [isRedirecting, setIsRedirecting] = useState(false);
+
+    const handleContinue = useCallback(() => {
+        setIsRedirecting(true);
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                router.push("/dashboard");
+            } else {
+                router.push("/login");
+            }
+        }, undefined, () => {
+            // If no user, redirect to login
+            router.push("/login");
+        });
+    }, [router]);
 
     useEffect(() => {
         const actionCode = searchParams.get("oobCode");
@@ -36,7 +51,7 @@ export default function AuthActionPage() {
                 if (modeParam === "verifyEmail") {
                     await applyActionCode(auth, actionCode);
                     setStatus("success");
-                    setMessage("Your email has been successfully verified! You can now access all features.");
+                    setMessage("Your email has been successfully verified! Redirecting you to the dashboard...");
 
                     if (auth.currentUser) {
                         await auth.currentUser.reload();
@@ -66,7 +81,7 @@ export default function AuthActionPage() {
 
                 if (isActuallyVerified) {
                     setStatus("success");
-                    setMessage("Your email has already been verified. You can proceed to the dashboard.");
+                    setMessage("Your email has already been verified. Redirecting you to the dashboard...");
                     return;
                 }
 
@@ -93,85 +108,138 @@ export default function AuthActionPage() {
         handleVerification();
     }, [searchParams]);
 
-    const handleContinue = () => {
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                router.push("/dashboard");
-            } else {
-                router.push("/login");
-            }
-        });
-    };
+    // Auto-redirect after successful verification
+    useEffect(() => {
+        if (status === "success") {
+            const countdownInterval = setInterval(() => {
+                setCountdown((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(countdownInterval);
+                        setIsRedirecting(true);
+                        handleContinue();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+
+            return () => clearInterval(countdownInterval);
+        }
+    }, [status, handleContinue]);
 
     return (
         <div
-            className="min-h-screen w-full flex flex-col items-center justify-center relative font-sans text-white p-4"
+            className="min-h-screen w-full flex flex-col items-start relative font-['Inter',sans-serif]"
             style={{
                 backgroundImage: "linear-gradient(90deg, rgb(23, 23, 23) 0%, rgb(23, 23, 23) 100%)",
             }}
         >
-            <div className="absolute inset-0 z-0">
+            <div className="bg-[#171717] w-full relative flex-1">
                 <div
-                    className="absolute inset-0 z-0 opacity-40"
+                    className="flex flex-col items-center justify-center w-full min-h-screen pb-[80px] pt-[60px] px-[40px] relative"
                     style={{
                         backgroundImage:
                             "url('data:image/svg+xml;utf8,<svg viewBox=\\'0 0 1440 652\\' xmlns=\\'http://www.w3.org/2000/svg\\' preserveAspectRatio=\\'none\\'><rect x=\\'0\\' y=\\'0\\' height=\\'100%\\' width=\\'100%\\' fill=\\'url(%23grad)\\' opacity=\\'1\\'/><defs><radialGradient id=\\'grad\\' gradientUnits=\\'userSpaceOnUse\\' cx=\\'0\\' cy=\\'0\\' r=\\'10\\' gradientTransform=\\'matrix(31.68 0 0 22.168 0 174.74)\\'><stop stop-color=\\'rgba(62,32,19,1)\\' offset=\\'0.10445\\'/><stop stop-color=\\'rgba(62,32,19,0)\\' offset=\\'1\\'/></radialGradient></defs></svg>')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
                     }}
-                />
-                <DotPattern />
-            </div>
+                >
+                    <div className="max-w-[600px] w-full z-10 flex flex-col gap-[32px] items-center">
+                        {status === "loading" && (
+                            <FormSection title="Email Verification">
+                                <div className="flex flex-col gap-[20px] items-center text-center py-8">
+                                    <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[#ff4d00]/10">
+                                        <Mail className="h-8 w-8 text-[#ff4d00] animate-pulse" />
+                                    </div>
+                                    <Spinner size="lg" />
+                                    <p className="font-['Inter',sans-serif] text-[15.9px] text-white opacity-90 leading-[23.8px]">
+                                        Verifying your email address...
+                                    </p>
+                                </div>
+                            </FormSection>
+                        )}
 
-            <div className="max-w-[480px] w-full z-10 relative">
-                <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-[24px] p-8 md:p-10 shadow-2xl flex flex-col items-center text-center gap-8">
+                        {status === "success" && (
+                            <FormSection title="Email Verified">
+                                <div className="flex flex-col gap-[20px] items-center text-center">
+                                    <div className="mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 ring-2 ring-green-500/30">
+                                        <CheckCircle2 className="h-12 w-12 text-green-500" />
+                                    </div>
+                                    <div className="flex flex-col gap-[12px]">
+                                        <h1 className="font-['Instrument_Serif',sans-serif] text-[36px] text-white leading-[40px] tracking-[-1px]">
+                                            Verification Successful
+                                        </h1>
+                                        <p className="font-['Inter',sans-serif] text-[15.9px] text-white opacity-90 leading-[23.8px]">
+                                            {message}
+                                        </p>
+                                    </div>
 
-                    {status === "loading" && (
-                        <div className="flex flex-col items-center gap-6 py-8">
-                            <Spinner size="xl" />
-                            <h1 className="font-['Instrument_Serif',serif] text-4xl">Verifying...</h1>
-                        </div>
-                    )}
+                                    {isRedirecting ? (
+                                        <div className="flex flex-col gap-3 items-center mt-4">
+                                            <Spinner size="md" />
+                                            <p className="font-['Inter',sans-serif] text-[14px] text-white opacity-70">
+                                                Redirecting to dashboard...
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="bg-white/5 p-4 rounded-lg mt-4">
+                                                <p className="font-['Inter',sans-serif] text-[14px] text-white opacity-70">
+                                                    Redirecting in <span className="font-semibold text-white">{countdown}</span> {countdown === 1 ? 'second' : 'seconds'}...
+                                                </p>
+                                            </div>
+                                            <div className="w-full mt-2">
+                                                <Button
+                                                    variant="primary"
+                                                    onClick={handleContinue}
+                                                    className="w-full"
+                                                >
+                                                    Continue to Dashboard
+                                                    <ArrowRight className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </FormSection>
+                        )}
 
-                    {status === "success" && (
-                        <>
-                            <div className="rounded-full bg-green-500/10 p-5 ring-1 ring-green-500/30 shadow-[0_0_30px_-5px_rgba(34,197,94,0.3)]">
-                                <CheckCircle2 className="h-16 w-16 text-green-500" />
-                            </div>
-                            <div className="space-y-3">
-                                <h1 className="font-['Instrument_Serif',serif] text-4xl">Email Verified</h1>
-                                <p className="text-white/70 text-base leading-relaxed">
-                                    {message}
-                                </p>
-                            </div>
-                        </>
-                    )}
+                        {status === "error" && (
+                            <FormSection title="Verification Failed">
+                                <div className="flex flex-col gap-[20px] items-center text-center">
+                                    <div className="mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-red-500/10 ring-2 ring-red-500/30">
+                                        <XCircle className="h-12 w-12 text-red-500" />
+                                    </div>
+                                    <div className="flex flex-col gap-[12px]">
+                                        <h1 className="font-['Instrument_Serif',sans-serif] text-[36px] text-white leading-[40px] tracking-[-1px]">
+                                            Verification Failed
+                                        </h1>
+                                        <p className="font-['Inter',sans-serif] text-[15.9px] text-white opacity-90 leading-[23.8px]">
+                                            {message}
+                                        </p>
+                                    </div>
 
-                    {status === "error" && (
-                        <>
-                            <div className="rounded-full bg-red-500/10 p-5 ring-1 ring-red-500/30 shadow-[0_0_30px_-5px_rgba(239,68,68,0.3)]">
-                                <XCircle className="h-16 w-16 text-red-500" />
-                            </div>
-                            <div className="space-y-3">
-                                <h1 className="font-['Instrument_Serif',serif] text-4xl">Verification Failed</h1>
-                                <p className="text-white/70 text-base leading-relaxed">
-                                    {message}
-                                </p>
-                            </div>
-                        </>
-                    )}
+                                    <div className="bg-white/5 p-4 rounded-lg mt-4">
+                                        <p className="font-['Inter',sans-serif] text-[13px] text-white opacity-60">
+                                            If you continue to experience issues, please contact support or request a new verification email.
+                                        </p>
+                                    </div>
 
-                    {status !== "loading" && (
-                        <Button
-                            variant="primary"
-                            onClick={handleContinue}
-                            className="w-full h-12 text-base mt-2"
-                        >
-                            {status === "success" ? "Continue to Dashboard" : "Return to Login"}
-                            <ArrowRight className="ml-2 h-5 w-5" />
-                        </Button>
-                    )}
+                                    <div className="flex flex-col gap-3 w-full mt-2">
+                                        <Button
+                                            variant="primary"
+                                            onClick={() => router.push("/login")}
+                                            className="w-full"
+                                        >
+                                            Return to Login
+                                            <ArrowRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </FormSection>
+                        )}
+                    </div>
                 </div>
+
+                <DotPattern />
             </div>
         </div>
     );

@@ -171,18 +171,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 body: formData,
             });
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                // If response is not JSON, create a basic error
+                setLoading(false);
+                throw new Error(`Registration failed with status ${response.status}. Please try again.`);
+            }
 
             if (!response.ok) {
                 setLoading(false); // Stop loading on error
+                // Extract error message from response - handle both message and error fields
+                const errorMessage = data?.message || data?.error || `Registration failed with status ${response.status}. Please try again.`;
+                
                 if (response.status === 400) {
-                    throw new Error(data.message || 'Invalid registration data. Please check all fields.');
+                    throw new Error(errorMessage);
                 } else if (response.status === 409) {
-                    throw new Error(data.message || 'Email already registered. Please login instead.');
+                    // 409 is used for conflicts: duplicate email, phone, discord, etc.
+                    throw new Error(errorMessage);
                 } else if (response.status === 500) {
-                    throw new Error(data.message || 'Server error. Please try again later.');
+                    throw new Error(errorMessage);
                 } else {
-                    throw new Error(data.message || 'Registration failed. Please try again.');
+                    throw new Error(errorMessage);
                 }
             }
 
@@ -206,9 +217,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setLoading(false);
             throw new Error(data.message || 'Registration failed. Please try again.');
         } catch (error) {
-            console.error('Registration error:', error);
+            console.error('Auth provider register error:', error);
+            console.error('Auth provider register error type:', typeof error);
+            console.error('Auth provider register error instanceof Error:', error instanceof Error);
             setLoading(false); // Ensure loading is stopped on error
-            throw error;
+            // Ensure we always throw an Error object
+            if (error instanceof Error) {
+                throw error;
+            } else {
+                throw new Error(String(error) || 'Registration failed. Please try again.');
+            }
         }
     };
 
@@ -241,7 +259,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const sendVerificationEmail = async () => {
         if (auth.currentUser) {
-            await sendEmailVerification(auth.currentUser);
+            // Include continueUrl to redirect to dashboard after verification
+            const actionCodeSettings = {
+                url: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/action?continueUrl=/dashboard`,
+                handleCodeInApp: false,
+            };
+            await sendEmailVerification(auth.currentUser, actionCodeSettings);
         }
     };
 
