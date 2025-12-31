@@ -681,7 +681,6 @@ export function DashboardContainer() {
           {teamStatus === "none" && (
             <FormSection
               title="Team Status"
-              status={<StatusBadge status="none" icon={AlertCircle} />}
             >
               <div className="flex flex-col gap-[16px]">
                 <AlertBanner 

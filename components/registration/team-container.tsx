@@ -191,7 +191,7 @@ export function TeamContainer() {
                     email: m.email,
                     role: m.role || 'Member',
                   })) || [],
-                  problemStatement: teamInfo.appliedFor?.title || 'No problem statement selected',
+                  problemStatement: teamInfo.appliedFor?.title || '',
                   lookingForMembers: teamInfo.isLooking || false,
                   status: teamInfo.teamStatus === 'pending' ? 'active' :
                     teamInfo.teamStatus === 'submitted' ? 'submitted' :
@@ -448,6 +448,20 @@ export function TeamContainer() {
   };
 
   const handleUserClick = async (userId: string) => {
+    // Prevent team members from seeing profiles of other team members
+    if (team && userId !== user?.uid) {
+      const isTeamMember = team.teamMembers?.some((member: TeamMember) => member.uid === userId);
+      const isTeamLead = team.leadId === userId;
+      if (isTeamMember || isTeamLead) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "You cannot view profiles of your team members.",
+        });
+        return;
+      }
+    }
+
     setSelectedUserId(userId);
     setIsLoadingUser(true);
     setUserError(null);
@@ -545,7 +559,7 @@ export function TeamContainer() {
                 email: m.email,
                 role: m.role || 'Member',
               })) || [],
-              problemStatement: teamInfo.appliedFor?.title || 'No problem statement selected',
+              problemStatement: teamInfo.appliedFor?.title || '',
               lookingForMembers: teamInfo.isLooking || false,
               status: teamInfo.teamStatus === 'pending' ? 'active' :
                 teamInfo.teamStatus === 'submitted' ? 'submitted' :
@@ -770,7 +784,7 @@ export function TeamContainer() {
                 email: m.email,
                 role: m.role || 'Member',
               })) || [],
-              problemStatement: teamInfo.appliedFor?.title || 'No problem statement selected',
+              problemStatement: teamInfo.appliedFor?.title || '',
               lookingForMembers: teamInfo.isLooking || false,
               status: teamInfo.teamStatus === 'pending' ? 'active' :
                 teamInfo.teamStatus === 'submitted' ? 'submitted' :
@@ -1116,14 +1130,22 @@ export function TeamContainer() {
                       </button>
                     )}
                   </div>
-                  <h4 className="text-[15px] text-white font-semibold mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>
-                    {team.problemStatement}
-                  </h4>
-                  <p className="text-[12px] text-white opacity-50 mt-auto" style={{ fontFamily: 'var(--font-body)' }}>
-                    {team.status === "active" 
-                      ? "You can change this before submitting" 
-                      : "Locked after submission"}
-                  </p>
+                  {team.problemStatement ? (
+                    <>
+                      <h4 className="text-[15px] text-white font-semibold mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>
+                        {team.problemStatement}
+                      </h4>
+                      <p className="text-[12px] text-white opacity-50 mt-auto" style={{ fontFamily: 'var(--font-body)' }}>
+                        {team.status === "active" 
+                          ? "You can change this before submitting" 
+                          : "Locked after submission"}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-[14px] text-white opacity-60" style={{ fontFamily: 'var(--font-body)' }}>
+                      No problem statement selected yet
+                    </p>
+                  )}
                 </div>
               </div>
 

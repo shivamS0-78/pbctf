@@ -61,6 +61,7 @@ export function DiscoverContainer() {
   const [invitingUser, setInvitingUser] = useState<string | null>(null);
   const [sentInvites, setSentInvites] = useState<Set<string>>(new Set()); // User IDs
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [userIsLooking, setUserIsLooking] = useState(false);
 
   // Debounce search query
   useEffect(() => {
@@ -88,6 +89,25 @@ export function DiscoverContainer() {
         if (!token) {
           setIsLoading(false);
           return;
+        }
+
+        // Fetch user profile to check isLooking status
+        let userIsLookingValue = false;
+        try {
+          const userProfileResponse = await fetch(API_ENDPOINTS.userProfile, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (userProfileResponse.ok) {
+            const userProfileData = await userProfileResponse.json();
+            const profileData = userProfileData.success ? userProfileData.data : userProfileData;
+            userIsLookingValue = profileData?.isLooking || false;
+            setUserIsLooking(userIsLookingValue);
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
         }
 
         // Build query string
@@ -143,60 +163,78 @@ export function DiscoverContainer() {
           }
         }
 
-        // Fetch teams looking for members
-        const teamsResponse = await fetch(`${API_ENDPOINTS.lookingForMembers}${queryParams}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        // Only fetch teams/participants if user has isLooking enabled
+        if (userIsLookingValue || isTeamLead) {
+          // Fetch teams looking for members (only if user is looking for team or is team lead)
+          if (!isTeamLead) {
+            const teamsResponse = await fetch(`${API_ENDPOINTS.lookingForMembers}${queryParams}`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            });
 
-        if (teamsResponse.ok) {
-          const teamsData = await teamsResponse.json();
-          if (teamsData.success && teamsData.data && Array.isArray(teamsData.data.teams)) {
-            // Transform API response to match component interface - store all available data
-            const transformed = teamsData.data.teams.map((team: any) => ({
-              teamName: team.teamName,
-              teamCode: team.teamCode,
-              problemStatement: team.appliedFor?.title || 'No problem statement selected',
-              currentMembers: team.currentMemberCount || 0,
-              maxMembers: team.maxMembers || 4,
-              teamLead: team.teamLead,
-              teamMembers: team.teamMembers,
-              appliedFor: team.appliedFor,
-            }));
-            setTeamsLookingForMembers(transformed);
-          } else {
-            setTeamsLookingForMembers([]);
+            if (teamsResponse.ok) {
+              const teamsData = await teamsResponse.json();
+              if (teamsData.success && teamsData.data && Array.isArray(teamsData.data.teams)) {
+                // Transform API response to match component interface - store all available data
+                const transformed = teamsData.data.teams.map((team: any) => ({
+                  teamName: team.teamName,
+                  teamCode: team.teamCode,
+                  problemStatement: team.appliedFor?.title || 'No problem statement selected',
+                  currentMembers: team.currentMemberCount || 0,
+                  maxMembers: team.maxMembers || 4,
+                  teamLead: team.teamLead,
+                  teamMembers: team.teamMembers,
+                  appliedFor: team.appliedFor,
+                }));
+                setTeamsLookingForMembers(transformed);
+              } else {
+                setTeamsLookingForMembers([]);
+              }
+            }
           }
-        }
 
-        // Fetch participants looking for teams
-        const participantsResponse = await fetch(`${API_ENDPOINTS.lookingForTeam}${queryParams}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+          // Fetch participants looking for teams (only if user is looking for team or is team lead)
+          const participantsResponse = await fetch(`${API_ENDPOINTS.lookingForTeam}${queryParams}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
 
-        if (participantsResponse.ok) {
-          const participantsData = await participantsResponse.json();
-          if (participantsData.success && participantsData.data && Array.isArray(participantsData.data.users)) {
-            // Transform API response to match component interface
-            const transformed = participantsData.data.users.map((user: any) => ({
-              id: user.id, // Store uid for fetching details
-              name: user.name,
-              skills: user.bio || 'No skills listed',
-              interests: user.bio || 'No interests listed',
-              university: user.organisation || undefined,
-              email: user.email,
-            }));
-            setParticipantsLookingForTeams(transformed);
-          } else {
-            setParticipantsLookingForTeams([]);
+          if (participantsResponse.ok) {
+            const participantsData = await participantsResponse.json();
+            if (participantsData.success && participantsData.data && Array.isArray(participantsData.data.users)) {
+              // Transform API response to match component interface
+              // Filter out own profile if user is looking for participants (team lead)
+              const transformed = participantsData.data.users
+                .filter((userData: any) => {
+                  // If user is team lead looking for participants, exclude their own profile
+                  if (isTeamLead && userData.id === user?.uid) {
+                    return false;
+                  }
+                  return true;
+                })
+                .map((user: any) => ({
+                  id: user.id, // Store uid for fetching details
+                  name: user.name,
+                  skills: user.bio || 'No skills listed',
+                  interests: user.bio || 'No interests listed',
+                  university: user.organisation || undefined,
+                  email: user.email,
+                }));
+              setParticipantsLookingForTeams(transformed);
+            } else {
+              setParticipantsLookingForTeams([]);
+            }
           }
+        } else {
+          // User doesn't have isLooking enabled, so don't show any teams/participants
+          setTeamsLookingForMembers([]);
+          setParticipantsLookingForTeams([]);
         }
 
         // Fetch user's join requests
@@ -230,7 +268,7 @@ export function DiscoverContainer() {
     };
 
     fetchData();
-  }, [getToken, user, debouncedSearchQuery]);
+  }, [getToken, user, debouncedSearchQuery, isTeamLead]);
 
   const handleSendRequest = async (teamCode: string) => {
     if (!user) return;
@@ -451,6 +489,39 @@ export function DiscoverContainer() {
   };
 
   const handleUserClick = async (userId: string) => {
+    // Prevent team members from seeing profiles of other team members
+    if (user?.teamCode && userId !== user.uid) {
+      // Check if the clicked user is a member of the same team
+      try {
+        const token = await getToken();
+        if (token) {
+          const teamResponse = await fetch(API_ENDPOINTS.getTeam(user.teamCode), {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            }
+          });
+          if (teamResponse.ok) {
+            const teamData = await teamResponse.json();
+            if (teamData.success && teamData.data) {
+              const teamMembers = teamData.data.teamMembers || [];
+              const isTeamMember = teamMembers.some((member: any) => member.uid === userId);
+              if (isTeamMember) {
+                toast({
+                  variant: "destructive",
+                  title: "Access Denied",
+                  description: "You cannot view profiles of your team members.",
+                });
+                return;
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking team membership:', error);
+      }
+    }
+
     setSelectedUserId(userId);
     setIsLoadingUser(true);
     setUserError(null);
@@ -523,6 +594,18 @@ export function DiscoverContainer() {
             </Button>
           </div>
         </div>
+      ) : !userIsLooking && !isTeamLead ? (
+        <div className="flex flex-col items-center justify-center py-[60px] text-center">
+          <div className="bg-[rgba(255,77,0,0.1)] border border-[#ff4d00]/30 rounded-lg p-8 max-w-2xl">
+            <h2 className="text-2xl font-bold text-[#ff4d00] mb-4">Enable "Looking for Team" to Discover</h2>
+            <p className="text-gray-300 mb-6">
+              You need to enable "Looking for Team" in your profile settings to see teams and participants looking for team members.
+            </p>
+            <Button onClick={() => router.push("/dashboard/profile")} variant="primary">
+              Go to Profile Settings
+            </Button>
+          </div>
+        </div>
       ) : (
         <>
           {!user?.teamCode && (
@@ -532,18 +615,16 @@ export function DiscoverContainer() {
               className="mb-6"
             />
           )}
-          {/* Privacy Notice - shown when viewing participants */}
-          {activeTab === "participants" && (
-            <AlertBanner
-              type="warning"
-              message={
-                <div>
-                  <strong>Privacy Notice:</strong> When you mark yourself as "looking for team", the following information from your profile will be publicly visible and discoverable by other participants: your name, bio, organisation, profile picture, resume, and all professional/social links (GitHub, LinkedIn, LeetCode, Kaggle, Devfolio, Portfolio, etc.). Please ensure you've redacted any sensitive personal information (e.g., phone numbers, addresses, personal email addresses) from your resume before marking yourself as available.
-                </div>
-              }
-              className="mb-6"
-            />
-          )}
+          {/* Privacy Notice - shown for both teams and participants tabs */}
+          <AlertBanner
+            type="warning"
+            message={
+              <div>
+                <strong>Privacy Notice:</strong> When you mark yourself as "looking for team", the following information from your profile will be publicly visible and discoverable by other participants: your name, bio, organisation, profile picture, resume, and all professional/social links (GitHub, LinkedIn, LeetCode, Kaggle, Devfolio, Portfolio, etc.). Please ensure you've redacted any sensitive personal information (e.g., phone numbers, addresses, personal email addresses) from your resume before marking yourself as available.
+              </div>
+            }
+            className="mb-6"
+          />
           <FormSection title={isTeamLead ? "Find Team Members" : "What are you looking for?"}>
             <div className="flex flex-col gap-[24px]">
               {/* Tab Navigation */}

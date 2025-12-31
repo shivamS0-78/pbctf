@@ -8,6 +8,9 @@ import { DotPattern } from "@/components/registration/dot-pattern";
 import { FormSection } from "@/components/registration/form-section";
 import { StickyAlert } from "@/components/registration/sticky-alert";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/registration/button";
+import { Modal } from "@/components/registration/modal";
+import { Home, ExternalLink } from "lucide-react";
 
 interface ProblemStatement {
     id: string;
@@ -27,6 +30,7 @@ export default function ProblemStatementsPage() {
         type: "success" | "error" | "warning" | "info";
         message: string;
     } | null>(null);
+    const [selectedProblemStatement, setSelectedProblemStatement] = useState<ProblemStatement | null>(null);
 
     const handleLogout = () => {
         logout();
@@ -120,29 +124,76 @@ export default function ProblemStatementsPage() {
                             />
                         )}
 
-                        <h1 className="text-4xl md:text-6xl font-heading mb-12 text-center text-white drop-shadow-[0_0_15px_rgba(255,77,0,0.5)]">
-                            Problem Statements
-                        </h1>
+                        <div className="flex items-center justify-between mb-12">
+                            <h1 className="text-4xl md:text-6xl font-heading text-white drop-shadow-[0_0_15px_rgba(255,77,0,0.5)]">
+                                Problem Statements
+                            </h1>
+                            <Button onClick={() => router.push("/dashboard")} variant="secondary">
+                                <Home className="w-4 h-4" />
+                                Back to Dashboard
+                            </Button>
+                        </div>
 
                         {problemStatements.length === 0 ? (
                             <FormSection title="No Active Problems">
                                 <p className="text-xl text-white/60 font-body text-center">No active problem statements found.</p>
                             </FormSection>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {problemStatements.map((ps) => (
-                                    <FormSection
-                                        key={ps.id}
-                                        title={ps.title}
-                                    >
-                                        <div className="flex flex-col gap-4">
-                                            <p className="text-white/80 leading-relaxed font-body">
-                                                {ps.description}
+                            <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px] max-w-6xl mx-auto">
+                                    {problemStatements.map((ps) => {
+                                        const description = ps.description || '';
+                                        const shouldTruncate = description.length > 200;
+                                        const displayText = shouldTruncate 
+                                            ? description.substring(0, 200) + '...'
+                                            : description;
+
+                                        return (
+                                            <div
+                                                key={ps.id}
+                                                className="relative p-[20px] rounded-[12px] border-2 border-[rgba(255,255,255,0.2)] bg-[rgba(138,138,138,0.1)] hover:border-[rgba(255,255,255,0.3)] hover:bg-[rgba(138,138,138,0.15)] transition-all duration-300 cursor-pointer"
+                                                onClick={() => setSelectedProblemStatement(ps)}
+                                            >
+                                                <h3 className="text-[18px] font-semibold text-white mb-[12px]" style={{ fontFamily: 'var(--font-body)' }}>
+                                                    {ps.title}
+                                                </h3>
+                                                <p className="text-[14px] text-white opacity-80 leading-relaxed mb-[12px]" style={{ fontFamily: 'var(--font-body)' }}>
+                                                    {displayText}
+                                                </p>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedProblemStatement(ps);
+                                                    }}
+                                                    className="w-full mt-[8px] flex items-center justify-center gap-[6px] px-[12px] py-[6px] bg-[rgba(255,77,0,0.2)] hover:bg-[rgba(255,77,0,0.3)] border border-[rgba(255,77,0,0.4)] rounded-[8px] text-[13px] text-white transition-colors"
+                                                    style={{ fontFamily: 'var(--font-body)' }}
+                                                >
+                                                    <span>Read More</span>
+                                                    <ExternalLink className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Problem Statement Modal */}
+                                <Modal
+                                    isOpen={!!selectedProblemStatement}
+                                    onClose={() => setSelectedProblemStatement(null)}
+                                    title={selectedProblemStatement?.title || ''}
+                                >
+                                    <div className="flex flex-col gap-[20px]">
+                                        <div>
+                                            <h3 className="text-[16px] text-white opacity-90 mb-[12px]" style={{ fontFamily: 'var(--font-body)' }}>
+                                                Description
+                                            </h3>
+                                            <p className="text-[14px] text-white opacity-80 leading-relaxed whitespace-pre-wrap" style={{ fontFamily: 'var(--font-body)' }}>
+                                                {selectedProblemStatement?.description || 'No description available.'}
                                             </p>
                                         </div>
-                                    </FormSection>
-                                ))}
-                            </div>
+                                    </div>
+                                </Modal>
+                            </>
                         )}
                     </div>
                 </div>
