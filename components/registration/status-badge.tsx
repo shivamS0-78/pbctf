@@ -12,28 +12,28 @@ export function StatusBadge({
 }: StatusBadgeProps) {
   const getStatusColor = () => {
     if (!status || typeof status !== 'string') {
-      return "bg-[rgba(138,138,138,0.2)] border-[rgba(255,255,255,0.38)]";
+      return "bg-white/5 border-white/38";
     }
     switch (status.toLowerCase()) {
       case "rsvped":
       case "confirmed":
       case "shortlisted":
       case "accepted":
-        return "bg-[rgba(0,200,0,0.2)] border-green-500";
+        return "bg-[rgba(255,77,0,0.2)] border-[#ff4d00]";
       case "pending":
       case "active":
       case "under-review":
-        return "bg-[rgba(255,204,0,0.2)] border-yellow-500";
+        return "bg-[rgba(255,77,0,0.15)] border-[#ff8800]";
       case "submitted":
-        return "bg-[rgba(59,130,246,0.2)] border-blue-500";
+        return "bg-white/5 border-white/38";
       case "declined":
       case "rejected":
       case "rsvp_declined":
-        return "bg-[rgba(200,0,0,0.2)] border-red-500";
+        return "bg-black/50 border-[#ff4d00]";
       case "withdrawn":
-        return "bg-[rgba(100,100,100,0.2)] border-gray-500";
+        return "bg-white/5 border-white/20";
       default:
-        return "bg-[rgba(138,138,138,0.2)] border-[rgba(255,255,255,0.38)]";
+        return "bg-white/5 border-white/38";
     }
   };
 

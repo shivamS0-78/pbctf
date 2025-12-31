@@ -72,7 +72,7 @@ export function TeamOverviewCard({ team, isLead, status }: TeamOverviewCardProps
                 title={copied ? "Copied!" : "Copy team code"}
               >
                 {copied ? (
-                  <Check className="w-4 h-4 text-green-400" />
+                  <Check className="w-4 h-4 text-white" />
                 ) : (
                   <Copy className="w-4 h-4" />
                 )}

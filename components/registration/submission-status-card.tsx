@@ -23,40 +23,40 @@ export function SubmissionStatusCard({
       case "submitted":
         return {
           icon: Clock,
-          color: "text-yellow-400",
-          bgColor: "bg-yellow-400/10",
+          color: "text-white",
+          bgColor: "bg-white/10",
           message: "Project submitted! Waiting for evaluation.",
-          bannerType: "yellow" as const,
+          bannerType: "info" as const,
         };
       case "under-review":
         return {
           icon: AlertCircle,
-          color: "text-orange-400",
-          bgColor: "bg-orange-400/10",
+          color: "text-white",
+          bgColor: "bg-[rgba(255,77,0,0.15)]",
           message: "Your project is under review by evaluators.",
           bannerType: "warning" as const,
         };
       case "shortlisted":
         return {
           icon: Award,
-          color: "text-green-400",
-          bgColor: "bg-green-400/10",
+          color: "text-white",
+          bgColor: "bg-[rgba(255,77,0,0.2)]",
           message: "🎉 Congratulations! Your team has been shortlisted!",
           bannerType: "success" as const,
         };
       case "confirmed":
         return {
           icon: CheckCircle,
-          color: "text-green-400",
-          bgColor: "bg-green-400/10",
+          color: "text-white",
+          bgColor: "bg-[rgba(255,77,0,0.2)]",
           message: "✅ RSVP Confirmed! See you at the event!",
           bannerType: "success" as const,
         };
       case "declined":
         return {
           icon: X,
-          color: "text-red-400",
-          bgColor: "bg-red-400/10",
+          color: "text-white",
+          bgColor: "bg-black/50",
           message: "You have declined participation.",
           bannerType: "error" as const,
         };

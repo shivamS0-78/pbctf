@@ -35,13 +35,13 @@ export function FormInput({
         onChange={onChange}
         disabled={disabled}
         className={`backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.2)] border ${error
-            ? "border-red-500"
+            ? "border-[#ff4d00]"
             : "border-[rgba(255,255,255,0.38)]"
           } border-solid rounded-[15px] px-[18px] py-[12px] text-white text-[14px] placeholder:text-[rgba(255,255,255,0.5)] focus:outline-none focus:border-[#ff4d00] focus:shadow-[0px_0px_10px_0px_rgba(255,77,0,0.3)] transition-all disabled:cursor-not-allowed`}
         style={{ fontFamily: 'var(--font-body)' }}
       />
       {error && (
-        <span className="text-[12px] text-red-400" style={{ fontFamily: 'var(--font-body)' }}>
+        <span className="text-[12px] text-[#ff4d00]" style={{ fontFamily: 'var(--font-body)' }}>
           {error}
         </span>
       )}

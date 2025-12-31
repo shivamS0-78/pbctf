@@ -887,7 +887,7 @@ export function DashboardContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteTeam}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-black/50 hover:bg-black/60 text-white border border-[#ff4d00]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Delete Team
@@ -913,7 +913,7 @@ export function DashboardContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={executeWithdrawSubmission}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-black/50 hover:bg-black/60 text-white border border-[#ff4d00]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Withdraw Submission
@@ -939,7 +939,7 @@ export function DashboardContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={executeRemoveMember}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-black/50 hover:bg-black/60 text-white border border-[#ff4d00]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Remove Member
@@ -965,7 +965,7 @@ export function DashboardContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleLeaveTeam}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-black/50 hover:bg-black/60 text-white border border-[#ff4d00]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Leave Team

@@ -15,17 +15,17 @@ export function AlertBanner({
   const getTypeClass = () => {
     switch (type) {
       case "success":
-        return "bg-[rgba(0,200,0,0.2)] border-green-500";
+        return "bg-[rgba(255,77,0,0.2)] border-[#ff4d00]";
       case "error":
-        return "bg-[rgba(200,0,0,0.2)] border-red-500";
+        return "bg-black/50 border-[#ff4d00]";
       case "warning":
-        return "bg-[rgba(255,165,0,0.2)] border-orange-500";
+        return "bg-[rgba(255,77,0,0.15)] border-[#ff8800]";
       case "yellow":
-        return "bg-[rgba(255,235,59,0.2)] border-[#ffeb3b]";
+        return "bg-[rgba(255,77,0,0.15)] border-[#ff8800]";
       case "info":
-        return "bg-[rgba(138,138,138,0.2)] border-[rgba(255,255,255,0.38)]";
+        return "bg-white/5 border-white/38";
       default:
-        return "bg-[rgba(138,138,138,0.2)] border-[rgba(255,255,255,0.38)]";
+        return "bg-white/5 border-white/38";
     }
   };
 

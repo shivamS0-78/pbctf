@@ -270,7 +270,7 @@ export function ProfileContainer() {
                 id="profileLookingForTeam"
                 checked={profileData.isLooking}
                 onCheckedChange={handleToggleLooking}
-                className="data-[state=checked]:bg-green-500 border-green-500"
+                className="data-[state=checked]:bg-[#ff4d00] border-[#ff4d00]"
               />
             <label htmlFor="profileLookingForTeam" className="text-[14px] font-semibold text-white cursor-pointer" style={{ fontFamily: 'var(--font-body)' }}>
               Looking for a Team?

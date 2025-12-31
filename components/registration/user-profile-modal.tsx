@@ -89,7 +89,7 @@ export function UserProfileModal({
         </div>
       ) : error ? (
         <div className="text-white text-center py-[40px]">
-          <p className="text-red-400 mb-[8px]">Error loading user details</p>
+          <p className="text-[#ff4d00] mb-[8px]">Error loading user details</p>
           <p className="text-white opacity-70 text-[14px]">{error}</p>
         </div>
       ) : userDetails ? (

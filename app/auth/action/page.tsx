@@ -16,7 +16,6 @@ export default function AuthActionPage() {
     const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
     const [message, setMessage] = useState("Verifying your request...");
     const [mode, setMode] = useState<string | null>(null);
-    const [countdown, setCountdown] = useState(3);
     const [isRedirecting, setIsRedirecting] = useState(false);
 
     const handleContinue = useCallback(() => {
@@ -51,7 +50,7 @@ export default function AuthActionPage() {
                 if (modeParam === "verifyEmail") {
                     await applyActionCode(auth, actionCode);
                     setStatus("success");
-                    setMessage("Your email has been successfully verified! Redirecting you to the dashboard...");
+                    setMessage("Your email has been successfully verified! You can now access all features.");
 
                     if (auth.currentUser) {
                         await auth.currentUser.reload();
@@ -81,7 +80,7 @@ export default function AuthActionPage() {
 
                 if (isActuallyVerified) {
                     setStatus("success");
-                    setMessage("Your email has already been verified. Redirecting you to the dashboard...");
+                    setMessage("Your email has already been verified. You can now access all features.");
                     return;
                 }
 
@@ -107,25 +106,6 @@ export default function AuthActionPage() {
 
         handleVerification();
     }, [searchParams]);
-
-    // Auto-redirect after successful verification
-    useEffect(() => {
-        if (status === "success") {
-            const countdownInterval = setInterval(() => {
-                setCountdown((prev) => {
-                    if (prev <= 1) {
-                        clearInterval(countdownInterval);
-                        setIsRedirecting(true);
-                        handleContinue();
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-
-            return () => clearInterval(countdownInterval);
-        }
-    }, [status, handleContinue]);
 
     return (
         <div
@@ -160,8 +140,8 @@ export default function AuthActionPage() {
                         {status === "success" && (
                             <FormSection title="Email Verified">
                                 <div className="flex flex-col gap-[20px] items-center text-center">
-                                    <div className="mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 ring-2 ring-green-500/30">
-                                        <CheckCircle2 className="h-12 w-12 text-green-500" />
+                                    <div className="mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-[rgba(255,77,0,0.2)] ring-2 ring-[#ff4d00]/30">
+                                        <CheckCircle2 className="h-12 w-12 text-white" />
                                     </div>
                                     <div className="flex flex-col gap-[12px]">
                                         <h1 className="font-['Instrument_Serif',sans-serif] text-[36px] text-white leading-[40px] tracking-[-1px]">
@@ -180,23 +160,16 @@ export default function AuthActionPage() {
                                             </p>
                                         </div>
                                     ) : (
-                                        <>
-                                            <div className="bg-white/5 p-4 rounded-lg mt-4">
-                                                <p className="font-['Inter',sans-serif] text-[14px] text-white opacity-70">
-                                                    Redirecting in <span className="font-semibold text-white">{countdown}</span> {countdown === 1 ? 'second' : 'seconds'}...
-                                                </p>
-                                            </div>
-                                            <div className="w-full mt-2">
-                                                <Button
-                                                    variant="primary"
-                                                    onClick={handleContinue}
-                                                    className="w-full"
-                                                >
-                                                    Continue to Dashboard
-                                                    <ArrowRight className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </>
+                                        <div className="w-full mt-2">
+                                            <Button
+                                                variant="primary"
+                                                onClick={handleContinue}
+                                                className="w-full"
+                                            >
+                                                Continue to Dashboard
+                                                <ArrowRight className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     )}
                                 </div>
                             </FormSection>
@@ -205,8 +178,8 @@ export default function AuthActionPage() {
                         {status === "error" && (
                             <FormSection title="Verification Failed">
                                 <div className="flex flex-col gap-[20px] items-center text-center">
-                                    <div className="mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-red-500/10 ring-2 ring-red-500/30">
-                                        <XCircle className="h-12 w-12 text-red-500" />
+                                    <div className="mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-black/50 ring-2 ring-[#ff4d00]/30">
+                                        <XCircle className="h-12 w-12 text-[#ff4d00]" />
                                     </div>
                                     <div className="flex flex-col gap-[12px]">
                                         <h1 className="font-['Instrument_Serif',sans-serif] text-[36px] text-white leading-[40px] tracking-[-1px]">

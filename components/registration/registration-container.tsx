@@ -401,9 +401,9 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
       )}
 
       {/* Card about filling more fields */}
-      <Card className="bg-[rgba(255,165,0,0.1)] border-orange-500/30">
+      <Card className="bg-[rgba(255,77,0,0.1)] border-[#ff4d00]/30">
         <div className="flex items-start gap-[12px]">
-          <Info className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+          <Info className="w-5 h-5 text-[#ff4d00] flex-shrink-0 mt-0.5" />
           <div className="flex flex-col gap-[4px]">
             <p className="text-[14px] text-white font-semibold" style={{ fontFamily: 'var(--font-body)' }}>
               💡 Complete Your Profile
@@ -416,8 +416,8 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
       </Card>
 
       {DEBUG_MODE && (
-        <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(255,165,0,0.2)] border border-orange-500 rounded-[15px] p-[12px] flex items-center gap-[12px]">
-          <Zap className="w-5 h-5 text-orange-400" />
+        <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(255,77,0,0.2)] border border-[#ff4d00] rounded-[15px] p-[12px] flex items-center gap-[12px]">
+          <Zap className="w-5 h-5 text-[#ff4d00]" />
           <div className="flex flex-col gap-[4px]">
             <span className="text-[13px] text-white font-semibold" style={{ fontFamily: 'var(--font-body)' }}>
               Debug Mode Active
@@ -563,7 +563,7 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
               currentFile={resumeFileName}
             />
             {errors.resume && (
-              <span className="text-[12px] text-red-400" style={{ fontFamily: 'var(--font-body)' }}>
+              <span className="text-[12px] text-[#ff4d00]" style={{ fontFamily: 'var(--font-body)' }}>
                 {errors.resume}
               </span>
             )}

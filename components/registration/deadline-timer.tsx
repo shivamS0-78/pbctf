@@ -92,8 +92,8 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
 
   if (error) {
     return (
-      <div className="w-full p-[16px] rounded-[16px] bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.3)]">
-        <p className="text-[14px] text-red-300 text-center" style={{ fontFamily: 'var(--font-body)' }}>
+      <div className="w-full p-[16px] rounded-[16px] bg-black/50 border border-[#ff4d00]">
+        <p className="text-[14px] text-white text-center" style={{ fontFamily: 'var(--font-body)' }}>
           Failed to load deadline timer
         </p>
       </div>
@@ -105,23 +105,23 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
   return (
     <div className={`w-full p-[20px] rounded-[16px] border flex flex-col items-center justify-center text-center ${
       isExpired 
-        ? 'bg-[rgba(239,68,68,0.1)] border-[rgba(239,68,68,0.3)]' 
+        ? 'bg-black/50 border-[#ff4d00]' 
         : submitted
-          ? 'bg-[rgba(34,197,94,0.1)] border-[rgba(34,197,94,0.3)]'
-          : 'bg-[rgba(251,191,36,0.1)] border-[rgba(251,191,36,0.3)]'
+          ? 'bg-[rgba(255,77,0,0.2)] border-[#ff4d00]'
+          : 'bg-[rgba(255,77,0,0.15)] border-[#ff8800]'
     }`}>
       {/* Header */}
       <div className="flex items-center justify-center gap-[12px] mb-[16px] w-full">
         {isExpired ? (
-          <AlertTriangle className="w-5 h-5 text-red-400" />
+          <AlertTriangle className="w-5 h-5 text-[#ff4d00]" />
         ) : submitted ? (
-          <CheckCircle2 className="w-5 h-5 text-green-400" />
+          <CheckCircle2 className="w-5 h-5 text-white" />
         ) : (
-          <Clock className="w-5 h-5 text-amber-400" />
+          <Clock className="w-5 h-5 text-white" />
         )}
         <h3 
           className={`text-[16px] font-semibold ${
-            isExpired ? 'text-red-400' : submitted ? 'text-green-400' : 'text-amber-400'
+            isExpired ? 'text-[#ff4d00]' : submitted ? 'text-white' : 'text-white'
           }`}
           style={{ fontFamily: 'var(--font-heading)' }}
         >
@@ -135,7 +135,7 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
 
       {/* Countdown or Status Message */}
       {isExpired ? (
-        <p className="text-[14px] text-red-300/80 text-center w-full" style={{ fontFamily: 'var(--font-body)' }}>
+        <p className="text-[14px] text-white/80 text-center w-full" style={{ fontFamily: 'var(--font-body)' }}>
           The submission deadline has passed. No new submissions are being accepted.
         </p>
       ) : (
@@ -172,7 +172,7 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
 
           {/* Status Message */}
           <p 
-            className={`text-[13px] text-center w-full ${submitted ? 'text-green-300/80' : 'text-amber-300/80'}`}
+            className={`text-[13px] text-center w-full text-white/80`}
             style={{ fontFamily: 'var(--font-body)' }}
           >
             {submitted 

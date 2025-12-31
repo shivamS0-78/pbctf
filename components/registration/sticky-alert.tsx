@@ -43,24 +43,24 @@ export function StickyAlert({
   const getTypeClass = () => {
     switch (type) {
       case "success":
-        return "bg-[rgba(0,200,0,0.3)] border-green-500";
+        return "bg-[rgba(255,77,0,0.3)] border-[#ff4d00]";
       case "error":
-        return "bg-[rgba(200,0,0,0.3)] border-red-500";
+        return "bg-black/60 border-[#ff4d00]";
       case "warning":
-        return "bg-[rgba(255,165,0,0.3)] border-orange-500";
+        return "bg-[rgba(255,77,0,0.2)] border-[#ff8800]";
       default:
-        return "bg-[rgba(138,138,138,0.3)] border-[rgba(255,255,255,0.38)]";
+        return "bg-white/10 border-white/38";
     }
   };
 
   const getIconColor = () => {
     switch (type) {
       case "success":
-        return "text-green-400";
+        return "text-white";
       case "error":
-        return "text-red-400";
+        return "text-[#ff4d00]";
       case "warning":
-        return "text-orange-400";
+        return "text-white";
       default:
         return "text-white";
     }

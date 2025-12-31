@@ -939,7 +939,7 @@ export function TeamContainer() {
                 />
                 <div className="flex flex-col gap-[12px]">
                   <label className="text-[14px] text-white opacity-90" style={{ fontFamily: 'var(--font-body)' }}>
-                    Select a Problem Statement <span className="text-red-400">*</span>
+                    Select a Problem Statement <span className="text-[#ff4d00]">*</span>
                   </label>
                   <div className="grid grid-cols-2 gap-[16px] relative">
                     {problemStatements.map((ps, index) => {
@@ -985,7 +985,7 @@ export function TeamContainer() {
                     })}
                   </div>
                   {!teamFormData.problemStatement && (
-                    <p className="text-[12px] text-red-400" style={{ fontFamily: 'var(--font-body)' }}>
+                    <p className="text-[12px] text-[#ff4d00]" style={{ fontFamily: 'var(--font-body)' }}>
                       Please select a problem statement to continue
                     </p>
                   )}
@@ -996,7 +996,7 @@ export function TeamContainer() {
                         id="lookingForMembers"
                         checked={teamFormData.lookingForMembers}
                         onCheckedChange={(checked) => setTeamFormData({ ...teamFormData, lookingForMembers: checked })}
-                        className="data-[state=checked]:bg-green-500 border-green-500"
+                        className="data-[state=checked]:bg-[#ff4d00] border-[#ff4d00]"
                       />
                     <label htmlFor="lookingForMembers" className="text-[14px] font-semibold text-white cursor-pointer" style={{ fontFamily: 'var(--font-body)' }}>
                       Looking for team members
@@ -1069,7 +1069,7 @@ export function TeamContainer() {
                           className="p-[4px] rounded-[4px] hover:bg-[rgba(255,255,255,0.1)] transition-colors"
                           title="Copy team code"
                         >
-                          {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3 text-white opacity-60" />}
+                          {copied ? <Check className="w-3 h-3 text-white" /> : <Copy className="w-3 h-3 text-white opacity-60" />}
                         </button>
                       </div>
                     </div>
@@ -1180,7 +1180,7 @@ export function TeamContainer() {
                           }
                         }}
                         disabled={team.status !== "active"}
-                        className="data-[state=checked]:bg-green-500 border-green-500"
+                        className="data-[state=checked]:bg-[#ff4d00] border-[#ff4d00]"
                       />
                       <label htmlFor="teamLookingForMembers" className={`text-[14px] font-semibold text-white ${team.status === "active" ? 'cursor-pointer' : 'cursor-not-allowed'}`} style={{ fontFamily: 'var(--font-body)' }}>
                         Looking for team members
@@ -1208,7 +1208,7 @@ export function TeamContainer() {
                       title={copied ? "Copied!" : "Copy team code"}
                     >
                       {copied ? (
-                        <Check className="w-3 h-3 text-green-400" />
+                        <Check className="w-3 h-3 text-white" />
                       ) : (
                         <Copy className="w-3 h-3 text-white" />
                       )}
@@ -1366,7 +1366,7 @@ export function TeamContainer() {
                             </span>
                           </div>
                           <div className="flex gap-[8px] items-center">
-                            <span className="text-[12px] text-yellow-400 font-medium px-2 py-1 bg-yellow-400/10 rounded">
+                            <span className="text-[12px] text-white font-medium px-2 py-1 bg-[rgba(255,77,0,0.15)] border border-[#ff8800] rounded">
                               Pending
                             </span>
                           </div>
@@ -1431,7 +1431,7 @@ export function TeamContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteTeam}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-black/50 hover:bg-black/60 text-white border border-[#ff4d00]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Delete
@@ -1457,7 +1457,7 @@ export function TeamContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveMember}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-black/50 hover:bg-black/60 text-white border border-[#ff4d00]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Remove
@@ -1483,7 +1483,7 @@ export function TeamContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleLeaveTeam}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-black/50 hover:bg-black/60 text-white border border-[#ff4d00]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               Leave Team

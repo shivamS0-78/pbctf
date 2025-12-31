@@ -511,8 +511,8 @@ export function DiscoverContainer() {
 
       {user?.teamCode && !isTeamLead ? (
         <div className="flex flex-col items-center justify-center py-[60px] text-center">
-          <div className="bg-[rgba(255,165,0,0.1)] border border-orange-500/30 rounded-lg p-8 max-w-2xl">
-            <h2 className="text-2xl font-bold text-orange-400 mb-4">You are already in a team!</h2>
+          <div className="bg-[rgba(255,77,0,0.1)] border border-[#ff4d00]/30 rounded-lg p-8 max-w-2xl">
+            <h2 className="text-2xl font-bold text-[#ff4d00] mb-4">You are already in a team!</h2>
             <p className="text-gray-300 mb-6">
               You are currently a member of team <span className="font-mono text-white bg-white/10 px-2 py-1 rounded">{user.teamCode}</span>.
               <br />
