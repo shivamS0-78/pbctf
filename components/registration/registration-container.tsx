@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, UserPlus, Zap, Info, ExternalLink } from "lucide-react";
+import { LogIn, UserPlus, Zap, Info, ExternalLink, Trash2 } from "lucide-react";
 import { FormInput } from "./form-input";
 import { FormTextarea } from "./form-textarea";
 import { FormSelect } from "./form-select";
@@ -18,6 +18,9 @@ import { Modal } from "./modal";
 
 // PRODUCTION MODE - Debug features disabled
 const DEBUG_MODE = false;
+
+// LocalStorage key for form data persistence
+const REGISTRATION_FORM_STORAGE_KEY = 'zenith_registration_form_data';
 
 interface RegistrationContainerProps {
   onSuccess?: () => void;
@@ -33,27 +36,85 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
     message: string;
   } | null>(null);
 
-  // Registration form state
-  const [registerData, setRegisterData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    discord_username: "",
-    phone: "",
-    age: "",
-    organisation: "",
-    bio: "",
-    github: "",
-    linkedin: "",
-    portfolio: "",
-    leetcode: "",
-    kaggle: "",
-    devfolio: "",
-    codeforces: "",
-    ctf: "",
-    referralCode: "",
-  });
+  // Helper function to get initial form data from localStorage
+  const getInitialFormData = () => {
+    try {
+      const savedData = localStorage.getItem(REGISTRATION_FORM_STORAGE_KEY);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.registerData) {
+          // Merge with default values to ensure all fields exist
+          return {
+            name: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+            discord_username: "",
+            phone: "",
+            age: "",
+            organisation: "",
+            bio: "",
+            github: "",
+            linkedin: "",
+            portfolio: "",
+            leetcode: "",
+            kaggle: "",
+            devfolio: "",
+            codeforces: "",
+            ctf: "",
+            referralCode: "",
+            ...parsed.registerData,
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Error reading form data from localStorage:', error);
+    }
+    // Return default empty values
+    return {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      discord_username: "",
+      phone: "",
+      age: "",
+      organisation: "",
+      bio: "",
+      github: "",
+      linkedin: "",
+      portfolio: "",
+      leetcode: "",
+      kaggle: "",
+      devfolio: "",
+      codeforces: "",
+      ctf: "",
+      referralCode: "",
+    };
+  };
+
+  // Helper function to get initial file names from localStorage
+  const getInitialFileNames = () => {
+    try {
+      const savedData = localStorage.getItem(REGISTRATION_FORM_STORAGE_KEY);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        return {
+          resumeFileName: parsed.resumeFileName || "",
+          profilePhotoFileName: parsed.profilePhotoFileName || "",
+        };
+      }
+    } catch (error) {
+      console.error('Error reading file names from localStorage:', error);
+    }
+    return {
+      resumeFileName: "",
+      profilePhotoFileName: "",
+    };
+  };
+
+  // Registration form state - initialized from localStorage
+  const [registerData, setRegisterData] = useState(getInitialFormData);
 
   // Login form state
   const [loginData, setLoginData] = useState({
@@ -64,14 +125,50 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
   // File states
   const [resume, setResume] = useState<File | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-  const [resumeFileName, setResumeFileName] = useState("");
-  const [profilePhotoFileName, setProfilePhotoFileName] = useState("");
+  
+  // File names - initialized from localStorage using lazy initialization
+  const [resumeFileName, setResumeFileName] = useState(() => {
+    const fileNames = getInitialFileNames();
+    return fileNames.resumeFileName;
+  });
+  const [profilePhotoFileName, setProfilePhotoFileName] = useState(() => {
+    const fileNames = getInitialFileNames();
+    return fileNames.profilePhotoFileName;
+  });
 
   // Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCodeOfConductModalOpen, setIsCodeOfConductModalOpen] = useState(false);
   const [acceptedCodeOfConduct, setAcceptedCodeOfConduct] = useState(false);
+
+  // Track if component has mounted to avoid saving empty data on initial mount
+  const isInitialMount = useRef(true);
+
+  // Key for file inputs to force reset when clearing
+  const [fileInputKey, setFileInputKey] = useState(0);
+
+  // Save form data to localStorage whenever it changes (excluding sensitive password fields)
+  useEffect(() => {
+    // Skip saving on initial mount since we just loaded from localStorage
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    try {
+      // Exclude password fields from localStorage for security
+      const { password, confirmPassword, ...safeRegisterData } = registerData;
+      const dataToSave = {
+        registerData: safeRegisterData,
+        resumeFileName,
+        profilePhotoFileName,
+      };
+      localStorage.setItem(REGISTRATION_FORM_STORAGE_KEY, JSON.stringify(dataToSave));
+    } catch (error) {
+      console.error('Error saving form data to localStorage:', error);
+    }
+  }, [registerData, resumeFileName, profilePhotoFileName]);
 
   // DEBUG: Auto-fill function
   const handleAutoFill = () => {
@@ -210,9 +307,9 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
     ];
     
     fieldsToValidate.forEach(field => {
-      const error = validateField(field, registerData[field]);
+      const error = validateField(field as string, registerData[field]);
       if (error) {
-        newErrors[field] = error;
+        newErrors[field as string] = error;
       }
     });
     
@@ -226,10 +323,35 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setIsSubmitting(false);
+      // Save form data even when validation fails
+      try {
+        const { password, confirmPassword, ...safeRegisterData } = registerData;
+        const dataToSave = {
+          registerData: safeRegisterData,
+          resumeFileName,
+          profilePhotoFileName,
+        };
+        localStorage.setItem(REGISTRATION_FORM_STORAGE_KEY, JSON.stringify(dataToSave));
+      } catch (error) {
+        console.error('Error saving form data to localStorage:', error);
+      }
       return;
     }
 
     try {
+      // Save form data before submission to ensure it's persisted
+      try {
+        const { password, confirmPassword, ...safeRegisterData } = registerData;
+        const dataToSave = {
+          registerData: safeRegisterData,
+          resumeFileName,
+          profilePhotoFileName,
+        };
+        localStorage.setItem(REGISTRATION_FORM_STORAGE_KEY, JSON.stringify(dataToSave));
+      } catch (error) {
+        console.error('Error saving form data to localStorage:', error);
+      }
+
       let formattedPhone = registerData.phone.trim();
       const phoneDigits = formattedPhone.replace(/\D/g, '');
       
@@ -264,6 +386,13 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
       if (registerData.referralCode) formData.append('referral_code', registerData.referralCode);
 
       await register(formData);
+
+      // Clear localStorage on successful registration
+      try {
+        localStorage.removeItem(REGISTRATION_FORM_STORAGE_KEY);
+      } catch (error) {
+        console.error('Error clearing form data from localStorage:', error);
+      }
 
       setAlert({
         type: "success",
@@ -396,6 +525,59 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
     }
   };
 
+  // Clear all form data and localStorage
+  const handleClearData = () => {
+    // Clear localStorage
+    try {
+      localStorage.removeItem(REGISTRATION_FORM_STORAGE_KEY);
+    } catch (error) {
+      console.error('Error clearing form data from localStorage:', error);
+    }
+
+    // Reset form data to empty values
+    setRegisterData({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      discord_username: "",
+      phone: "",
+      age: "",
+      organisation: "",
+      bio: "",
+      github: "",
+      linkedin: "",
+      portfolio: "",
+      leetcode: "",
+      kaggle: "",
+      devfolio: "",
+      codeforces: "",
+      ctf: "",
+      referralCode: "",
+    });
+
+    // Clear file states
+    setResume(null);
+    setProfilePhoto(null);
+    setResumeFileName("");
+    setProfilePhotoFileName("");
+
+    // Clear errors
+    setErrors({});
+
+    // Reset file inputs by changing key
+    setFileInputKey(prev => prev + 1);
+
+    // Reset code of conduct acceptance
+    setAcceptedCodeOfConduct(false);
+
+    // Show confirmation
+    toast({
+      title: "Form Cleared",
+      description: "All form data has been cleared.",
+    });
+  };
+
   return (
     <div className="flex flex-col gap-[32px] max-w-[600px] w-full">
       <div className="flex flex-col gap-[12px] items-center text-center">
@@ -495,7 +677,21 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
         </div>
       )}
 
-      <FormSection title="Create Your Account">
+      <FormSection 
+        title="Create Your Account"
+        status={
+          <Button 
+            type="button" 
+            variant="secondary" 
+            onClick={handleClearData}
+            disabled={isSubmitting}
+            className="flex-shrink-0"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Clear Data
+          </Button>
+        }
+      >
           <form onSubmit={handleRegister} className="flex flex-col gap-[20px]">
             <FormInput
               label="Full Name"
@@ -631,24 +827,28 @@ export function RegistrationContainer({ onSuccess }: RegistrationContainerProps)
               rows={3}
               error={errors.bio}
             />
-            <FormFileUpload
-              label="Resume (PDF)"
-              accept=".pdf"
-              required
-              onChange={handleResumeChange}
-              currentFile={resumeFileName}
-            />
+            <div key={`resume-${fileInputKey}`}>
+              <FormFileUpload
+                label="Resume (PDF)"
+                accept=".pdf"
+                required
+                onChange={handleResumeChange}
+                currentFile={resumeFileName}
+              />
+            </div>
             {errors.resume && (
               <span className="text-[12px] text-[#ff4d00]" style={{ fontFamily: 'var(--font-body)' }}>
                 {errors.resume}
               </span>
             )}
-            <FormFileUpload
-              label="Profile Photo"
-              accept="image/*"
-              onChange={handleProfilePhotoChange}
-              currentFile={profilePhotoFileName}
-            />
+            <div key={`profile-${fileInputKey}`}>
+              <FormFileUpload
+                label="Profile Photo"
+                accept="image/*"
+                onChange={handleProfilePhotoChange}
+                currentFile={profilePhotoFileName}
+              />
+            </div>
             {errors.profilePhoto && (
               <span className="text-[12px] text-red-400" style={{ fontFamily: 'var(--font-body)' }}>
                 {errors.profilePhoto}
