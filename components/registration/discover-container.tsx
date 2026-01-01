@@ -212,8 +212,8 @@ export function DiscoverContainer() {
               // Filter out own profile if user is looking for participants (team lead)
               const transformed = participantsData.data.users
                 .filter((userData: any) => {
-                  // If user is team lead looking for participants, exclude their own profile
-                  if (isTeamLead && userData.id === user?.uid) {
+                  // Always exclude user's own profile from the list
+                  if (userData.id === user?.uid) {
                     return false;
                   }
                   return true;
