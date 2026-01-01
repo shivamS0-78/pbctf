@@ -448,20 +448,6 @@ export function TeamContainer() {
   };
 
   const handleUserClick = async (userId: string) => {
-    // Prevent team members from seeing profiles of other team members
-    if (team && userId !== user?.uid) {
-      const isTeamMember = team.teamMembers?.some((member: TeamMember) => member.uid === userId);
-      const isTeamLead = team.leadId === userId;
-      if (isTeamMember || isTeamLead) {
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "You cannot view profiles of your team members.",
-        });
-        return;
-      }
-    }
-
     setSelectedUserId(userId);
     setIsLoadingUser(true);
     setUserError(null);
@@ -839,25 +825,47 @@ export function TeamContainer() {
       }
 
       if (data.success && data.data) {
-        const teamInfo = data.data;
-        setTeam({
-          id: teamInfo.teamCode,
-          name: teamInfo.teamName,
-          code: teamInfo.teamCode,
-          leadId: typeof teamInfo.teamLead === 'string' ? teamInfo.teamLead : teamInfo.teamLead?.id || '',
-          members: teamInfo.teamMembers?.map((m: any) => m.uid || m.id) || [],
-          problemStatement: teamInfo.appliedFor?.title || 'No problem statement selected',
-          lookingForMembers: teamInfo.isLooking || false,
-          status: teamInfo.teamStatus === 'pending' ? 'active' :
-            teamInfo.teamStatus === 'submitted' ? 'submitted' :
-              teamInfo.teamStatus === 'shortlisted' ? 'shortlisted' :
-                teamInfo.teamStatus === 'rsvped' ? 'confirmed' :
-                  teamInfo.teamStatus === 'rsvp_declined' ? 'declined' :
-                    teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'active',
+        const joinedTeamCode = data.data.teamCode;
+        
+        // Fetch full team data after joining (same pattern as create)
+        const teamResponse = await fetch(API_ENDPOINTS.getTeam(joinedTeamCode), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
+
+        if (teamResponse.ok) {
+          const teamData = await teamResponse.json();
+          if (teamData.success && teamData.data) {
+            const teamInfo = teamData.data;
+            setTeam({
+              id: teamInfo.teamCode,
+              name: teamInfo.teamName,
+              code: teamInfo.teamCode,
+              leadId: typeof teamInfo.teamLead === 'string' ? teamInfo.teamLead : teamInfo.teamLead?.id || '',
+              members: teamInfo.teamMembers?.map((m: any) => m.uid || m.id) || [],
+              teamMembers: teamInfo.teamMembers?.map((m: any) => ({
+                uid: m.uid,
+                name: m.name,
+                email: m.email,
+                role: m.role || 'Member',
+              })) || [],
+              problemStatement: teamInfo.appliedFor?.title || '',
+              lookingForMembers: teamInfo.isLooking || false,
+              status: teamInfo.teamStatus === 'pending' ? 'active' :
+                teamInfo.teamStatus === 'submitted' ? 'submitted' :
+                  teamInfo.teamStatus === 'shortlisted' ? 'shortlisted' :
+                    teamInfo.teamStatus === 'rsvped' ? 'confirmed' :
+                      teamInfo.teamStatus === 'rsvp_declined' ? 'declined' :
+                        teamInfo.teamStatus === 'withdrawn' ? 'withdrawn' : 'active',
+            });
+          }
+        }
+        
         setAlert({
           type: "success",
-          message: `Joined team "${teamInfo.teamName}"!`,
+          message: `Joined team "${data.data.teamName}"!`,
         });
         setTimeout(() => setAlert(null), 3000);
       }
@@ -1131,19 +1139,19 @@ export function TeamContainer() {
                     )}
                   </div>
                   {team.problemStatement ? (
-                    <>
-                      <h4 className="text-[15px] text-white font-semibold mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>
-                        {team.problemStatement}
-                      </h4>
-                      <p className="text-[12px] text-white opacity-50 mt-auto" style={{ fontFamily: 'var(--font-body)' }}>
-                        {team.status === "active" 
-                          ? "You can change this before submitting" 
-                          : "Locked after submission"}
-                      </p>
-                    </>
+                    <h4 className="text-[15px] text-white font-semibold" style={{ fontFamily: 'var(--font-body)' }}>
+                      {team.problemStatement}
+                    </h4>
                   ) : (
                     <p className="text-[14px] text-white opacity-60" style={{ fontFamily: 'var(--font-body)' }}>
                       No problem statement selected yet
+                    </p>
+                  )}
+                  {team.leadId === user.uid && team.problemStatement && (
+                    <p className="text-[12px] text-white opacity-50 mt-[8px]" style={{ fontFamily: 'var(--font-body)' }}>
+                      {team.status === "active" 
+                        ? "You can change this before submitting" 
+                        : "Locked after submission"}
                     </p>
                   )}
                 </div>
