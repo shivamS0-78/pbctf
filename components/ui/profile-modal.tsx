@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, ExternalLink, Github, Linkedin, Download, Code, Shield, Award, Database } from "lucide-react"
 import type { Profile } from "../../lib/types"
@@ -14,8 +14,11 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ profile, isOpen, onClose }: ProfileModalProps) {
+    const [isDownloadingResume, setIsDownloadingResume] = useState(false);
+
     const handleResumeDownload = async (url: string) => {
       try {
+        setIsDownloadingResume(true);
         const response = await fetch(url);
         const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);
@@ -28,6 +31,8 @@ export default function ProfileModal({ profile, isOpen, onClose }: ProfileModalP
         document.body.removeChild(a);
       } catch (error) {
         console.error('Error downloading resume:', error);
+      } finally {
+        setIsDownloadingResume(false);
       }
     };
 
@@ -205,10 +210,20 @@ export default function ProfileModal({ profile, isOpen, onClose }: ProfileModalP
                     {profile.resume_link && (
                       <button
                         onClick={() => handleResumeDownload(profile.resume_link!)}
-                        className="flex items-center gap-1.5 bg-[#0a3333] hover:bg-[#0a4444] text-white px-3 py-1.5 rounded-full text-sm transition-colors cursor-pointer"
+                        disabled={isDownloadingResume}
+                        className="flex items-center gap-1.5 bg-[#0a3333] hover:bg-[#0a4444] disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-full text-sm transition-colors cursor-pointer"
                       >
-                        <Download size={16} className="text-[#0ff]" />
-                        <span>Resume</span>
+                        {isDownloadingResume ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-[#0ff]/20 border-t-[#0ff] rounded-full animate-spin" />
+                            <span>Downloading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Download size={16} className="text-[#0ff]" />
+                            <span>Resume</span>
+                          </>
+                        )}
                       </button>
                     )}
                   </div>

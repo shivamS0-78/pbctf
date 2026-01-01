@@ -597,9 +597,9 @@ export function DiscoverContainer() {
       ) : !userIsLooking && !isTeamLead ? (
         <div className="flex flex-col items-center justify-center py-[60px] text-center">
           <div className="bg-[rgba(255,77,0,0.1)] border border-[#ff4d00]/30 rounded-lg p-8 max-w-2xl">
-            <h2 className="text-2xl font-bold text-[#ff4d00] mb-4">Enable "Looking for Team" to Discover</h2>
+            <h2 className="text-2xl font-bold text-[#ff4d00] mb-4">Enable "Profile Public" to Discover</h2>
             <p className="text-gray-300 mb-6">
-              You need to enable "Looking for Team" in your profile settings to see teams and participants looking for team members.
+              You need to enable "Profile Public" in your profile settings to see teams and participants looking for team members.
             </p>
             <Button onClick={() => router.push("/dashboard/profile")} variant="primary">
               Go to Profile Settings
@@ -620,7 +620,7 @@ export function DiscoverContainer() {
             type="warning"
             message={
               <div>
-                <strong>Privacy Notice:</strong> When you mark yourself as "looking for team", the following information from your profile will be publicly visible and discoverable by other participants: your name, bio, organisation, profile picture, resume, and all professional/social links (GitHub, LinkedIn, LeetCode, Kaggle, Devfolio, Portfolio, etc.). Please ensure you've redacted any sensitive personal information (e.g., phone numbers, addresses, personal email addresses) from your resume before marking yourself as available.
+                <strong>Privacy Notice:</strong> When you make your profile public, the following information from your profile will be publicly visible and discoverable by other participants: your name, bio, organisation, profile picture, resume, and all professional/social links (GitHub, LinkedIn, LeetCode, Kaggle, Devfolio, Portfolio, etc.). Please ensure you've redacted any sensitive personal information (e.g., phone numbers, addresses, personal email addresses) from your resume before making your profile public.
               </div>
             }
             className="mb-6"

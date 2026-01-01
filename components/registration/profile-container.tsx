@@ -45,6 +45,7 @@ export function ProfileContainer() {
   const [profilePhotoFileName, setProfilePhotoFileName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProfileLocked, setIsProfileLocked] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [alert, setAlert] = useState<{ type: "success" | "error" | "warning" | "info"; message: string } | null>(null);
 
   useEffect(() => {
@@ -56,6 +57,7 @@ export function ProfileContainer() {
     // Load data from API
     const fetchProfile = async () => {
       try {
+        setIsLoading(true);
         const token = await getToken();
 
         const response = await fetch('/api/user/profile', {
@@ -117,6 +119,8 @@ export function ProfileContainer() {
           title: "Error",
           description: "Failed to load profile data. Please refresh the page."
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -164,10 +168,10 @@ export function ProfileContainer() {
       setProfileData(prev => ({ ...prev, isLooking: newValue }));
 
       toast({
-        title: newValue ? "You are now visible" : "You are now hidden",
+        title: newValue ? "Profile is now public" : "Profile is now private",
         description: newValue
-          ? "Other participants can now find and invite you to their team"
-          : "You are hidden from the Discover section"
+          ? "Your profile is now publicly visible and discoverable by other participants"
+          : "Your profile is now private and hidden from the Discover section"
       });
 
       // Update global user context silently
@@ -264,6 +268,14 @@ export function ProfileContainer() {
 
   if (!user) return null;
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-[24px] max-w-[700px] w-full">
       <div className="flex items-center justify-between">
@@ -288,11 +300,11 @@ export function ProfileContainer() {
                 className="data-[state=checked]:bg-[#ff4d00] border-[#ff4d00]"
               />
             <label htmlFor="profileLookingForTeam" className="text-[14px] font-semibold text-white cursor-pointer" style={{ fontFamily: 'var(--font-body)' }}>
-              Looking for a Team?
+              Profile Public
             </label>
           </div>
           <p className="text-[13px] text-[rgba(255,255,255,0.6)] ml-[32px]" style={{ fontFamily: 'var(--font-body)' }}>
-            Enable this to let other participants find and invite you.
+            Enable this to make your profile publicly visible and discoverable by other participants.
           </p>
         </div>
       )}
