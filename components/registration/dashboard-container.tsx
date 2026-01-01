@@ -312,13 +312,7 @@ export function DashboardContainer() {
                 description: "Failed to load team invitations."
               });
             }
-          } else {
-            // If API doesn't return expected format, calculate from context user
-            calculateProfileFromContext();
           }
-        } else {
-          // If API fails, calculate from context user
-          calculateProfileFromContext();
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -327,50 +321,9 @@ export function DashboardContainer() {
           title: "Error",
           description: "Failed to load dashboard data. Please refresh the page."
         });
-        // Calculate from context user as fallback
-        calculateProfileFromContext();
       } finally {
         setIsLoading(false);
       }
-    };
-
-    // Fallback: Calculate from user context if API fails
-    const calculateProfileFromContext = () => {
-      const profileFields = [
-        { key: 'name', label: 'Name' },
-        { key: 'email', label: 'Email' },
-        { key: 'phone', label: 'Phone' },
-        { key: 'discord_username', label: 'Discord' },
-        { key: 'age', label: 'Age' },
-        { key: 'organisation', label: 'Organisation' },
-        { key: 'bio', label: 'Bio' },
-        { key: 'profile_picture', label: 'Profile Picture' },
-        { key: 'resume_link', label: 'Resume' },
-        { key: 'github_link', label: 'GitHub' },
-        { key: 'linkedin_link', label: 'LinkedIn' },
-        { key: 'leetcode_profile', label: 'LeetCode' },
-        { key: 'codeforces_link', label: 'Codeforces' },
-        { key: 'kaggle_link', label: 'Kaggle' },
-        { key: 'devfolio_link', label: 'Devfolio' },
-        { key: 'portfolio_link', label: 'Portfolio' },
-        { key: 'ctf_profile', label: 'CTF Profile' },
-      ];
-
-      let completed = 0;
-      const missing: string[] = [];
-
-      profileFields.forEach((field) => {
-        if (!user) return;
-        const value = user[field.key as keyof typeof user];
-        if (value && value !== null && value !== '') {
-          completed++;
-        } else {
-          missing.push(field.label);
-        }
-      });
-
-      setProfileCompleteness(Math.round((completed / profileFields.length) * 100));
-      setMissingFields(missing);
     };
 
     fetchData();

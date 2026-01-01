@@ -30,6 +30,11 @@ export function ProfileContainer() {
     github: "",
     linkedin: "",
     portfolio: "",
+    leetcode: "",
+    codeforces: "",
+    kaggle: "",
+    devfolio: "",
+    ctf_profile: "",
     profile_picture: "",
     isLooking: false,
     teamCode: "",
@@ -76,6 +81,11 @@ export function ProfileContainer() {
               github: userData.github_link || "",
               linkedin: userData.linkedin_link || "",
               portfolio: userData.portfolio_link || "",
+              leetcode: userData.leetcode_profile || "",
+              codeforces: userData.codeforces_link || "",
+              kaggle: userData.kaggle_link || "",
+              devfolio: userData.devfolio_link || "",
+              ctf_profile: userData.ctf_profile || "",
               isLooking: userData.isLooking || false,
               teamCode: userData.teamCode || "",
               profile_picture: userData.profile_picture || "",
@@ -207,6 +217,11 @@ export function ProfileContainer() {
         github_link: profileData.github,
         linkedin_link: profileData.linkedin,
         portfolio_link: profileData.portfolio,
+        leetcode_profile: profileData.leetcode,
+        codeforces_link: profileData.codeforces,
+        kaggle_link: profileData.kaggle,
+        devfolio_link: profileData.devfolio,
+        ctf_profile: profileData.ctf_profile,
         isLooking: profileData.isLooking,
         resume: resumeBase64,
         profile_picture: photoBase64,
@@ -393,6 +408,48 @@ export function ProfileContainer() {
               placeholder="https://yourportfolio.com"
               value={profileData.portfolio}
               onChange={(e) => setProfileData({ ...profileData, portfolio: e.target.value })}
+              disabled={isProfileLocked}
+            />
+          </FormSection>
+
+          <FormSection title="Competitive & Technical Profiles">
+            <div className="grid grid-cols-2 gap-[16px]">
+              <FormInput
+                label="LeetCode"
+                placeholder="https://leetcode.com/username"
+                value={profileData.leetcode}
+                onChange={(e) => setProfileData({ ...profileData, leetcode: e.target.value })}
+                disabled={isProfileLocked}
+              />
+              <FormInput
+                label="Codeforces"
+                placeholder="https://codeforces.com/profile/username"
+                value={profileData.codeforces}
+                onChange={(e) => setProfileData({ ...profileData, codeforces: e.target.value })}
+                disabled={isProfileLocked}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-[16px]">
+              <FormInput
+                label="Kaggle"
+                placeholder="https://kaggle.com/username"
+                value={profileData.kaggle}
+                onChange={(e) => setProfileData({ ...profileData, kaggle: e.target.value })}
+                disabled={isProfileLocked}
+              />
+              <FormInput
+                label="Devfolio"
+                placeholder="https://devfolio.co/@username"
+                value={profileData.devfolio}
+                onChange={(e) => setProfileData({ ...profileData, devfolio: e.target.value })}
+                disabled={isProfileLocked}
+              />
+            </div>
+            <FormInput
+              label="CTF Profile"
+              placeholder="https://ctftime.org/team/12345"
+              value={profileData.ctf_profile}
+              onChange={(e) => setProfileData({ ...profileData, ctf_profile: e.target.value })}
               disabled={isProfileLocked}
             />
           </FormSection>
