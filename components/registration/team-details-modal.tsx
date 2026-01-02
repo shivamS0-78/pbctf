@@ -119,42 +119,6 @@ export function TeamDetailsModal({
               </p>
             </div>
 
-            {/* Send Request Button */}
-            {onSendRequest && (
-              <div className="pt-[8px] border-t border-[rgba(255,255,255,0.1)]">
-                {requestStatus === 'pending' ? (
-                  <Button 
-                    variant="secondary"
-                    disabled
-                    onClick={() => {}}
-                  >
-                    <Users className="w-4 h-4" />
-                    Request Sent
-                  </Button>
-                ) : requestStatus === 'accepted' ? (
-                  <Button 
-                    variant="secondary"
-                    disabled
-                    onClick={() => {}}
-                  >
-                    <Users className="w-4 h-4" />
-                    Accepted
-                  </Button>
-                ) : (
-                  <Button 
-                    variant="secondary"
-                    onClick={() => {
-                      onSendRequest();
-                    }}
-                    disabled={isSendingRequest}
-                  >
-                    {isSendingRequest ? <Spinner size="sm" className="mr-2" /> : <Users className="w-4 h-4" />}
-                    {isSendingRequest ? 'Sending...' : 'Send Request'}
-                  </Button>
-                )}
-              </div>
-            )}
-
             <div>
               <h4 className="font-['Inter',sans-serif] text-[16px] text-white mb-[12px]">Team Lead</h4>
               <div 
@@ -209,6 +173,54 @@ export function TeamDetailsModal({
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Send Request Button - Moved to bottom right */}
+            {onSendRequest && (
+              <div className="mt-[12px] pt-[24px] border-t border-[rgba(255,255,255,0.1)] flex justify-end">
+                {requestStatus === 'pending' ? (
+                  <Button 
+                    variant="secondary"
+                    disabled
+                    onClick={() => {}}
+                    className="w-full sm:w-auto"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Request Sent
+                  </Button>
+                ) : requestStatus === 'accepted' ? (
+                  <Button 
+                    variant="secondary"
+                    disabled
+                    onClick={() => {}}
+                    className="w-full sm:w-auto"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Accepted
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="primary"
+                    onClick={() => {
+                      onSendRequest();
+                    }}
+                    disabled={isSendingRequest}
+                    className="w-full sm:w-auto"
+                  >
+                    {isSendingRequest ? (
+                      <>
+                        <Spinner size="sm" className="mr-2" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Users className="w-4 h-4 mr-2" />
+                        Send Request
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             )}
           </div>

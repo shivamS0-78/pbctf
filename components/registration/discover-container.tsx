@@ -334,16 +334,16 @@ export function DiscoverContainer() {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !data.success) {
         throw new Error(data.message || 'Failed to invite user');
       }
+
+      setSentInvites(prev => new Set(prev).add(userId));
 
       toast({
         title: "Invitation sent",
         description: `Invitation sent to ${userEmail} successfully.`,
       });
-
-      setSentInvites(prev => new Set(prev).add(userId));
 
     } catch (error) {
       console.error('Error sending invite:', error);
@@ -594,12 +594,12 @@ export function DiscoverContainer() {
             </Button>
           </div>
         </div>
-      ) : !userIsLooking && !isTeamLead ? (
+      ) : !userIsLooking && !isTeamLead && activeTab === "teams" ? (
         <div className="flex flex-col items-center justify-center py-[60px] text-center">
           <div className="bg-[rgba(255,77,0,0.1)] border border-[#ff4d00]/30 rounded-lg p-8 max-w-2xl">
-            <h2 className="text-2xl font-bold text-[#ff4d00] mb-4">Enable "Profile Public" to Discover</h2>
+            <h2 className="text-2xl font-bold text-[#ff4d00] mb-4">Enable "Profile Public" to Discover Teams</h2>
             <p className="text-gray-300 mb-6">
-              You need to enable "Profile Public" in your profile settings to see teams and participants looking for team members.
+              You need to enable "Profile Public" in your profile settings to see teams looking for members.
             </p>
             <Button onClick={() => router.push("/dashboard/profile")} variant="primary">
               Go to Profile Settings
@@ -737,7 +737,14 @@ export function DiscoverContainer() {
                               >
                                 <div className="flex flex-col gap-[8px]">
                                   <div className="flex items-start justify-between">
-                                    <h3 className="font-['Inter',sans-serif] text-[16px] text-white">{participant.name}</h3>
+                                    <div className="flex items-center gap-[12px]">
+                                      <h3 className="font-['Inter',sans-serif] text-[16px] text-white">{participant.name}</h3>
+                                      {sentInvites.has(participant.id) && (
+                                        <span className="px-[8px] py-[2px] bg-[rgba(255,235,59,0.2)] border border-[#ffeb3b] rounded-[6px] text-[12px] text-[#ffeb3b] font-medium">
+                                          Invite Sent
+                                        </span>
+                                      )}
+                                    </div>
                                     {participant.university && (
                                       <span className="font-['Inter',sans-serif] text-[12px] text-white opacity-60">{participant.university}</span>
                                     )}
