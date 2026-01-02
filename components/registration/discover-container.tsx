@@ -62,6 +62,7 @@ export function DiscoverContainer() {
   const [sentInvites, setSentInvites] = useState<Set<string>>(new Set()); // User IDs
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [userIsLooking, setUserIsLooking] = useState(false);
+  const [userHasTeam, setUserHasTeam] = useState(false);
   const [teamCapacity, setTeamCapacity] = useState<{ current: number, max: number } | null>(null);
 
   // Pagination state
@@ -102,8 +103,9 @@ export function DiscoverContainer() {
           return;
         }
 
-        // Fetch user profile to check isLooking status
+        // Fetch user profile to check isLooking status and team code
         let userIsLookingValue = false;
+        let userHasTeamValue = false;
         try {
           const userProfileResponse = await fetch(API_ENDPOINTS.userProfile, {
             headers: {
@@ -115,7 +117,9 @@ export function DiscoverContainer() {
             const userProfileData = await userProfileResponse.json();
             const profileData = userProfileData.success ? userProfileData.data : userProfileData;
             userIsLookingValue = profileData?.isLooking || false;
+            userHasTeamValue = !!profileData?.teamCode;
             setUserIsLooking(userIsLookingValue);
+            setUserHasTeam(userHasTeamValue);
           }
         } catch (error) {
           console.error("Error fetching user profile:", error);
@@ -180,8 +184,8 @@ export function DiscoverContainer() {
           }
         }
 
-        // Only fetch teams/participants if user has isLooking enabled
-        if (userIsLookingValue || isTeamLead) {
+        // Only fetch teams/participants if user has isLooking enabled or has a team
+        if (userIsLookingValue || userHasTeamValue || isTeamLead) {
           // Fetch teams looking for members (only if user is looking for team or is team lead)
           if (!isTeamLead) {
             const teamsResponse = await fetch(`${API_ENDPOINTS.lookingForMembers}${queryParams}${queryParams ? '&' : '?'}page=${teamsPage}&limit=${ITEMS_PER_PAGE}`, {
@@ -601,18 +605,24 @@ export function DiscoverContainer() {
 
   return (
     <div className="flex flex-col gap-[24px] w-full">
-      <div className="flex items-center justify-between">
-        <h1 className="text-[42px] text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-          Discover
-        </h1>
-        <Button onClick={() => router.push("/dashboard")} variant="secondary">
-          <Home className="w-4 h-4" />
-          Back to Dashboard
-        </Button>
-      </div>
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-[100px]">
+          <Spinner size="lg" />
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between">
+            <h1 className="text-[42px] text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+              Discover
+            </h1>
+            <Button onClick={() => router.push("/dashboard")} variant="secondary">
+              <Home className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          </div>
 
-      {user?.teamCode && !isTeamLead ? (
-        <div className="flex flex-col items-center justify-center py-[60px] text-center">
+          {user?.teamCode && !isTeamLead ? (
+            <div className="flex flex-col items-center justify-center py-[60px] text-center">
           <div className="bg-[rgba(255,77,0,0.1)] border border-[#ff4d00]/30 rounded-lg p-8 max-w-2xl">
             <h2 className="text-2xl font-bold text-[#ff4d00] mb-4">You are already in a team!</h2>
             <p className="text-gray-300 mb-6">
@@ -624,9 +634,9 @@ export function DiscoverContainer() {
               Go to Team Dashboard
             </Button>
           </div>
-        </div>
-      ) : !userIsLooking && !isTeamLead && activeTab === "teams" ? (
-        <div className="flex flex-col items-center justify-center py-[60px] text-center">
+            </div>
+          ) : !userIsLooking && !isTeamLead && !userHasTeam && activeTab === "teams" ? (
+            <div className="flex flex-col items-center justify-center py-[60px] text-center">
           <div className="bg-[rgba(255,77,0,0.1)] border border-[#ff4d00]/30 rounded-lg p-8 max-w-2xl">
             <h2 className="text-2xl font-bold text-[#ff4d00] mb-4">Enable "Public Profile" to Discover Teams</h2>
             <p className="text-gray-300 mb-6">
@@ -636,8 +646,8 @@ export function DiscoverContainer() {
               Go to Profile Settings
             </Button>
           </div>
-        </div>
-      ) : (
+            </div>
+          ) : (
         <>
           {!user?.teamCode && (
             <AlertBanner
@@ -873,6 +883,8 @@ export function DiscoverContainer() {
             showCreateTeamHint={!user?.teamCode}
             error={userError}
           />
+        </>
+      )}
         </>
       )}
     </div>
