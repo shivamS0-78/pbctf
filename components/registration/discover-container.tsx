@@ -64,10 +64,20 @@ export function DiscoverContainer() {
   const [userIsLooking, setUserIsLooking] = useState(false);
   const [teamCapacity, setTeamCapacity] = useState<{ current: number, max: number } | null>(null);
 
+  // Pagination state
+  const [teamsPage, setTeamsPage] = useState(1);
+  const [participantsPage, setParticipantsPage] = useState(1);
+  const [teamsPagination, setTeamsPagination] = useState({ totalPages: 1, total: 0 });
+  const [participantsPagination, setParticipantsPagination] = useState({ totalPages: 1, total: 0 });
+  const ITEMS_PER_PAGE = 10;
+
   // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
+      // Reset to page 1 when search changes
+      setTeamsPage(1);
+      setParticipantsPage(1);
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -174,7 +184,7 @@ export function DiscoverContainer() {
         if (userIsLookingValue || isTeamLead) {
           // Fetch teams looking for members (only if user is looking for team or is team lead)
           if (!isTeamLead) {
-            const teamsResponse = await fetch(`${API_ENDPOINTS.lookingForMembers}${queryParams}`, {
+            const teamsResponse = await fetch(`${API_ENDPOINTS.lookingForMembers}${queryParams}${queryParams ? '&' : '?'}page=${teamsPage}&limit=${ITEMS_PER_PAGE}`, {
               method: 'GET',
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -197,6 +207,13 @@ export function DiscoverContainer() {
                   appliedFor: team.appliedFor,
                 }));
                 setTeamsLookingForMembers(transformed);
+                // Store pagination info
+                if (teamsData.data.pagination) {
+                  setTeamsPagination({
+                    totalPages: teamsData.data.pagination.totalPages || 1,
+                    total: teamsData.data.pagination.total || 0,
+                  });
+                }
               } else {
                 setTeamsLookingForMembers([]);
               }
@@ -204,7 +221,7 @@ export function DiscoverContainer() {
           }
 
           // Fetch participants looking for teams (only if user is looking for team or is team lead)
-          const participantsResponse = await fetch(`${API_ENDPOINTS.lookingForTeam}${queryParams}`, {
+          const participantsResponse = await fetch(`${API_ENDPOINTS.lookingForTeam}${queryParams}${queryParams ? '&' : '?'}page=${participantsPage}&limit=${ITEMS_PER_PAGE}`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -234,6 +251,13 @@ export function DiscoverContainer() {
                   email: user.email,
                 }));
               setParticipantsLookingForTeams(transformed);
+              // Store pagination info
+              if (participantsData.data.pagination) {
+                setParticipantsPagination({
+                  totalPages: participantsData.data.pagination.totalPages || 1,
+                  total: participantsData.data.pagination.total || 0,
+                });
+              }
             } else {
               setParticipantsLookingForTeams([]);
             }
@@ -275,7 +299,7 @@ export function DiscoverContainer() {
     };
 
     fetchData();
-  }, [getToken, user, debouncedSearchQuery, isTeamLead]);
+  }, [getToken, user, debouncedSearchQuery, isTeamLead, teamsPage, participantsPage]);
 
   const handleSendRequest = async (teamCode: string) => {
     if (!user) return;
@@ -718,6 +742,29 @@ export function DiscoverContainer() {
                       ))}
                     </div>
                   )}
+
+                  {/* Teams Pagination Controls */}
+                  {teamsLookingForMembers.length > 0 && teamsPagination.totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-[16px] mt-[24px] pt-[16px] border-t border-[rgba(255,255,255,0.1)]">
+                      <Button
+                        variant="secondary"
+                        onClick={() => setTeamsPage(prev => Math.max(1, prev - 1))}
+                        disabled={teamsPage <= 1 || isLoading}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                        Page {teamsPage} of {teamsPagination.totalPages}
+                      </span>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setTeamsPage(prev => Math.min(teamsPagination.totalPages, prev + 1))}
+                        disabled={teamsPage >= teamsPagination.totalPages || isLoading}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div>
@@ -770,6 +817,29 @@ export function DiscoverContainer() {
                           </Card>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Participants Pagination Controls */}
+                  {participantsLookingForTeams.length > 0 && participantsPagination.totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-[16px] mt-[24px] pt-[16px] border-t border-[rgba(255,255,255,0.1)]">
+                      <Button
+                        variant="secondary"
+                        onClick={() => setParticipantsPage(prev => Math.max(1, prev - 1))}
+                        disabled={participantsPage <= 1 || isLoading}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                        Page {participantsPage} of {participantsPagination.totalPages}
+                      </span>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setParticipantsPage(prev => Math.min(participantsPagination.totalPages, prev + 1))}
+                        disabled={participantsPage >= participantsPagination.totalPages || isLoading}
+                      >
+                        Next
+                      </Button>
                     </div>
                   )}
                 </div>
