@@ -4,6 +4,7 @@ import { Instrument_Serif } from 'next/font/google';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { Toaster } from "@/components/ui/toaster";
 import { HelpButton } from "@/components/ui/help-button";
+import { Analytics } from "@vercel/analytics/next";
 
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
@@ -44,6 +45,7 @@ export default function RootLayout({
           <Toaster />
           <HelpButton />
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
