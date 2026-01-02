@@ -14,6 +14,7 @@ import {
   X,
   Check,
   Search,
+  ArrowRight,
 } from "lucide-react";
 import { FormSection } from "./form-section";
 import { Button } from "./button";
@@ -102,6 +103,7 @@ export function DashboardContainer() {
   const [removeMemberDialogOpen, setRemoveMemberDialogOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
   const [transferOwnershipDialogOpen, setTransferOwnershipDialogOpen] = useState(false);
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
 
   const handleRespondToInvite = async (requestId: string, action: 'accept' | 'decline') => {
     try {
@@ -142,6 +144,12 @@ export function DashboardContainer() {
   };
 
   useEffect(() => {
+    // Check if welcome banner has been dismissed
+    const welcomeBannerDismissed = localStorage.getItem('zenith_welcome_banner_dismissed');
+    if (!welcomeBannerDismissed) {
+      setShowWelcomeBanner(true);
+    }
+
     if (!isAuthenticated || !user) {
       router.push("/login");
       return;
@@ -657,6 +665,11 @@ export function DashboardContainer() {
     return user?.role === 'admin';
   };
 
+  const handleDismissWelcomeBanner = () => {
+    setShowWelcomeBanner(false);
+    localStorage.setItem('zenith_welcome_banner_dismissed', 'true');
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -672,6 +685,63 @@ export function DashboardContainer() {
   return (
     <div className="flex flex-col gap-[24px] max-w-[1100px] w-full">
       {alert && <AlertBanner type={alert.type} message={alert.message} />}
+
+      {/* Welcome Banner - Registration Success */}
+      {showWelcomeBanner && (
+        <div className="relative backdrop-blur-[2.5px] backdrop-filter bg-[rgba(255,77,0,0.15)] rounded-[15px] p-[20px] border border-[#ff4d00]">
+          <button
+            onClick={handleDismissWelcomeBanner}
+            className="absolute top-4 right-4 text-white opacity-70 hover:opacity-100 transition-opacity"
+            aria-label="Close banner"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          
+          <div className="flex flex-col gap-[16px] pr-8">
+            <div className="flex items-center gap-[12px]">
+              <CheckCircle className="w-6 h-6 text-[#ff4d00] flex-shrink-0" />
+              <h3 className="text-[20px] text-white font-semibold" style={{ fontFamily: 'var(--font-heading)' }}>
+                Registration Successful!
+              </h3>
+            </div>
+            
+            <div className="space-y-[12px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+              <p className="text-[15px] leading-[22px]">
+                You're registered!
+              </p>
+              <p className="text-[14px] opacity-90 leading-[20px]">
+                All hackathon communication happens on Discord — announcements, networking and doubts.
+              </p>
+              
+              <div className="flex items-start gap-[8px] pt-[4px]">
+                <ArrowRight className="w-5 h-5 text-[#ff4d00] flex-shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-[8px]">
+                  <p className="text-[14px] opacity-90 leading-[20px]">
+                    <span className="font-semibold">After joining the Discord server:</span>
+                  </p>
+                  <ul className="list-disc list-inside space-y-[4px] text-[13px] opacity-85 ml-2">
+                    <li>Go to <span className="text-[#ff4d00] font-semibold">#welcome-rules</span></li>
+                    <li>Click the green tick (✅) to accept the rules</li>
+                    <li>This will unlock all channels for you</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div className="pt-[4px]">
+              <a
+                href="https://discord.gg/kqNUEVGmXA"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center bg-[#ff4d00] hover:bg-[#ff6600] text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-[0_0_15px_rgba(255,77,0,0.4)] hover:shadow-[0_0_20px_rgba(255,77,0,0.6)]"
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
+                Join Discord
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex flex-col gap-[12px] items-center text-center">

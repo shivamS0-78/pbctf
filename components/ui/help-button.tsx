@@ -28,13 +28,13 @@ export function HelpButton() {
                             Stuck or have a question? We're here to help!
                         </p>
                         <p className="text-gray-400">
-                            Join our official Discord server and head over to the <span className="text-[var(--primary)] font-bold">#help</span> channel for support.
+                            Join our official Discord server and head over to the <span className="text-[var(--primary)] font-bold">#❓┃doubts</span> channel for support.
                         </p>
                     </div>
 
                     <div className="flex justify-end pt-4">
                         <a
-                            href="https://discord.gg/zenith"
+                            href="https://discord.gg/kqNUEVGmXA"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center bg-[var(--primary)] hover:brightness-110 text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 w-full sm:w-auto shadow-[0_0_15px_rgba(255,77,0,0.4)] hover:shadow-[0_0_20px_rgba(255,77,0,0.6)]"
