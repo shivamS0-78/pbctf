@@ -628,9 +628,9 @@ export function DiscoverContainer() {
       ) : !userIsLooking && !isTeamLead && activeTab === "teams" ? (
         <div className="flex flex-col items-center justify-center py-[60px] text-center">
           <div className="bg-[rgba(255,77,0,0.1)] border border-[#ff4d00]/30 rounded-lg p-8 max-w-2xl">
-            <h2 className="text-2xl font-bold text-[#ff4d00] mb-4">Enable "Profile Public" to Discover Teams</h2>
+            <h2 className="text-2xl font-bold text-[#ff4d00] mb-4">Enable "Public Profile" to Discover Teams</h2>
             <p className="text-gray-300 mb-6">
-              You need to enable "Profile Public" in your profile settings to see teams looking for members.
+              You need to enable "Public Profile" in your profile settings to see teams looking for members.
             </p>
             <Button onClick={() => router.push("/dashboard/profile")} variant="primary">
               Go to Profile Settings

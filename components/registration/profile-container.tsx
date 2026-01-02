@@ -309,7 +309,7 @@ export function ProfileContainer() {
             className="data-[state=checked]:bg-[#ff4d00] border-[#ff4d00]"
           />
           <label htmlFor="profileLookingForTeam" className="text-[14px] font-semibold text-white cursor-pointer" style={{ fontFamily: 'var(--font-body)' }}>
-            Profile Public
+            Public Profile
           </label>
         </div>
         <p className="text-[13px] text-[rgba(255,255,255,0.6)] ml-[32px]" style={{ fontFamily: 'var(--font-body)' }}>
