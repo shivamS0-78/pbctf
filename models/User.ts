@@ -1,33 +1,34 @@
-import mongoose, { Schema, Document, Model, Types } from 'mongoose';
+import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
 export interface IUser extends Document {
-    _id: Types.ObjectId;
-    uid: string;
-    name: string;
-    email: string;
-    phone?: string;
-    discord_username?: string;
-    resume_link?: string;
-    leetcode_profile?: string;
-    github_link?: string;
-    linkedin_link?: string;
-    codeforces_link?: string;
-    kaggle_link?: string;
-    devfolio_link?: string;
-    portfolio_link?: string;
-    ctf_profile?: string;
-    bio?: string;
-    age?: number;
-    organisation?: string;
-    profile_picture?: string;
-    isLooking: boolean;
-    role: 'user' | 'admin' | 'evaluator';
-    teamCode?: string;
-    createdAt: Date;
-    updatedAt: Date;
+  _id: Types.ObjectId;
+  uid: string;
+  name: string;
+  email: string;
+  phone?: string;
+  discord_username?: string;
+  resume_link?: string;
+  leetcode_profile?: string;
+  github_link?: string;
+  linkedin_link?: string;
+  codeforces_link?: string;
+  kaggle_link?: string;
+  devfolio_link?: string;
+  portfolio_link?: string;
+  ctf_profile?: string;
+  bio?: string;
+  age?: number;
+  organisation?: string;
+  profile_picture?: string;
+  isLooking: boolean;
+  role: "user" | "admin" | "evaluator";
+  teamCode?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const UserSchema: Schema = new Schema({
+const UserSchema: Schema = new Schema(
+  {
     uid: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -47,17 +48,21 @@ const UserSchema: Schema = new Schema({
     organisation: { type: String }, // Optional - required for regular users during registration
     profile_picture: { type: String },
     isLooking: { type: Boolean, default: false, index: true },
-    role: { type: String, enum: ['user', 'admin', 'evaluator'], default: 'user' },
+    role: {
+      type: String,
+      enum: ["user", "admin", "evaluator"],
+      default: "user",
+    },
     teamCode: { type: String, index: true },
-}, {
+  },
+  {
     timestamps: true,
-});
+  }
+);
 
 UserSchema.index({ createdAt: -1 });
 
-if (mongoose.models.User) {
-  delete mongoose.models.User;
-}
-const User: Model<IUser> = mongoose.model<IUser>('User', UserSchema);
+const User: Model<IUser> =
+  mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
 
 export default User;
