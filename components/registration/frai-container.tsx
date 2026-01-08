@@ -18,10 +18,11 @@ const REGISTRATION_DATA = [
     { name: 'Jan 1', users: 45 },
     { name: 'Jan 2', users: 98 },
     { name: 'Jan 3', users: 156 },
-    { name: 'Jan 4', users: 210 },
-    { name: 'Jan 5', users: 289 },
-    { name: 'Jan 6', users: 345 },
-    { name: 'Jan 7', users: 378 },
+    { name: 'Jan 4', users: 180 },
+    { name: 'Jan 5', users: 202 },
+    { name: 'Jan 6', users: 243 },
+    { name: 'Jan 7', users: 301 },
+    { name: 'Jan 8', users: 378 },
 ];
 
 const TEAM_STATUS_DATA = [
