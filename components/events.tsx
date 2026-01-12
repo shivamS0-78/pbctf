@@ -40,8 +40,8 @@ const events: Event[] = [
       id: 4,
       title: "HACKATHON",
       category: "Tech",
-      description: "A 48-hour coding marathon where innovators build groundbreaking applications.",
-      fullDescription: "HACKATHON is the ultimate test of creativity and endurance for developers, engineers, and designers. Over 48 hours, participants collaborate in teams to develop innovative applications, tackle real-world problems, and present their solutions to a panel of judges. With categories spanning web development, AI, blockchain, and IoT, this event is a breeding ground for the next big tech breakthrough.",
+      description: "A 18-hour coding marathon where innovators build groundbreaking applications.",
+      fullDescription: "HACKATHON is the ultimate test of creativity and endurance for developers, engineers, and designers. Over 18 hours, participants collaborate in teams to develop innovative applications, tackle real-world problems, and present their solutions to a panel of judges. With categories spanning web development, AI, blockchain, and IoT, this event is a breeding ground for the next big tech breakthrough.",
       time: "Starts at 11PM",
       image: hackathon.src,
     }
@@ -184,6 +184,7 @@ function Events() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4"
+              onClick={handleClose}
             >
               <EventBox 
                 event={events.find(e => e.id === expandedId)!}

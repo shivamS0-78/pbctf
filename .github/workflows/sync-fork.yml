@@ -1,0 +1,76 @@
+name: Sync Fork with Upstream
+
+on:
+  schedule:
+    # Runs every minute (minimum interval for GitHub Actions cron)
+    # Note: GitHub Actions doesn't support intervals less than 1 minute
+    - cron: '*/1 * * * *'
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to push to the repository
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for proper merging
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          UPSTREAM_REPO="https://github.com/pbdsce/Zenith.git"
+          
+          # Check if upstream remote already exists
+          if git remote | grep -q "^upstream$"; then
+            git remote set-url upstream "$UPSTREAM_REPO"
+          else
+            git remote add upstream "$UPSTREAM_REPO"
+          fi
+
+      - name: Fetch upstream
+        run: git fetch upstream
+
+      - name: Get current branch
+        id: branch
+        run: echo "branch=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Merge upstream changes
+        run: |
+          CURRENT_BRANCH="${{ steps.branch.outputs.branch }}"
+          UPSTREAM_BRANCH="prod"  # Upstream default branch
+          
+          git checkout $CURRENT_BRANCH
+          
+          # Try to merge from upstream branch
+          if git merge "upstream/$UPSTREAM_BRANCH" --no-edit; then
+            echo "Successfully merged upstream/$UPSTREAM_BRANCH into $CURRENT_BRANCH"
+          else
+            echo "Merge failed or no changes to merge"
+            # Check if there are actual conflicts or just no changes
+            if [ -n "$(git status --porcelain)" ]; then
+              echo "Merge conflicts detected, skipping push"
+              exit 1
+            else
+              echo "No changes to merge"
+              exit 0
+            fi
+          fi
+
+      - name: Push changes
+        run: |
+          CURRENT_BRANCH="${{ steps.branch.outputs.branch }}"
+          if git push origin $CURRENT_BRANCH; then
+            echo "Successfully pushed changes to $CURRENT_BRANCH"
+          else
+            echo "No changes to push or push failed"
+            exit 0
+          fi

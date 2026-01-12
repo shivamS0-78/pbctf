@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { ChevronDown, Target, Crosshair, Briefcase, Flag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-
 interface FAQItem {
   question: string;
   answer: string;
@@ -31,10 +30,10 @@ export function Brief() {
           question: "What is Zenith?",
           answer: "Zenith is a flagship 36-hour tech contest organized by Point Blank. It brings together 200+ top programmers for CTF, hackathons, competitive programming, and a Kaggle competition."
         },
-        {
-          question: "When and where is Zenith happening?",
-          answer: "The event is scheduled for April 27-28, 2025, with the venue to be announced soon. Please note that the dates are tentative."
-        },
+        // {
+        //   question: "When and where is Zenith happening?",
+        //   answer: "The event is scheduled for April 27-28, 2025, with the venue to be announced soon. Please note that the dates are tentative."
+        // },
         {
           question: "Who can Participate?",
           answer: "Zenith is open to college students, professionals, and tech enthusiasts from across India. Some competitions may have specific eligibility criteria."
@@ -62,7 +61,7 @@ export function Brief() {
       questions: [
         {
           question: "What are the different contests in Zenith?",
-          answer: "Zenith features a diverse range of competitions designed to challenge and inspire participants across multiple tech domains. The Capture The Flag (CTF) contest is tailored for cybersecurity enthusiasts, where participants solve real-world security challenges and vulnerabilities. The Hackathon encourages developers to innovate and build groundbreaking solutions in software, AI, and machine learning. Competitive Programming is all about speed and logical problem-solving, where participants tackle algorithmic challenges under time constraints. Lastly, the Kaggle Competition is a data science and machine learning challenge that enables participants to analyze datasets, develop AI-driven models, and derive meaningful insights."
+          answer: "Zenith features CTF for cybersecurity challenges, a Hackathon for software and AI innovation, Competitive Programming for algorithmic problem-solving, and a Kaggle Competition for AI/ML-based challenges."
         },
         {
           question: "How do I register?",
@@ -70,7 +69,7 @@ export function Brief() {
         },
         {
           question: "Can I participate individually or in teams?",
-          answer: "Participation rules vary depending on the competition. The Capture The Flag (CTF) and Hackathon events require team participation, with a maximum of four members per team. Competitive Programming, on the other hand, is an individual event where participants compete to solve algorithmic problems independently. The Kaggle Competition allows both individual and team participation, depending on the specific challenge. Participants should check the detailed event guidelines to ensure they meet the eligibility requirements for their preferred competition."
+          answer: "Registrations are individual, and teams will be formed on the spot during the event. You can explore participant profiles and connect with others beforehand to set up your team. If you don’t have a team by then, we’ll assign you one at the event."
         }
       ]
     },
@@ -112,16 +111,16 @@ export function Brief() {
   ];
 
   const [selectedSection, setSelectedSection] = useState<keyof FAQData>('general');
-  const [openQuestions, setOpenQuestions] = useState<Set<string>>(new Set());
+  const [openQuestion, setOpenQuestion] = useState<string | null>(null);
 
   const toggleQuestion = (questionId: string) => {
-    const newOpenQuestions = new Set(openQuestions);
-    if (newOpenQuestions.has(questionId)) {
-      newOpenQuestions.delete(questionId);
+    if (openQuestion === questionId) {
+      // If clicking the same question, close it
+      setOpenQuestion(null);
     } else {
-      newOpenQuestions.add(questionId);
+      // Otherwise open the new question (and automatically close the previous one)
+      setOpenQuestion(questionId);
     }
-    setOpenQuestions(newOpenQuestions);
   };
 
   return (
@@ -132,21 +131,32 @@ export function Brief() {
           transition={{ duration: 0.6 }}
           className="max-w-7xl mx-auto"
         >
-          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="px-4 sm:px-6 lg:px-8">
             <motion.h1 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="text-6xl sm:text-7xl xl:text-8xl font-bold mb-8 tracking-wider font-dystopian text-[#2AD7DB]"
+              className="text-[6rem] sm:text-7xl xl:text-8xl text-center sm:text-left font-bold mb-8 tracking-wider font-dystopian text-[#2AD7DB]"
               style={{
-                textShadow: "0 0 20px rgba(42,215,219,0.3), 0 0 40px rgba(42,215,219,0.2), 0 0 60px rgba(42,215,219,0.1)"
+              textShadow: "0 0 20px rgba(42,215,219,0.3), 0 0 40px rgba(42,215,219,0.2), 0 0 60px rgba(42,215,219,0.1)"
               }}
             >
               FAQ
             </motion.h1>
-          </div>
+            </div>
 
           <div className="lg:hidden relative mb-8">
-            <div className="flex overflow-x-auto scrollbar-hide px-4 sm:px-6 space-x-4 pb-4">
+            <div 
+              className="flex overflow-x-auto px-4 sm:px-6 space-x-4 pb-4"
+              style={{
+                msOverflowStyle: 'none',
+                scrollbarWidth: 'none',
+              }}
+            >
+              <style jsx>{`
+                div::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
               {menuItems.map((item, index) => (
                 <motion.button
                   initial={{ opacity: 0, x: -20 }}
@@ -209,7 +219,7 @@ export function Brief() {
                       key={index}
                       className="border-b border-gray-700/50 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 hover:border-[#2AD7DB]/30 group"
                       style={{
-                        boxShadow: openQuestions.has(`${selectedSection}-${index}`) 
+                        boxShadow: openQuestion === `${selectedSection}-${index}` 
                           ? '0 0 20px rgba(42,215,219,0.1)' 
                           : 'none'
                       }}
@@ -220,10 +230,10 @@ export function Brief() {
                       >
                         <span className="text-xl font-medium pr-8">{item.question}</span>
                         <motion.div
-                          animate={{ rotate: openQuestions.has(`${selectedSection}-${index}`) ? 180 : 0 }}
+                          animate={{ rotate: openQuestion === `${selectedSection}-${index}` ? 180 : 0 }}
                           transition={{ duration: 0.2 }}
                           className={`transition-colors duration-300 ${
-                            openQuestions.has(`${selectedSection}-${index}`) 
+                            openQuestion === `${selectedSection}-${index}` 
                               ? 'text-[#2AD7DB]' 
                               : 'group-hover:text-[#2AD7DB]'
                           }`}
@@ -232,7 +242,7 @@ export function Brief() {
                         </motion.div>
                       </button>
                       <AnimatePresence>
-                        {openQuestions.has(`${selectedSection}-${index}`) && (
+                        {openQuestion === `${selectedSection}-${index}` && (
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
@@ -277,10 +287,10 @@ export function Brief() {
                     >
                       <span className="text-xl font-medium pr-8">{item.question}</span>
                       <motion.div
-                        animate={{ rotate: openQuestions.has(`${selectedSection}-${index}`) ? 180 : 0 }}
+                        animate={{ rotate: openQuestion === `${selectedSection}-${index}` ? 180 : 0 }}
                         transition={{ duration: 0.2 }}
                         className={`transition-colors duration-300 ${
-                          openQuestions.has(`${selectedSection}-${index}`) 
+                          openQuestion === `${selectedSection}-${index}` 
                             ? 'text-[#2AD7DB]' 
                             : 'group-hover:text-[#2AD7DB]'
                         }`}
@@ -289,7 +299,7 @@ export function Brief() {
                       </motion.div>
                     </button>
                     <AnimatePresence>
-                      {openQuestions.has(`${selectedSection}-${index}`) && (
+                      {openQuestion === `${selectedSection}-${index}` && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}

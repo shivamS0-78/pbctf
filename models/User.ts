@@ -1,0 +1,68 @@
+import mongoose, { Schema, Document, Model, Types } from "mongoose";
+
+export interface IUser extends Document {
+  _id: Types.ObjectId;
+  uid: string;
+  name: string;
+  email: string;
+  phone?: string;
+  discord_username?: string;
+  resume_link?: string;
+  leetcode_profile?: string;
+  github_link?: string;
+  linkedin_link?: string;
+  codeforces_link?: string;
+  kaggle_link?: string;
+  devfolio_link?: string;
+  portfolio_link?: string;
+  ctf_profile?: string;
+  bio?: string;
+  age?: number;
+  organisation?: string;
+  profile_picture?: string;
+  isLooking: boolean;
+  role: "user" | "admin" | "evaluator" | "frai";
+  teamCode?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const UserSchema: Schema = new Schema(
+  {
+    uid: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    phone: { type: String }, // Optional - required for regular users during registration
+    discord_username: { type: String }, // Optional - required for regular users during registration
+    resume_link: { type: String },
+    leetcode_profile: { type: String },
+    github_link: { type: String },
+    linkedin_link: { type: String },
+    codeforces_link: { type: String },
+    kaggle_link: { type: String },
+    devfolio_link: { type: String },
+    portfolio_link: { type: String },
+    ctf_profile: { type: String },
+    bio: { type: String }, // Optional - required for regular users during registration
+    age: { type: Number }, // Optional - required for regular users during registration
+    organisation: { type: String }, // Optional - required for regular users during registration
+    profile_picture: { type: String },
+    isLooking: { type: Boolean, default: false, index: true },
+    role: {
+      type: String,
+      enum: ["user", "admin", "evaluator", "frai"],
+      default: "user",
+    },
+    teamCode: { type: String, index: true },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+UserSchema.index({ createdAt: -1 });
+
+const User: Model<IUser> =
+  mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+
+export default User;

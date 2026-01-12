@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Monoton } from 'next/font/google'
-import { BarLoader } from 'react-spinners'
+import { Spinner } from '@/components/ui/spinner'
 
 const mon = Monoton({
   weight: '400',
@@ -12,7 +12,7 @@ const mon = Monoton({
 
 export default function Loading() {
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black flex items-center justify-center z-50 select-none">
       <div className="text-center">
         <motion.h1 
           className={`font-dystopian text-4xl md:text-7xl text-white`}
@@ -34,11 +34,9 @@ export default function Loading() {
           ZENITH
         </motion.h1>
         <div className="mt-8">
-          <BarLoader
-            color="white"
-            width={280}
-            height={4}
-          />
+        <div className="mt-8">
+          <Spinner size="xl" />
+        </div>
         </div>
       </div>
     </div>
