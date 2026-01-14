@@ -263,8 +263,16 @@ export function SubmissionContainer() {
         });
 
         if (!uploadResponse.ok) {
-          const uploadData = await uploadResponse.json();
-          throw new Error(uploadData.message || 'Failed to upload submission');
+          let errorMessage = 'Failed to upload submission';
+          try {
+            const uploadData = await uploadResponse.json();
+            errorMessage = uploadData.message || errorMessage;
+          } catch (e) {
+            // If JSON parsing fails, try to get text response
+            const textError = await uploadResponse.text();
+            errorMessage = textError || errorMessage;
+          }
+          throw new Error(errorMessage);
         }
       }
 
@@ -396,10 +404,23 @@ export function SubmissionContainer() {
             label="Project Documentation (PDF)"
             accept=".pdf"
             required
+            maxSizeMB={10}
             onChange={(e) => {
               if (e.target.files && e.target.files[0]) {
-                setDocumentationFile(e.target.files[0]);
-                setDocumentationFileName(e.target.files[0].name);
+                const file = e.target.files[0];
+                if (file.size > 10 * 1024 * 1024) {
+                  setAlert({
+                    type: "error",
+                    message: "File size must be less than 10MB",
+                  });
+                  e.target.value = ""; // Clear input
+                  setDocumentationFile(null);
+                  setDocumentationFileName("");
+                  return;
+                }
+                setAlert(null); // Clear any previous errors
+                setDocumentationFile(file);
+                setDocumentationFileName(file.name);
               }
             }}
             currentFile={documentationFileName}
