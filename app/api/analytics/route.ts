@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
             Team.countDocuments({ teamStatus: { $in: ['shortlisted', 'accepted'] } })
         ]);
 
-        const adjust = (value: number) => Math.ceil(value * 1.2);
+        const adjust = (value: number) => Math.ceil(value * 1);
 
         const realRegistered = Math.max(0, totalTeams - (submittedCount + evaluatedCount));
 
