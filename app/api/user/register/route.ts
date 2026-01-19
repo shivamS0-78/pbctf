@@ -57,6 +57,18 @@ async function uploadBase64ToCloudinary(base64Data: string, folder: string, reso
 
 export async function POST(request: Request) {
   try {
+    const REGISTRATION_DEADLINE = new Date('2026-01-20T10:00:00+05:30');
+    if (new Date() > REGISTRATION_DEADLINE) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Registration deadline has passed. Registrations are no longer accepted.",
+          error: { code: 'registration_closed', message: "Registration deadline has passed. Registrations are no longer accepted." }
+        },
+        { status: 403 }
+      );
+    }
+
     const formData = await request.formData();
 
     // Helper to convert File to base64

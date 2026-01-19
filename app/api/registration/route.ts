@@ -182,6 +182,16 @@ const getOrCreateBatchDocument = async () => {
 
 export async function POST(request: Request) {
   try {
+    const REGISTRATION_DEADLINE = new Date('2026-01-20T10:00:00+05:30');
+    if (new Date() > REGISTRATION_DEADLINE) {
+      return NextResponse.json(
+        {
+          message: "Registration deadline has passed. Registrations are no longer accepted.",
+          error: "Registration closed"
+        },
+        { status: 403 }
+      );
+    }
     // Parse form data with files
     const { fields, files } = await parseForm(request);
     const data = { ...fields };
