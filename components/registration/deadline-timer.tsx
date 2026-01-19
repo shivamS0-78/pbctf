@@ -185,7 +185,7 @@ export function DeadlineTimer({ teamStatus, hasSubmitted = false }: DeadlineTime
             className="text-[12px] text-white/50 mt-[8px] text-center w-full"
             style={{ fontFamily: 'var(--font-body)' }}
           >
-            Deadline: January 19, 2026 at 11:59 PM IST
+            Deadline: January 21, 2026 at 06:00 AM IST
           </p>
         </div>
       )}
