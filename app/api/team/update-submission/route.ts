@@ -90,18 +90,18 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const deadline = process.env.SUBMISSION_DEADLINE 
+    const SUBMISSION_DEADLINE = process.env.SUBMISSION_DEADLINE 
       ? new Date(process.env.SUBMISSION_DEADLINE) 
-      : null;
+      : new Date('2026-01-21T10:00:00+05:30');
     
-    if (deadline && new Date() > deadline) {
+    if (new Date() > SUBMISSION_DEADLINE) {
       return NextResponse.json(
         {
-          message: "Deadline has passed",
+          message: "Submission deadline has passed. No updates allowed.",
           error: {
             code: 'DEADLINE_PASSED',
             message: 'Submission deadline has passed. No updates allowed.',
-            deadline: deadline.toISOString()
+            deadline: SUBMISSION_DEADLINE.toISOString()
           }
         },
         { status: 403 }
@@ -158,7 +158,7 @@ export async function PUT(request: NextRequest) {
       data: {
         teamCode: updatedTeam.teamCode,
         updatedAt: updatedTeam.updatedAt || new Date().toISOString(),
-        deadline: deadline?.toISOString() || null,
+        deadline: SUBMISSION_DEADLINE.toISOString(),
       },
     });
   } catch (error: any) {
