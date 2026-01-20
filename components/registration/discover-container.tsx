@@ -882,6 +882,7 @@ export function DiscoverContainer() {
             canInvite={isTeamLead && (!teamCapacity || teamCapacity.current < teamCapacity.max)}
             showCreateTeamHint={!user?.teamCode}
             error={userError}
+            openResumeInNewTab
           />
         </>
       )}
