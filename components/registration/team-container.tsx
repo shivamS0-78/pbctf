@@ -1431,6 +1431,7 @@ export function TeamContainer() {
         isInvited={false} // Team container doesn't track sent invites per user easily
         canInvite={false} // Invite logic is different in team container (by email)
         error={userError}
+        openResumeInNewTab
       />
 
       {/* Problem Statement Details Modal */}

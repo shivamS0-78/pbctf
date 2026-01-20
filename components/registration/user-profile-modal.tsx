@@ -37,6 +37,11 @@ interface UserProfileModalProps {
   canInvite?: boolean;
   showCreateTeamHint?: boolean;
   error?: string | null;
+  /**
+   * If true, clicking resume opens in a new tab via `/api/resume/view`
+   * instead of forcing a download. Used on admin dashboard.
+   */
+  openResumeInNewTab?: boolean;
 }
 
 export function UserProfileModal({ 
@@ -49,10 +54,17 @@ export function UserProfileModal({
   isInvited = false,
   canInvite = false,
   showCreateTeamHint = false,
-  error
+  error,
+  openResumeInNewTab = false,
 }: UserProfileModalProps) {
-  const handleResumeDownload = async (url: string) => {
+  const handleResumeClick = async (url: string) => {
     try {
+      if (openResumeInNewTab) {
+        const viewerUrl = `/api/resume/view?url=${encodeURIComponent(url)}`;
+        window.open(viewerUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
+
       const response = await fetch(url);
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
@@ -189,7 +201,7 @@ export function UserProfileModal({
                 )}
                 {userDetails.resume_link && (
                   <button
-                    onClick={() => handleResumeDownload(userDetails.resume_link!)}
+                    onClick={() => handleResumeClick(userDetails.resume_link!)}
                     className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors cursor-pointer w-full"
                   >
                     <FileText className="w-4 h-4 text-white opacity-70" />

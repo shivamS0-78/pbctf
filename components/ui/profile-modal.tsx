@@ -14,27 +14,21 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ profile, isOpen, onClose }: ProfileModalProps) {
-    const [isDownloadingResume, setIsDownloadingResume] = useState(false);
+  const [isDownloadingResume, setIsDownloadingResume] = useState(false);
 
-    const handleResumeDownload = async (url: string) => {
-      try {
-        setIsDownloadingResume(true);
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = 'resume.pdf';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(blobUrl);
-        document.body.removeChild(a);
-      } catch (error) {
-        console.error('Error downloading resume:', error);
-      } finally {
-        setIsDownloadingResume(false);
-      }
-    };
+  // For admin dashboard: open resume in a new tab instead of forcing download.
+  // We proxy through our API to force `Content-Disposition: inline` and `application/pdf`.
+  const handleResumeOpen = (url: string) => {
+    try {
+      setIsDownloadingResume(true);
+      const viewerUrl = `/api/resume/view?url=${encodeURIComponent(url)}`;
+      window.open(viewerUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      console.error("Error opening resume:", error);
+    } finally {
+      setIsDownloadingResume(false);
+    }
+  };
 
     // Generate a consistent color based on name
     const getColorFromName = (name: string) => {
@@ -209,18 +203,18 @@ export default function ProfileModal({ profile, isOpen, onClose }: ProfileModalP
 
                     {profile.resume_link && (
                       <button
-                        onClick={() => handleResumeDownload(profile.resume_link!)}
+                        onClick={() => handleResumeOpen(profile.resume_link!)}
                         disabled={isDownloadingResume}
                         className="flex items-center gap-1.5 bg-[#0a3333] hover:bg-[#0a4444] disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-full text-sm transition-colors cursor-pointer"
                       >
                         {isDownloadingResume ? (
                           <>
                             <div className="w-4 h-4 border-2 border-[#0ff]/20 border-t-[#0ff] rounded-full animate-spin" />
-                            <span>Downloading...</span>
+                            <span>Opening...</span>
                           </>
                         ) : (
                           <>
-                            <Download size={16} className="text-[#0ff]" />
+                            <ExternalLink size={16} className="text-[#0ff]" />
                             <span>Resume</span>
                           </>
                         )}
