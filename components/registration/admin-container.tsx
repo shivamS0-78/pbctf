@@ -822,6 +822,7 @@ export function AdminContainer() {
         onClose={() => setIsUserModalOpen(false)}
         userDetails={selectedUser}
         isLoading={isUserLoading}
+        openResumeInNewTab
       />
 
       <Modal isOpen={isAddPSModalOpen} onClose={() => setIsAddPSModalOpen(false)} title="Add Problem Statement">

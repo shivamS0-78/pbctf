@@ -178,6 +178,7 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
                 onClose={() => setIsProfileOpen(false)}
                 userDetails={selectedUser}
                 isLoading={isLoadingProfile}
+                openResumeInNewTab
             />
 
             <div className="flex items-center gap-4">
