@@ -296,23 +296,30 @@ export default function ShortlistedPage() {
                             {team.teamName}
                           </h3>
                           
-                          {/* Team Code */}
+                          {/* Leader Name */}
                           <p 
-                            className="text-xs text-white/40 font-mono mt-0.5"
+                            className="text-xs text-white/50 mt-0.5 truncate"
+                            style={{ fontFamily: 'var(--font-body)' }}
+                            title={team.leaderName}
                           >
-                            {team.teamCode}
+                            Led by {team.leaderName}
                           </p>
                         </div>
                       </div>
 
                       {/* Bottom row */}
                       <div className="flex items-center justify-between">
-                        {/* Member count */}
-                        <div className="flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5 text-white/40" />
-                          <span className="text-xs text-white/60" style={{ fontFamily: 'var(--font-body)' }}>
-                            {team.memberCount} members
+                        {/* Team Code & Member count */}
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-white/40 font-mono">
+                            {team.teamCode}
                           </span>
+                          <div className="flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5 text-white/40" />
+                            <span className="text-xs text-white/60" style={{ fontFamily: 'var(--font-body)' }}>
+                              {team.memberCount}
+                            </span>
+                          </div>
                         </div>
                         
                         {/* Sparkle indicator */}
