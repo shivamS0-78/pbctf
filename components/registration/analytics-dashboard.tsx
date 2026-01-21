@@ -16,7 +16,7 @@ interface AdminStats {
 
 
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 
 
@@ -37,6 +37,7 @@ export function AnalyticsDashboard() {
     const [registrationData, setRegistrationData] = useState<any[]>([]);
     const [teamStatusData, setTeamStatusData] = useState<any[]>([]);
     const [submissionData, setSubmissionData] = useState<any[]>([]);
+    const [psDistributionData, setPsDistributionData] = useState<any[]>([]);
 
     const [alert, setAlert] = useState<{
         type: "success" | "error" | "warning" | "info";
@@ -81,6 +82,10 @@ export function AnalyticsDashboard() {
 
                         if (result.data.submissionActivity) {
                             setSubmissionData(result.data.submissionActivity);
+                        }
+
+                        if (result.data.psDistribution) {
+                            setPsDistributionData(result.data.psDistribution);
                         }
                     }
                 }
@@ -221,6 +226,52 @@ export function AnalyticsDashboard() {
                                             <Bar dataKey="submissions" fill="#ff4d00" />
                                         </BarChart>
                                     </ResponsiveContainer>
+                                </div>
+                            </Card>
+
+                            <Card>
+                                <div className="mb-4">
+                                    <h3 className="text-white font-medium mb-1">Submissions by Problem Statement</h3>
+                                    <p className="text-white/60 text-sm">Distribution across problem statements</p>
+                                </div>
+                                <div className="h-[300px] w-full">
+                                    {psDistributionData.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={psDistributionData}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={80}
+                                                    fill="#8884d8"
+                                                    paddingAngle={2}
+                                                    dataKey="value"
+                                                    label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                                                    labelLine={true}
+                                                >
+                                                    {psDistributionData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip
+                                                    contentStyle={{ backgroundColor: '#171717', border: '1px solid rgba(255,255,255,0.1)' }}
+                                                    itemStyle={{ color: '#fff' }}
+                                                />
+                                                <Legend
+                                                    layout="vertical"
+                                                    verticalAlign="middle"
+                                                    align="right"
+                                                    iconType="circle"
+                                                    wrapperStyle={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)', maxWidth: '120px', lineHeight: '14px' }}
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="h-full w-full flex items-center justify-center text-white/50">
+                                            No submission data available
+                                        </div>
+                                    )}
                                 </div>
                             </Card>
                         </div>
