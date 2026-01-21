@@ -41,12 +41,15 @@ export async function GET(request: NextRequest) {
         await dbConnect();
 
         // Fetch real stats
-        const [totalUsers, totalTeams, submittedCount, evaluatedCount, shortlistedCount] = await Promise.all([
+        const [totalUsers, totalTeams, submittedCount, evaluatedCount, shortlistedCount, actualSubmissionsCount] = await Promise.all([
             User.countDocuments({ role: 'user' }),
             Team.countDocuments({}),
             Team.countDocuments({ teamStatus: { $in: ['submitted', 'under-review'] } }),
-            Team.countDocuments({ teamStatus: { $in: ['shortlisted', 'accepted', 'rejected'] } }),
-            Team.countDocuments({ teamStatus: { $in: ['shortlisted', 'accepted'] } })
+            Team.countDocuments({ evaluations: { $exists: true, $ne: [] } }),
+            Team.countDocuments({ 
+                'evaluations.tier': { $in: ['accepted', 'strongly_accepted'] }
+            }),
+            Team.countDocuments({ submittedAt: { $exists: true, $ne: null } })
         ]);
 
         const adjust = (value: number) => Math.ceil(value * 1);
@@ -57,6 +60,7 @@ export async function GET(request: NextRequest) {
         const adjustedSubmitted = adjust(submittedCount);
         const adjustedEvaluated = adjust(evaluatedCount);
         const adjustedShortlisted = adjust(shortlistedCount);
+        const adjustedActualSubmissions = adjust(actualSubmissionsCount);
 
         // Ensure total equals the sum of mutually exclusive parts (Reg + Sub + Eval)
         const adjustedTotalTeams = adjustedRegistered + adjustedSubmitted + adjustedEvaluated;
@@ -64,7 +68,7 @@ export async function GET(request: NextRequest) {
         const currentStats = {
             totalUsers: adjust(totalUsers),
             totalTeams: adjustedTotalTeams,
-            totalSubmissions: adjustedSubmitted + adjustedEvaluated, // Total generic submissions
+            totalSubmissions: adjustedActualSubmissions, // Count teams that have actually submitted (using submittedAt field)
             totalEvaluated: adjustedEvaluated,
         };
 
