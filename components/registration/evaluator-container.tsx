@@ -472,6 +472,20 @@ export function EvaluatorContainer() {
                                                 voted {team.myVote.vote}
                                             </span>
                                         )}
+                                        {/* Display Selection Status Tags */}
+                                        {(() => {
+                                            const uniqueTiers = Array.from(new Set(team.evaluations.map(e => e.tier)));
+                                            if (uniqueTiers.length === 0 && team.isEvaluated) return null;
+                                            return uniqueTiers.map(tier => (
+                                                <span key={tier} className={`px-2 py-0.5 rounded border capitalize flex items-center ${tier === 'strongly_accepted' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
+                                                    tier === 'accepted' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                                                        tier === 'borderline' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
+                                                            'bg-red-500/10 border-red-500/20 text-red-400'
+                                                    }`} style={{ fontFamily: 'var(--font-body)' }}>
+                                                    {tier.replace('_', ' ')}
+                                                </span>
+                                            ));
+                                        })()}
                                     </div>
                                 </div>
                             ))}
