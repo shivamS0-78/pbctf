@@ -44,7 +44,7 @@ interface Team {
     isEvaluated: boolean;
 }
 
-type Tab = 'pending' | 'evaluated' | 'community' | 'tier_view';
+type Tab = 'pending' | 'evaluated' | 'all_submissions';
 type Tier = 'strongly_accepted' | 'accepted' | 'borderline' | 'rejected';
 
 // Skeleton Component for Team Card
@@ -70,8 +70,10 @@ export function EvaluatorContainer() {
     const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
     const [activeTab, setActiveTab] = useState<Tab>('pending');
 
-    // Tier View State
-    const [selectedTier, setSelectedTier] = useState<Tier>('strongly_accepted');
+    // Filter State
+    const [selectedTiers, setSelectedTiers] = useState<Tier[]>([]);
+    const [problemStatements, setProblemStatements] = useState<{ id: string; title: string }[]>([]);
+    const [selectedPsIds, setSelectedPsIds] = useState<string[]>([]);
 
     const [searchQuery, setSearchQuery] = useState("");
     const [alert, setAlert] = useState<{ type: "success" | "error" | "warning"; message: string } | null>(null);
@@ -81,6 +83,9 @@ export function EvaluatorContainer() {
     const [totalPages, setTotalPages] = useState(1);
     const [totalTeams, setTotalTeams] = useState(0);
     const limit = 10;
+
+    // Toggle for filter panel
+    const [showFilters, setShowFilters] = useState(false);
 
     // Stats for header
     const [stats, setStats] = useState({ assigned: 0, evaluated: 0, pending: 0 });
@@ -94,13 +99,18 @@ export function EvaluatorContainer() {
             let url = `${API_ENDPOINTS.evaluatorTeams}?page=${page}&limit=${limit}`;
 
             // Map tab to API type & filters
-            if (activeTab === 'community') {
-                url += '&type=community&sort=votes&filter=submitted';
-            } else if (activeTab === 'tier_view') {
-                url += `&type=tier&tier=${selectedTier}`;
+            if (selectedPsIds.length > 0) {
+                url += `&psIds=${selectedPsIds.join(',')}`;
+            }
+            if (selectedTiers.length > 0) {
+                url += `&tiers=${selectedTiers.join(',')}`;
+            }
+
+            if (activeTab === 'all_submissions') {
+                url += '&type=all_submissions&sort=votes&filter=submitted';
             } else {
                 url += '&type=assigned';
-                // 'pending' and 'evaluated' are filtered client-side for now
+                // 'pending' and 'evaluated' are filtered client-side currently
             }
 
             const response = await fetch(url, {
@@ -130,16 +140,46 @@ export function EvaluatorContainer() {
         }
     };
 
-    // Reset page on tab/tier change
+    // Reset page on tab/filter change
     useEffect(() => {
         setPage(1);
-    }, [activeTab, selectedTier]);
+    }, [activeTab, selectedTiers, selectedPsIds]);
+
+    // Fetch Problem Statements
+    useEffect(() => {
+        const fetchPS = async () => {
+            const token = await getToken();
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_ENDPOINTS.problemStatements}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.data && data.data.problemStatements) {
+                        setProblemStatements(data.data.problemStatements.map((ps: any) => ({ id: ps.id, title: ps.title })));
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch PS", e);
+            }
+        }
+        fetchPS();
+    }, [getToken]);
 
     // Fetch data
     useEffect(() => {
         fetchData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, activeTab, selectedTier]);
+    }, [page, activeTab, selectedTiers, selectedPsIds]);
+
+    const togglePs = (id: string) => {
+        setSelectedPsIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
+
+    const toggleTier = (tier: Tier) => {
+        setSelectedTiers(prev => prev.includes(tier) ? prev.filter(x => x !== tier) : [...prev, tier]);
+    };
 
     const filteredTeams = useMemo(() => {
         let list = [...teams];
@@ -150,7 +190,7 @@ export function EvaluatorContainer() {
         } else if (activeTab === 'evaluated') {
             list = list.filter(t => !!t.myEvaluation);
         }
-        // Community and Tier views are pre-filtered by API
+        // All Submissions is pre-filtered by API
 
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
@@ -202,7 +242,6 @@ export function EvaluatorContainer() {
         if (activeTab !== tab) {
             setActiveTab(tab);
             setPage(1);
-            if (tab === 'tier_view') setSelectedTier('strongly_accepted'); // Default
         }
     };
 
@@ -271,59 +310,22 @@ export function EvaluatorContainer() {
                             )}
                         </button>
                         <button
-                            onClick={() => handleTabChange('community')}
-                            className={`px-6 py-3 text-[14px] font-medium transition-all relative whitespace-nowrap ${activeTab === 'community' ? 'text-[#ff4d00]' : 'text-white/60 hover:text-white'
+                            onClick={() => handleTabChange('all_submissions')}
+                            className={`px-6 py-3 text-[14px] font-medium transition-all relative whitespace-nowrap ${activeTab === 'all_submissions' ? 'text-[#ff4d00]' : 'text-white/60 hover:text-white'
                                 }`}
                             style={{ fontFamily: 'var(--font-body)' }}
                         >
                             <div className="flex items-center gap-2">
                                 <Vote className="w-4 h-4" />
-                                Community Voting
+                                All Submissions
                             </div>
-                            {activeTab === 'community' && (
-                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#ff4d00]" />
-                            )}
-                        </button>
-                        <button
-                            onClick={() => handleTabChange('tier_view')}
-                            className={`px-6 py-3 text-[14px] font-medium transition-all relative whitespace-nowrap ${activeTab === 'tier_view' ? 'text-[#ff4d00]' : 'text-white/60 hover:text-white'
-                                }`}
-                            style={{ fontFamily: 'var(--font-body)' }}
-                        >
-                            <div className="flex items-center gap-2">
-                                <Layers className="w-4 h-4" />
-                                Tiered View
-                            </div>
-                            {activeTab === 'tier_view' && (
+                            {activeTab === 'all_submissions' && (
                                 <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#ff4d00]" />
                             )}
                         </button>
                     </div>
 
-                    {/* Tier Sub-Tabs */}
-                    {activeTab === 'tier_view' && (
-                        <div className="flex items-center gap-2 pb-2 overflow-x-auto">
-                            {[
-                                { id: 'strongly_accepted', label: 'Strongly Accepted', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
-                                { id: 'accepted', label: 'Accepted', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-                                { id: 'borderline', label: 'Borderline', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-                                { id: 'rejected', label: 'Rejected', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
-                            ].map((tier) => (
-                                <button
-                                    key={tier.id}
-                                    onClick={() => setSelectedTier(tier.id as Tier)}
-                                    className={`px-4 py-2 rounded-full text-xs font-medium border transition-all whitespace-nowrap ${selectedTier === tier.id
-                                        ? tier.color + ' border-opacity-50 ring-1 ring-offset-1 ring-offset-[#1a1a1a] ring-white/10'
-                                        : 'bg-white/5 text-white/50 border-white/5 hover:bg-white/10'
-                                        }`}
-                                >
-                                    {tier.label}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Search */}
+                    {/* Search and Filter Toggle */}
                     <div className="flex items-center gap-4">
                         <div className="flex-1 relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
@@ -336,7 +338,75 @@ export function EvaluatorContainer() {
                                 style={{ fontFamily: 'var(--font-body)' }}
                             />
                         </div>
+                        <button
+                            onClick={() => setShowFilters(prev => !prev)}
+                            className={`p-2.5 rounded-lg border transition-all duration-200 ${showFilters
+                                ? 'bg-[#ff4d00]/10 border-[#ff4d00]/50 text-[#ff4d00]'
+                                : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:border-white/20'}`}
+                        >
+                            <Layers className="w-5 h-5" />
+                        </button>
                     </div>
+
+                    {/* Global Filter Tags (Moved Below) */}
+                    {showFilters && (
+                        <div className="flex flex-col gap-6 bg-[#0a0a0a]/50 backdrop-blur-sm border border-white/10 p-5 rounded-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                            {/* Tiers */}
+                            <div className="flex flex-col gap-3">
+                                <span className="text-[10px] text-white/40 uppercase tracking-widest font-semibold" style={{ fontFamily: 'var(--font-body)' }}>
+                                    Selection Status
+                                </span>
+                                <div className="flex flex-wrap gap-2">
+                                    {[
+                                        { id: 'strongly_accepted', label: 'Strongly Accepted', color: 'text-green-400 bg-green-500/10 border-green-500/20 hover:border-green-500/40', active: 'ring-1 ring-green-500/50 bg-green-500/20' },
+                                        { id: 'accepted', label: 'Accepted', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 hover:border-emerald-500/40', active: 'ring-1 ring-emerald-500/50 bg-emerald-500/20' },
+                                        { id: 'borderline', label: 'Borderline', color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20 hover:border-yellow-500/40', active: 'ring-1 ring-yellow-500/50 bg-yellow-500/20' },
+                                        { id: 'rejected', label: 'Rejected', color: 'text-red-400 bg-red-500/10 border-red-500/20 hover:border-red-500/40', active: 'ring-1 ring-red-500/50 bg-red-500/20' },
+                                    ].map((tier) => {
+                                        const isSelected = selectedTiers.includes(tier.id as Tier);
+                                        return (
+                                            <button
+                                                key={tier.id}
+                                                onClick={() => toggleTier(tier.id as Tier)}
+                                                className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-all duration-200 ${isSelected
+                                                    ? tier.color + ' ' + tier.active
+                                                    : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10 hover:text-white/60'
+                                                    }`}
+                                            >
+                                                {tier.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="h-[1px] w-full bg-white/5" />
+
+                            {/* Problem Statements */}
+                            <div className="flex flex-col gap-3">
+                                <span className="text-[10px] text-white/40 uppercase tracking-widest font-semibold" style={{ fontFamily: 'var(--font-body)' }}>
+                                    Problem Statement
+                                </span>
+                                <div className="flex flex-wrap gap-2">
+                                    {problemStatements.map((ps) => {
+                                        const isSelected = selectedPsIds.includes(ps.id);
+                                        return (
+                                            <button
+                                                key={ps.id}
+                                                onClick={() => togglePs(ps.id)}
+                                                className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-all duration-200 text-left ${isSelected
+                                                    ? 'bg-[#ff4d00]/10 text-[#ff4d00] border-[#ff4d00]/30 ring-1 ring-[#ff4d00]/20'
+                                                    : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10 hover:text-white/60 hover:border-white/20'
+                                                    }`}
+                                            >
+                                                {ps.title}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Team List or Skeleton */}
                     {isLoading ? (
@@ -362,7 +432,7 @@ export function EvaluatorContainer() {
                                             {team.teamName}
                                         </h3>
                                         <div className="flex items-center gap-2">
-                                            {(activeTab === 'community' || activeTab === 'tier_view') && (
+                                            {activeTab === 'all_submissions' && (
                                                 <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded border border-white/5">
                                                     <div className="flex items-center gap-1 text-[10px] text-green-400">
                                                         <ThumbsUp className="w-3 h-3" /> {team.upvoteCount || 0}
@@ -395,22 +465,27 @@ export function EvaluatorContainer() {
                                                 {team.myEvaluation.tier.replace('_', ' ')}
                                             </span>
                                         )}
-                                        {activeTab === 'community' && team.myVote && (
+                                        {activeTab === 'all_submissions' && team.myVote && (
                                             <span className={`px-2 py-0.5 rounded border ${team.myVote.vote === 'up' ? 'bg-green-500/20 border-green-500/30 text-green-400' :
                                                 'bg-red-500/20 border-red-500/30 text-red-400'
                                                 }`} style={{ fontFamily: 'var(--font-body)' }}>
                                                 voted {team.myVote.vote}
                                             </span>
                                         )}
-                                        {activeTab === 'tier_view' && (
-                                            <span className={`px-2 py-0.5 rounded border capitalize ${selectedTier === 'strongly_accepted' ? 'bg-green-500/20 border-green-500/30 text-green-400' :
-                                                selectedTier === 'accepted' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
-                                                    selectedTier === 'borderline' ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-400' :
-                                                        'bg-red-500/20 border-red-500/30 text-red-400'
-                                                }`} style={{ fontFamily: 'var(--font-body)' }}>
-                                                {selectedTier.replace('_', ' ')}
-                                            </span>
-                                        )}
+                                        {/* Display Selection Status Tags */}
+                                        {(() => {
+                                            const uniqueTiers = Array.from(new Set(team.evaluations.map(e => e.tier)));
+                                            if (uniqueTiers.length === 0 && team.isEvaluated) return null;
+                                            return uniqueTiers.map(tier => (
+                                                <span key={tier} className={`px-2 py-0.5 rounded border capitalize flex items-center ${tier === 'strongly_accepted' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
+                                                    tier === 'accepted' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                                                        tier === 'borderline' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
+                                                            'bg-red-500/10 border-red-500/20 text-red-400'
+                                                    }`} style={{ fontFamily: 'var(--font-body)' }}>
+                                                    {tier.replace('_', ' ')}
+                                                </span>
+                                            ));
+                                        })()}
                                     </div>
                                 </div>
                             ))}

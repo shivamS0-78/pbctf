@@ -48,7 +48,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const sort = searchParams.get('sort'); // 'votes'
     const filter = searchParams.get('filter'); // 'submitted'
-    const tier = searchParams.get('tier'); // 'strongly_accepted', etc.
+    const psIds = searchParams.get('psIds')?.split(',').filter(Boolean) || [];
+    const tiers = searchParams.get('tiers')?.split(',').filter(Boolean) || [];
 
     const skip = (page - 1) * limit;
 
@@ -60,6 +61,11 @@ export async function GET(request: NextRequest) {
     // --- Build Aggregation Pipeline ---
     const pipeline: any[] = [];
 
+    // Global filters
+    if (psIds.length > 0) {
+      pipeline.push({ $match: { appliedFor: { $in: psIds } } });
+    }
+
     if (type === 'assigned') {
       if (!evaluator) {
         return createSuccessResponse("No assigned teams", {
@@ -69,11 +75,17 @@ export async function GET(request: NextRequest) {
         });
       }
       pipeline.push({ $match: { teamCode: { $in: assignedTeamCodes } } });
-    } else if (type === 'community') {
-      pipeline.push({ $match: { teamCode: { $nin: assignedTeamCodes } } });
-    } else if (type === 'tier' && tier) {
-      // Filter teams that have AT LEAST ONE evaluation with this tier
-      pipeline.push({ $match: { 'evaluations.tier': tier } });
+
+      // Filter by tiers in assigned view if requested
+      if (tiers.length > 0) {
+        pipeline.push({ $match: { 'evaluations': { $elemMatch: { evaluatorId: authResult.user.uid, tier: { $in: tiers } } } } });
+      }
+
+    } else if (type === 'all_submissions') {
+      // Show ALL teams
+      if (tiers.length > 0) {
+        pipeline.push({ $match: { 'evaluations.tier': { $in: tiers } } });
+      }
     }
 
     pipeline.push({
