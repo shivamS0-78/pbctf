@@ -17,10 +17,6 @@ interface UserDetails {
   resume_link?: string;
   github_link?: string;
   linkedin_link?: string;
-  leetcode_profile?: string;
-  codeforces_link?: string;
-  kaggle_link?: string;
-  devfolio_link?: string;
   portfolio_link?: string;
   ctf_profile?: string;
   age?: number;
@@ -169,9 +165,7 @@ export function UserProfileModal({
             </div>
           )}
 
-          {(userDetails.github_link || userDetails.linkedin_link || userDetails.resume_link || 
-            userDetails.leetcode_profile || userDetails.codeforces_link || userDetails.kaggle_link ||
-            userDetails.devfolio_link || userDetails.portfolio_link || userDetails.ctf_profile) && (
+          {(userDetails.github_link || userDetails.linkedin_link || userDetails.resume_link || userDetails.portfolio_link || userDetails.ctf_profile) && (
             <div>
               <h4 className="font-['Google_Sans_Flex',sans-serif] text-[16px] text-white mb-[12px]">Links & Profiles</h4>
               <div className="flex flex-col gap-[8px]">
@@ -208,50 +202,6 @@ export function UserProfileModal({
                     <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white">Resume</span>
                     <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
                   </button>
-                )}
-                {userDetails.leetcode_profile && (
-                  <a 
-                    href={userDetails.leetcode_profile} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                  >
-                    <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white">LeetCode</span>
-                    <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                  </a>
-                )}
-                {userDetails.codeforces_link && (
-                  <a 
-                    href={userDetails.codeforces_link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                  >
-                    <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white">Codeforces</span>
-                    <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                  </a>
-                )}
-                {userDetails.kaggle_link && (
-                  <a 
-                    href={userDetails.kaggle_link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                  >
-                    <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white">Kaggle</span>
-                    <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                  </a>
-                )}
-                {userDetails.devfolio_link && (
-                  <a 
-                    href={userDetails.devfolio_link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                  >
-                    <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white">Devfolio</span>
-                    <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                  </a>
                 )}
                 {userDetails.portfolio_link && (
                   <a 

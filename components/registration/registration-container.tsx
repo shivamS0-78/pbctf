@@ -59,13 +59,8 @@ export function RegistrationContainer({
             bio: "",
             github: "",
             linkedin: "",
-            portfolio: "",
-            leetcode: "",
-            kaggle: "",
-            devfolio: "",
-            codeforces: "",
             ctf: "",
-            referralCode: "",
+            portfolio: "",
             ...parsed.registerData,
           };
         }
@@ -86,13 +81,8 @@ export function RegistrationContainer({
       bio: "",
       github: "",
       linkedin: "",
-      portfolio: "",
-      leetcode: "",
-      kaggle: "",
-      devfolio: "",
-      codeforces: "",
       ctf: "",
-      referralCode: "",
+      portfolio: "",
     };
   };
 
@@ -188,15 +178,11 @@ export function RegistrationContainer({
       discord_username: "testuser.discord",
       phone: "+919876543210",
       age: "22",
-      organisation: "Test University",
-      bio: "I'm a passionate developer interested in AI, web development, and CTFs and security. Looking forward to participating in PBCTF 5.0!",
+      organisation: "Test University/Company",
+      bio: "I'm a passionate developer interested in AI, web development, and hackathons. Looking forward to participating in PBCTF 5.0!",
       github: "https://github.com/testuser",
       linkedin: "https://linkedin.com/in/testuser",
       portfolio: "https://testuser.dev",
-      leetcode: "https://leetcode.com/testuser",
-      kaggle: "https://kaggle.com/testuser",
-      devfolio: "https://devfolio.co/@testuser",
-      codeforces: "https://codeforces.com/profile/testuser",
       ctf: "https://ctftime.org/user/testuser",
       referralCode: "TEST2024",
     });
@@ -269,10 +255,7 @@ export function RegistrationContainer({
       case "organisation":
         if (!value.trim()) return "Organisation is required";
         break;
-      case "bio":
-        if (!value.trim()) return "Bio is required";
-        break;
-      case "github":
+      case 'github':
         if (!value.trim()) return "GitHub link is required";
         const githubPattern =
           /^(https?:\/\/)?(www\.)?github\.com\/[\w-]+(\/)?$/i;
@@ -309,48 +292,12 @@ export function RegistrationContainer({
           }
         }
         break;
-      case "kaggle":
-        if (value.trim()) {
-          try {
-            const url = new URL(value.trim());
-            if (!url.hostname.includes("kaggle.com")) {
-              return "Please enter a valid Kaggle URL (e.g., https://kaggle.com/username)";
-            }
-          } catch {
-            return "Please enter a valid Kaggle URL";
-          }
-        }
-        break;
-      case "codeforces":
-        if (value.trim()) {
-          try {
-            const url = new URL(value.trim());
-            if (!url.hostname.includes("codeforces.com")) {
-              return "Please enter a valid Codeforces URL (e.g., https://codeforces.com/profile/username)";
-            }
-          } catch {
-            return "Please enter a valid Codeforces URL";
-          }
-        }
-        break;
-      case "ctf":
+      case 'ctf':
         if (value.trim()) {
           try {
             new URL(value.trim());
           } catch {
             return "Please enter a valid CTF profile URL";
-          }
-        }
-        break;
-      case "devfolio":
-        if (value.trim()) {
-          try {
-            const url = new URL(value.trim());
-            if (!url.hostname.includes("devfolio.co")) {
-              return "Please enter a valid Devfolio URL (e.g., https://devfolio.co/@username)";
-            }
-          } catch {
-            return "Please enter a valid Devfolio URL";
           }
         }
         break;
@@ -382,17 +329,8 @@ export function RegistrationContainer({
     const validationErrors: Record<string, string> = {};
 
     const requiredFields: Array<keyof typeof registerData> = [
-      "name",
-      "email",
-      "password",
-      "confirmPassword",
-      "discord_username",
-      "phone",
-      "age",
-      "organisation",
-      "bio",
-      "github",
-      "linkedin",
+      'name', 'email', 'password', 'confirmPassword', 'discord_username',
+      'phone', 'age', 'organisation', 'github', 'linkedin'
     ];
 
     requiredFields.forEach((field) => {
@@ -403,12 +341,7 @@ export function RegistrationContainer({
     });
 
     const optionalFields: Array<keyof typeof registerData> = [
-      "portfolio",
-      "leetcode",
-      "kaggle",
-      "devfolio",
-      "codeforces",
-      "ctf",
+      'portfolio', 'bio', 'ctf'
     ];
 
     optionalFields.forEach((field) => {
@@ -491,32 +424,22 @@ export function RegistrationContainer({
       }
       // Create FormData for API request
       const formData = new FormData();
-      formData.append("name", registerData.name);
-      formData.append("email", registerData.email);
-      formData.append("password", registerData.password);
-      formData.append("discord_username", registerData.discord_username);
-      formData.append("phone", formattedPhone);
-      formData.append("age", registerData.age);
-      formData.append("organisation", registerData.organisation);
-      formData.append("bio", registerData.bio);
-      formData.append("github_link", registerData.github);
-      formData.append("linkedin_link", registerData.linkedin);
-
-      if (resume) formData.append("resume", resume);
-      if (profilePhoto) formData.append("profile_picture", profilePhoto);
-      if (registerData.portfolio)
-        formData.append("portfolio_link", registerData.portfolio);
-      if (registerData.leetcode)
-        formData.append("leetcode_profile", registerData.leetcode);
-      if (registerData.kaggle)
-        formData.append("kaggle_link", registerData.kaggle);
-      if (registerData.devfolio)
-        formData.append("devfolio_link", registerData.devfolio);
-      if (registerData.codeforces)
-        formData.append("codeforces_link", registerData.codeforces);
-      if (registerData.ctf) formData.append("ctf_profile", registerData.ctf);
-      if (registerData.referralCode)
-        formData.append("referral_code", registerData.referralCode);
+      formData.append('name', registerData.name);
+      formData.append('email', registerData.email);
+      formData.append('password', registerData.password);
+      formData.append('discord_username', registerData.discord_username);
+      formData.append('phone', formattedPhone);
+      formData.append('age', registerData.age);
+      formData.append('organisation', registerData.organisation);
+      formData.append('bio', registerData.bio);
+      formData.append('github_link', registerData.github);
+      formData.append('linkedin_link', registerData.linkedin);
+      
+      if (resume) formData.append('resume', resume);
+      if (profilePhoto) formData.append('profile_picture', profilePhoto);
+      if (registerData.portfolio) formData.append('portfolio_link', registerData.portfolio);
+      if (registerData.ctf) formData.append('ctf_profile', registerData.ctf);
+      if (registerData.referralCode) formData.append('referral_code', registerData.referralCode);
 
       await register(formData);
 
@@ -545,14 +468,10 @@ export function RegistrationContainer({
       let errorMessage = "Registration failed. Please try again.";
       const fieldErrors: Record<string, string> = {};
       const fieldNameMap: Record<string, string> = {
-        github_link: "github",
-        linkedin_link: "linkedin",
-        portfolio_link: "portfolio",
-        leetcode_profile: "leetcode",
-        kaggle_link: "kaggle",
-        devfolio_link: "devfolio",
-        codeforces_link: "codeforces",
-        ctf_profile: "ctf",
+        'github_link': 'github',
+        'linkedin_link': 'linkedin',
+        'portfolio_link': 'portfolio',
+        'ctf_profile': 'ctf',
       };
 
       if (error instanceof Error) {
@@ -575,151 +494,43 @@ export function RegistrationContainer({
         } else {
           errorMessage = error.message || errorMessage;
           const errorMsg = error.message.toLowerCase();
-          if (
-            errorMsg.includes("email already exists") ||
-            errorMsg.includes("email is already")
-          ) {
-            fieldErrors.email = "This email is already registered";
-          } else if (
-            errorMsg.includes("discord username already exists") ||
-            errorMsg.includes("discord username is already")
-          ) {
-            fieldErrors.discord_username =
-              "This Discord username is already registered";
-          } else if (
-            errorMsg.includes("phone number already exists") ||
-            errorMsg.includes("phone number is already")
-          ) {
-            fieldErrors.phone = "This phone number is already registered";
-          } else if (
-            errorMsg.includes("invalid leetcode") ||
-            errorMsg.includes("leetcode profile")
-          ) {
-            fieldErrors.leetcode = "Invalid LeetCode URL";
-          } else if (
-            errorMsg.includes("invalid kaggle") ||
-            errorMsg.includes("kaggle profile")
-          ) {
-            fieldErrors.kaggle = "Invalid Kaggle URL";
-          } else if (
-            errorMsg.includes("invalid codeforces") ||
-            errorMsg.includes("codeforces profile")
-          ) {
-            fieldErrors.codeforces = "Invalid Codeforces URL";
-          } else if (
-            errorMsg.includes("invalid ctf") ||
-            errorMsg.includes("ctf profile")
-          ) {
-            fieldErrors.ctf = "Invalid CTF profile URL";
-          } else if (
-            errorMsg.includes("invalid devfolio") ||
-            errorMsg.includes("devfolio profile")
-          ) {
-            fieldErrors.devfolio = "Invalid Devfolio URL";
-          } else if (
-            errorMsg.includes("invalid portfolio") ||
-            errorMsg.includes("portfolio link")
-          ) {
-            fieldErrors.portfolio = "Invalid Portfolio URL";
-          } else if (
-            errorMsg.includes("invalid github") ||
-            errorMsg.includes("github profile")
-          ) {
-            fieldErrors.github = "Invalid GitHub URL";
-          } else if (
-            errorMsg.includes("invalid linkedin") ||
-            errorMsg.includes("linkedin profile")
-          ) {
-            fieldErrors.linkedin = "Invalid LinkedIn URL";
+          if (errorMsg.includes('email already exists') || errorMsg.includes('email is already')) {
+            fieldErrors.email = 'This email is already registered';
+          } else if (errorMsg.includes('discord username already exists') || errorMsg.includes('discord username is already')) {
+            fieldErrors.discord_username = 'This Discord username is already registered';
+          } else if (errorMsg.includes('phone number already exists') || errorMsg.includes('phone number is already')) {
+            fieldErrors.phone = 'This phone number is already registered';
+          } else if (errorMsg.includes('invalid portfolio') || errorMsg.includes('portfolio link')) {
+            fieldErrors.portfolio = 'Invalid Portfolio URL';
+          } else if (errorMsg.includes('invalid github') || errorMsg.includes('github profile')) {
+            fieldErrors.github = 'Invalid GitHub URL';
+          } else if (errorMsg.includes('invalid linkedin') || errorMsg.includes('linkedin profile')) {
+            fieldErrors.linkedin = 'Invalid LinkedIn URL';
           }
         }
       } else if (typeof error === "string") {
         errorMessage = error;
         const errorMsg = error.toLowerCase();
-        if (
-          errorMsg.includes("invalid leetcode") ||
-          errorMsg.includes("leetcode profile")
-        ) {
-          fieldErrors.leetcode = "Invalid LeetCode URL";
-        } else if (
-          errorMsg.includes("invalid kaggle") ||
-          errorMsg.includes("kaggle profile")
-        ) {
-          fieldErrors.kaggle = "Invalid Kaggle URL";
-        } else if (
-          errorMsg.includes("invalid codeforces") ||
-          errorMsg.includes("codeforces profile")
-        ) {
-          fieldErrors.codeforces = "Invalid Codeforces URL";
-        } else if (
-          errorMsg.includes("invalid ctf") ||
-          errorMsg.includes("ctf profile")
-        ) {
-          fieldErrors.ctf = "Invalid CTF profile URL";
-        } else if (
-          errorMsg.includes("invalid devfolio") ||
-          errorMsg.includes("devfolio profile")
-        ) {
-          fieldErrors.devfolio = "Invalid Devfolio URL";
-        } else if (
-          errorMsg.includes("invalid portfolio") ||
-          errorMsg.includes("portfolio link")
-        ) {
-          fieldErrors.portfolio = "Invalid Portfolio URL";
-        } else if (
-          errorMsg.includes("invalid github") ||
-          errorMsg.includes("github profile")
-        ) {
-          fieldErrors.github = "Invalid GitHub URL";
-        } else if (
-          errorMsg.includes("invalid linkedin") ||
-          errorMsg.includes("linkedin profile")
-        ) {
-          fieldErrors.linkedin = "Invalid LinkedIn URL";
+        if (errorMsg.includes('invalid ctf') || errorMsg.includes('ctf profile')) {
+          fieldErrors.ctf = 'Invalid CTF profile URL';
+        } else if (errorMsg.includes('invalid portfolio') || errorMsg.includes('portfolio link')) {
+          fieldErrors.portfolio = 'Invalid Portfolio URL';
+        } else if (errorMsg.includes('invalid github') || errorMsg.includes('github profile')) {
+          fieldErrors.github = 'Invalid GitHub URL';
+        } else if (errorMsg.includes('invalid linkedin') || errorMsg.includes('linkedin profile')) {
+          fieldErrors.linkedin = 'Invalid LinkedIn URL';
         }
       } else if (error && typeof error === "object" && "message" in error) {
         errorMessage = String(error.message);
         const errorMsg = errorMessage.toLowerCase();
-        if (
-          errorMsg.includes("invalid leetcode") ||
-          errorMsg.includes("leetcode profile")
-        ) {
-          fieldErrors.leetcode = "Invalid LeetCode URL";
-        } else if (
-          errorMsg.includes("invalid kaggle") ||
-          errorMsg.includes("kaggle profile")
-        ) {
-          fieldErrors.kaggle = "Invalid Kaggle URL";
-        } else if (
-          errorMsg.includes("invalid codeforces") ||
-          errorMsg.includes("codeforces profile")
-        ) {
-          fieldErrors.codeforces = "Invalid Codeforces URL";
-        } else if (
-          errorMsg.includes("invalid ctf") ||
-          errorMsg.includes("ctf profile")
-        ) {
-          fieldErrors.ctf = "Invalid CTF profile URL";
-        } else if (
-          errorMsg.includes("invalid devfolio") ||
-          errorMsg.includes("devfolio profile")
-        ) {
-          fieldErrors.devfolio = "Invalid Devfolio URL";
-        } else if (
-          errorMsg.includes("invalid portfolio") ||
-          errorMsg.includes("portfolio link")
-        ) {
-          fieldErrors.portfolio = "Invalid Portfolio URL";
-        } else if (
-          errorMsg.includes("invalid github") ||
-          errorMsg.includes("github profile")
-        ) {
-          fieldErrors.github = "Invalid GitHub URL";
-        } else if (
-          errorMsg.includes("invalid linkedin") ||
-          errorMsg.includes("linkedin profile")
-        ) {
-          fieldErrors.linkedin = "Invalid LinkedIn URL";
+        if (errorMsg.includes('invalid ctf') || errorMsg.includes('ctf profile')) {
+          fieldErrors.ctf = 'Invalid CTF profile URL';
+        } else if (errorMsg.includes('invalid portfolio') || errorMsg.includes('portfolio link')) {
+          fieldErrors.portfolio = 'Invalid Portfolio URL';
+        } else if (errorMsg.includes('invalid github') || errorMsg.includes('github profile')) {
+          fieldErrors.github = 'Invalid GitHub URL';
+        } else if (errorMsg.includes('invalid linkedin') || errorMsg.includes('linkedin profile')) {
+          fieldErrors.linkedin = 'Invalid LinkedIn URL';
         }
       }
 
@@ -733,22 +544,18 @@ export function RegistrationContainer({
           alertMessage = fieldErrors[fieldErrorKeys[0]];
         } else {
           const fieldDisplayNameMap: Record<string, string> = {
-            leetcode: "LeetCode",
-            kaggle: "Kaggle",
-            codeforces: "Codeforces",
-            ctf: "CTF Profile",
-            devfolio: "Devfolio",
-            portfolio: "Portfolio",
-            github: "GitHub",
-            linkedin: "LinkedIn",
-            email: "Email",
-            password: "Password",
-            discord_username: "Discord Username",
-            phone: "Phone",
-            age: "Age",
-            organisation: "Organisation",
-            bio: "Bio",
-            name: "Name",
+            'ctf': 'CTF Profile',
+            'portfolio': 'Portfolio',
+            'github': 'GitHub',
+            'linkedin': 'LinkedIn',
+            'email': 'Email',
+            'password': 'Password',
+            'discord_username': 'Discord Username',
+            'phone': 'Phone',
+            'age': 'Age',
+            'organisation': 'Organisation',
+            'bio': 'Bio',
+            'name': 'Name',
           };
 
           const errorList = fieldErrorKeys
@@ -867,10 +674,6 @@ export function RegistrationContainer({
       github: "",
       linkedin: "",
       portfolio: "",
-      leetcode: "",
-      kaggle: "",
-      devfolio: "",
-      codeforces: "",
       ctf: "",
       referralCode: "",
     });
@@ -1092,7 +895,7 @@ export function RegistrationContainer({
             onBlur={handleFieldBlur("confirmPassword")}
             error={errors.confirmPassword}
           />
-          <div className="grid grid-cols-2 gap-[16px]">
+          <div className="flex flex-col gap-[16px]">
             <FormInput
               label="Discord Username"
               placeholder="username"
@@ -1122,270 +925,192 @@ export function RegistrationContainer({
               error={errors.phone}
             />
             <FormInput
-              label="Age"
-              type="number"
-              placeholder="22"
-              required
-              value={registerData.age}
+  label="Age"
+  type="number"
+  placeholder="22"
+  required
+  value={registerData.age}
+  onChange={(e) =>
+    setRegisterData({
+      ...registerData,
+      age: e.target.value,
+    })
+  }
+  onBlur={handleFieldBlur("age")}
+  error={errors.age}
+/>
+
+<FormInput
+  label="Organisation"
+  placeholder="Your University/Company"
+  required
+  value={registerData.organisation}
+  onChange={(e) =>
+    setRegisterData({
+      ...registerData,
+      organisation: e.target.value,
+    })
+  }
+  onBlur={handleFieldBlur("organisation")}
+  error={errors.organisation}
+/>
+            <FormTextarea
+              label="Bio"
+              placeholder="Tell us about yourself..."
+              value={registerData.bio}
               onChange={(e) =>
                 setRegisterData({
                   ...registerData,
-                  age: e.target.value,
+                  bio: e.target.value,
                 })
               }
-              onBlur={handleFieldBlur("age")}
-              error={errors.age}
+              onBlur={handleFieldBlur('bio')}
+              rows={3}
+              error={errors.bio}
             />
-          </div>
-          <FormInput
-            label="Organisation"
-            placeholder="Your University"
-            required
-            value={registerData.organisation}
-            onChange={(e) =>
-              setRegisterData({
-                ...registerData,
-                organisation: e.target.value,
-              })
-            }
-            onBlur={handleFieldBlur("organisation")}
-            error={errors.organisation}
-          />
-          <FormTextarea
-            label="Bio"
-            placeholder="Tell us about yourself..."
-            required
-            value={registerData.bio}
-            onChange={(e) =>
-              setRegisterData({
-                ...registerData,
-                bio: e.target.value,
-              })
-            }
-            onBlur={handleFieldBlur("bio")}
-            rows={3}
-            error={errors.bio}
-          />
-          <div key={`resume-${fileInputKey}`}>
-            <FormFileUpload
-              label="Resume (PDF)"
-              accept=".pdf"
-              required
-              onChange={handleResumeChange}
-              currentFile={resumeFileName}
-            />
-          </div>
-          {errors.resume && (
-            <span
-              className="text-[12px] text-[#22c55e]"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              {errors.resume}
-            </span>
-          )}
-          <div key={`profile-${fileInputKey}`}>
-            <FormFileUpload
-              label="Profile Photo"
-              accept="image/*"
-              onChange={handleProfilePhotoChange}
-              currentFile={profilePhotoFileName}
-            />
-          </div>
-          {errors.profilePhoto && (
-            <span
-              className="text-[12px] text-red-400"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              {errors.profilePhoto}
-            </span>
-          )}
-          <div className="flex flex-col gap-[12px]">
-            <p
-              className="text-[14px] text-white opacity-80"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              Professional Links (Required)
-            </p>
-            <FormInput
-              label="GitHub"
-              placeholder="https://github.com/username"
-              required
-              value={registerData.github}
-              onChange={(e) =>
-                setRegisterData({
-                  ...registerData,
-                  github: e.target.value,
-                })
-              }
-              onBlur={handleFieldBlur("github")}
-              error={errors.github}
-            />
-            <FormInput
-              label="LinkedIn"
-              placeholder="https://linkedin.com/in/username"
-              required
-              value={registerData.linkedin}
-              onChange={(e) =>
-                setRegisterData({
-                  ...registerData,
-                  linkedin: e.target.value,
-                })
-              }
-              onBlur={handleFieldBlur("linkedin")}
-              error={errors.linkedin}
-            />
-          </div>
-          <div className="flex flex-col gap-[12px]">
-            <p
-              className="text-[14px] text-white opacity-80"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              Optional: Add your social links
-            </p>
-            <FormInput
-              label="Portfolio"
-              placeholder="https://yourportfolio.com"
-              value={registerData.portfolio}
-              onChange={(e) =>
-                setRegisterData({
-                  ...registerData,
-                  portfolio: e.target.value,
-                })
-              }
-              onBlur={handleFieldBlur("portfolio")}
-              error={errors.portfolio}
-            />
-            <FormInput
-              label="LeetCode"
-              placeholder="https://leetcode.com/username"
-              value={registerData.leetcode}
-              onChange={(e) =>
-                setRegisterData({
-                  ...registerData,
-                  leetcode: e.target.value,
-                })
-              }
-              onBlur={handleFieldBlur("leetcode")}
-              error={errors.leetcode}
-            />
-            <FormInput
-              label="Kaggle"
-              placeholder="https://kaggle.com/username"
-              value={registerData.kaggle}
-              onChange={(e) =>
-                setRegisterData({
-                  ...registerData,
-                  kaggle: e.target.value,
-                })
-              }
-              onBlur={handleFieldBlur("kaggle")}
-              error={errors.kaggle}
-            />
-            <FormInput
-              label="Devfolio"
-              placeholder="https://devfolio.co/@username"
-              value={registerData.devfolio}
-              onChange={(e) =>
-                setRegisterData({
-                  ...registerData,
-                  devfolio: e.target.value,
-                })
-              }
-              onBlur={handleFieldBlur("devfolio")}
-              error={errors.devfolio}
-            />
-            <FormInput
-              label="Codeforces"
-              placeholder="https://codeforces.com/profile/username"
-              value={registerData.codeforces}
-              onChange={(e) =>
-                setRegisterData({
-                  ...registerData,
-                  codeforces: e.target.value,
-                })
-              }
-              onBlur={handleFieldBlur("codeforces")}
-              error={errors.codeforces}
-            />
-            <FormInput
-              label="CTF Profile"
-              placeholder="your CTF profile URL"
-              value={registerData.ctf}
-              onChange={(e) =>
-                setRegisterData({
-                  ...registerData,
-                  ctf: e.target.value,
-                })
-              }
-              onBlur={handleFieldBlur("ctf")}
-              error={errors.ctf}
-            />
-            <FormInput
-              label="Referral Code"
-              placeholder="Enter referral code (if any)"
-              value={registerData.referralCode}
-              onChange={(e) =>
-                setRegisterData({
-                  ...registerData,
-                  referralCode: e.target.value,
-                })
-              }
-            />
-          </div>
-          {/* Code of Conduct Section */}
-          <div className="flex flex-col gap-[12px]">
-            <div className="flex items-start gap-[12px]">
-              <div className="relative flex-shrink-0 mt-0.5">
-                <input
-                  type="checkbox"
-                  id="codeOfConduct"
-                  checked={acceptedCodeOfConduct}
-                  onChange={(e) => {
-                    setAcceptedCodeOfConduct(e.target.checked);
-                    if (errors.codeOfConduct) {
-                      const newErrors = { ...errors };
-                      delete newErrors.codeOfConduct;
-                      setErrors(newErrors);
-                    }
-                  }}
-                  className="w-[18px] h-[18px] rounded-[4px] border border-[rgba(255,255,255,0.38)] backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.2)] text-[#22c55e] focus:ring-2 focus:ring-[#22c55e] focus:ring-offset-0 cursor-pointer appearance-none checked:bg-[#22c55e] checked:border-[#22c55e] transition-all"
-                  style={{
-                    backgroundImage: acceptedCodeOfConduct
-                      ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='2' d='M2 6l3 3 5-5'/%3E%3C/svg%3E")`
-                      : "none",
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "center",
-                    backgroundSize: "12px 12px",
-                  }}
-                />
-              </div>
-              <label
-                htmlFor="codeOfConduct"
-                className="text-[14px] text-white leading-[20px] cursor-pointer flex-1"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                I agree to the{" "}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsCodeOfConductModalOpen(true);
-                  }}
-                  className="text-[#22c55e] hover:text-[#4ade80] underline inline-flex items-center gap-1 transition-colors"
-                >
-                  Code of Conduct
-                  <ExternalLink className="w-3 h-3" />
-                </button>
-              </label>
+            <div key={`resume-${fileInputKey}`}>
+              <FormFileUpload
+                label="Resume (PDF)"
+                accept=".pdf"
+                required
+                onChange={handleResumeChange}
+                currentFile={resumeFileName}
+              />
             </div>
-            {errors.codeOfConduct && (
-              <span
-                className="text-[12px] text-[#22c55e]"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                {errors.codeOfConduct}
+            {errors.resume && (
+              <span className="text-[12px] text-[#ff4d00]" style={{ fontFamily: 'var(--font-body)' }}>
+                {errors.resume}
               </span>
             )}
+            <div key={`profile-${fileInputKey}`}>
+              <FormFileUpload
+                label="Profile Photo"
+                accept="image/*"
+                onChange={handleProfilePhotoChange}
+                currentFile={profilePhotoFileName}
+              />
+            </div>
+            {errors.profilePhoto && (
+              <span className="text-[12px] text-red-400" style={{ fontFamily: 'var(--font-body)' }}>
+                {errors.profilePhoto}
+              </span>
+            )}
+            <div className="flex flex-col gap-[12px]">
+              <p className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                Professional Links (Required)
+              </p>
+              <FormInput
+                label="GitHub"
+                placeholder="https://github.com/username"
+                required
+                value={registerData.github}
+                onChange={(e) =>
+                  setRegisterData({
+                    ...registerData,
+                    github: e.target.value,
+                  })
+                }
+                onBlur={handleFieldBlur('github')}
+                error={errors.github}
+              />
+              <FormInput
+                label="LinkedIn"
+                placeholder="https://linkedin.com/in/username"
+                required
+                value={registerData.linkedin}
+                onChange={(e) =>
+                  setRegisterData({
+                    ...registerData,
+                    linkedin: e.target.value,
+                  })
+                }
+                onBlur={handleFieldBlur('linkedin')}
+                error={errors.linkedin}
+              />
+            </div>
+            <div className="flex flex-col gap-[12px]">
+              <p className="text-[14px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
+                Optional: Add your social links
+              </p>
+              <FormInput
+                label="Portfolio"
+                placeholder="https://yourportfolio.com"
+                value={registerData.portfolio}
+                onChange={(e) =>
+                  setRegisterData({
+                    ...registerData,
+                    portfolio: e.target.value,
+                  })
+                }
+                onBlur={handleFieldBlur('portfolio')}
+                error={errors.portfolio}
+              />
+              <FormInput
+                label="CTF Profile"
+                placeholder="your CTF profile URL"
+                value={registerData.ctf}
+                onChange={(e) =>
+                  setRegisterData({
+                    ...registerData,
+                    ctf: e.target.value,
+                  })
+                }
+                onBlur={handleFieldBlur('ctf')}
+                error={errors.ctf}
+              />
+            </div>
+            {/* Code of Conduct Section */}
+            <div className="flex flex-col gap-[12px]">
+              <div className="flex items-start gap-[12px]">
+                <div className="relative flex-shrink-0 mt-0.5">
+                  <input
+                    type="checkbox"
+                    id="codeOfConduct"
+                    checked={acceptedCodeOfConduct}
+                    onChange={(e) => {
+                      setAcceptedCodeOfConduct(e.target.checked);
+                      if (errors.codeOfConduct) {
+                        const newErrors = { ...errors };
+                        delete newErrors.codeOfConduct;
+                        setErrors(newErrors);
+                      }
+                    }}
+                    className="w-[18px] h-[18px] rounded-[4px] border border-[rgba(255,255,255,0.38)] backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.2)] text-[#ff4d00] focus:ring-2 focus:ring-[#ff4d00] focus:ring-offset-0 cursor-pointer appearance-none checked:bg-[#ff4d00] checked:border-[#ff4d00] transition-all"
+                    style={{
+                      backgroundImage: acceptedCodeOfConduct 
+                        ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='2' d='M2 6l3 3 5-5'/%3E%3C/svg%3E")`
+                        : 'none',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'center',
+                      backgroundSize: '12px 12px'
+                    }}
+                  />
+                </div>
+                <label
+                  htmlFor="codeOfConduct"
+                  className="text-[14px] text-white leading-[20px] cursor-pointer flex-1"
+                  style={{ fontFamily: 'var(--font-body)' }}
+                >
+                  I agree to the{" "}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsCodeOfConductModalOpen(true);
+                    }}
+                    className="text-[#ff4d00] hover:text-[#ff8800] underline inline-flex items-center gap-1 transition-colors"
+                  >
+                    Code of Conduct
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                </label>
+              </div>
+              {errors.codeOfConduct && (
+                <span className="text-[12px] text-[#ff4d00]" style={{ fontFamily: 'var(--font-body)' }}>
+                  {errors.codeOfConduct}
+                </span>
+              )}
+            </div>
           </div>
           <Button
             type="submit"
@@ -1407,151 +1132,92 @@ export function RegistrationContainer({
           className="flex flex-col gap-[24px] text-white"
           style={{ fontFamily: "var(--font-body)" }}
         >
-          <div className="flex flex-col gap-[16px]">
-            <div>
-              <h3
-                className="text-[18px] font-semibold mb-[8px]"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                Overview
-              </h3>
-              <p className="text-[14px] leading-[22px] opacity-90">
-                Point Blank is committed to providing a safe, inclusive, and
-                respectful environment for all CTF participants. This event is
-                about solving security challenges and capturing flags, and that
-                requires professionalism, integrity, and mutual respect.
-              </p>
-              <p className="text-[14px] leading-[22px] opacity-90 mt-[8px]">
-                By participating, you agree to follow this Code of Conduct.
-              </p>
-            </div>
+          <div className="flex flex-col gap-[24px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+            <div className="flex flex-col gap-[16px]">
+              <div>
+                <h3 className="text-[18px] font-semibold mb-[8px]" style={{ fontFamily: 'var(--font-heading)' }}>
+                  Overview
+                </h3>
+                <p className="text-[14px] leading-[22px] opacity-90">
+                  Point Blank is committed to providing a safe, inclusive, and respectful environment for all CTF participants.
+                </p>
+                <p className="text-[14px] leading-[22px] opacity-90 mt-[8px]">
+                  By participating, you agree to follow this Code of Conduct.
+                </p>
+              </div>
 
-            <div>
-              <h3
-                className="text-[18px] font-semibold mb-[8px]"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                Expected Behavior
-              </h3>
-              <p className="text-[14px] leading-[22px] opacity-90 mb-[8px]">
-                Participants must:
-              </p>
-              <ul className="list-disc list-inside space-y-[4px] text-[14px] leading-[22px] opacity-90 ml-[8px]">
-                <li>Treat others with respect and professionalism</li>
-                <li>
-                  Communicate constructively and collaborate in good faith
-                </li>
-                <li>Compete fairly and honestly</li>
-                <li>Respect diverse perspectives and backgrounds</li>
-                <li>Follow all competition rules and guidelines</li>
-              </ul>
-            </div>
+              <div>
+                <h3 className="text-[18px] font-semibold mb-[8px]" style={{ fontFamily: 'var(--font-heading)' }}>
+                  Respect & Professionalism
+                </h3>
+                <ul className="list-disc list-inside space-y-[4px] text-[14px] leading-[22px] opacity-90 ml-[8px]">
+                  <li>Treat all participants, organizers, and volunteers with respect</li>
+                  <li>Maintain a friendly and inclusive environment</li>
+                  <li>Professional behavior is expected at all times</li>
+                </ul>
+              </div>
 
-            <div>
-              <h3
-                className="text-[18px] font-semibold mb-[8px]"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                Prohibited Conduct
-              </h3>
-              <p className="text-[14px] leading-[22px] opacity-90 mb-[8px]">
-                The following will not be tolerated:
-              </p>
-              <ul className="list-disc list-inside space-y-[4px] text-[14px] leading-[22px] opacity-90 ml-[8px]">
-                <li>Harassment, discrimination, or offensive behavior</li>
-                <li>Plagiarism or misrepresentation of work</li>
-                <li>Cheating, sabotage, or misuse of platforms</li>
-                <li>Disruptive or unethical conduct in any form</li>
-              </ul>
-              <p className="text-[14px] leading-[22px] opacity-90 mt-[8px]">
-                This applies across all competition-related spaces and
-                platforms.
-              </p>
-            </div>
+              <div>
+                <h3 className="text-[18px] font-semibold mb-[8px]" style={{ fontFamily: 'var(--font-heading)' }}>
+                  Communication Guidelines
+                </h3>
+                <ul className="list-disc list-inside space-y-[4px] text-[14px] leading-[22px] opacity-90 ml-[8px]">
+                  <li>Use designated communication channels (Discord Channel)</li>
+                  <li>Keep discussions relevant to the competition</li>
+                  <li>No spam, repetitive messages, or off-topic content</li>
+                  <li>Avoid promotional content or unrelated links</li>
+                </ul>
+                <p className="text-[14px] leading-[22px] opacity-90 mt-[8px]">
+                  This applies across all CTF-related spaces and platforms.
+                </p>
+              </div>
 
-            <div>
-              <h3
-                className="text-[18px] font-semibold mb-[8px]"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                Intellectual Property
-              </h3>
-              <p className="text-[14px] leading-[22px] opacity-90 mb-[8px]">
-                By participating, you agree that:
-              </p>
-              <ul className="list-disc list-inside space-y-[4px] text-[14px] leading-[22px] opacity-90 ml-[8px]">
-                <li>
-                  All code, submissions, designs, documentation, and
-                  intellectual property created during the competition are the
-                  exclusive property of FinalRound AI.
-                </li>
-                <li>
-                  Participants may reference their work for non-commercial
-                  portfolio or resume use unless otherwise stated.
-                </li>
-                <li>
-                  FinalRound AI reserves the right to use, modify, and
-                  commercialize submissions.
-                </li>
-              </ul>
-            </div>
+              <div>
+                <h3 className="text-[18px] font-semibold mb-[8px]" style={{ fontFamily: 'var(--font-heading)' }}>
+                  Content Standards
+                </h3>
+                <ul className="list-disc list-inside space-y-[4px] text-[14px] leading-[22px] opacity-90 ml-[8px]">
+                  <li>No racist, sexist, or discriminatory language</li>
+                  <li>Keep all content appropriate and professional</li>
+                  <li>No sexually explicit or inappropriate material</li>
+                  <li>Maintain a safe environment for all participants</li>
+                </ul>
+              </div>
 
-            <div>
-              <h3
-                className="text-[18px] font-semibold mb-[8px]"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                Original Work & AI Usage
-              </h3>
-              <ul className="list-disc list-inside space-y-[4px] text-[14px] leading-[22px] opacity-90 ml-[8px]">
-                <li>All submissions must be created during the competition</li>
-                <li>
-                  Use of AI tools is allowed but must be ethical and
-                  license-compliant
-                </li>
-                <li>
-                  Any third-party tools or APIs must follow their respective
-                  terms
-                </li>
-              </ul>
-            </div>
+              <div>
+                <h3 className="text-[18px] font-semibold mb-[8px]" style={{ fontFamily: 'var(--font-heading)' }}>
+                  Venue Etiquette
+                </h3>
+                <ul className="list-disc list-inside space-y-[4px] text-[14px] leading-[22px] opacity-90 ml-[8px]">
+                  <li>Keep your workspace clean and organized</li>
+                  <li>Personal snacks allowed (clean up after yourself)</li>
+                  <li>Respect venue property and equipment</li>
+                  <li>Follow all venue guidelines and regulations</li>
+                </ul>
+              </div>
 
-            <div>
-              <h3
-                className="text-[18px] font-semibold mb-[8px]"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                Enforcement
-              </h3>
-              <ul className="list-disc list-inside space-y-[4px] text-[14px] leading-[22px] opacity-90 ml-[8px]">
-                <li>
-                  Point Blank reserves the right to take action for violations,
-                  including warnings, disqualification, or removal from the
-                  event.
-                </li>
-                <li>Reports of misconduct will be handled confidentially.</li>
-              </ul>
-            </div>
+              <div>
+                <h3 className="text-[18px] font-semibold mb-[8px]" style={{ fontFamily: 'var(--font-heading)' }}>
+                  Enforcement
+                </h3>
+                <ul className="list-disc list-inside space-y-[4px] text-[14px] leading-[22px] opacity-90 ml-[8px]">
+                  <li>Point Blank reserves the right to take action for violations, including warnings, disqualification, or removal from the event.</li>
+                  <li>Reports of misconduct will be handled confidentially.</li>
+                </ul>
+              </div>
 
-            <div>
-              <h3
-                className="text-[18px] font-semibold mb-[8px]"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                Final Note
-              </h3>
-              <p className="text-[14px] leading-[22px] opacity-90">
-                This CTF is about solving security challenges and capturing
-                flags.
-              </p>
-              <p className="text-[14px] leading-[22px] opacity-90 mt-[8px]">
-                Bring curiosity, build responsibly, and respect the community.
-              </p>
-              <p className="text-[14px] leading-[22px] opacity-90 mt-[12px] text-right">
-                — Point Blank
-              </p>
+              <div>
+                <h3 className="text-[18px] font-semibold mb-[8px]" style={{ fontFamily: 'var(--font-heading)' }}>
+                  Final Note
+                </h3>
+                <p className="text-[14px] leading-[22px] opacity-90 mt-[8px]">
+                  Bring curiosity, participate responsibly, and respect the community.
+                </p>
+                <p className="text-[14px] leading-[22px] opacity-90 mt-[12px] text-right">
+                  — Point Blank
+                </p>
+              </div>
             </div>
-          </div>
 
           <div className="flex justify-end pt-[16px] border-t border-[rgba(255,255,255,0.2)]">
             <Button
@@ -1570,7 +1236,8 @@ export function RegistrationContainer({
             </Button>
           </div>
         </div>
+      </div>
       </Modal>
-    </div>
+    </div> 
   );
-}
+  }
