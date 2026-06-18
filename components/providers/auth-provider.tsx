@@ -12,12 +12,21 @@ import {
 import { auth } from "@/Firebase";
 import { useRouter } from "next/navigation";
 import { VerifyEmail } from "@/components/auth/verify-email";
+import posthog from "posthog-js";
+import { clearAuthData } from "@/lib/auth-storage";
 
 const API_ENDPOINTS = {
     login: '/api/user/login',
     register: '/api/user/register',
     userProfile: '/api/user/profile',
 };
+
+// App-owned localStorage keys that must be wiped on logout. Firebase's own
+// keys (firebase:authUser:*, firebase:host:*) are cleared by firebaseSignOut.
+// PostHog state is handled via posthog.reset() below.
+const APP_STORAGE_KEYS = [
+    "zenith_registration_form_data",
+];
 
 interface UserProfile {
     uid: string;
@@ -260,8 +269,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = useCallback(async () => {
         try {
+            // 1. Firebase: drops its own session keys + token refresh state.
             await firebaseSignOut(auth);
+
+            // 2. App-owned localStorage: clear PII left by the registration
+            //    form draft + the legacy auth storage so the next person on
+            //    this browser can't read it.
+            if (typeof window !== "undefined") {
+                try {
+                    for (const key of APP_STORAGE_KEYS) {
+                        window.localStorage.removeItem(key);
+                    }
+                    clearAuthData();
+                } catch (storageError) {
+                    // Storage may be unavailable (private mode, quota). Don't
+                    // block sign-out on this — Firebase is already cleared.
+                    console.error("logout: storage clear failed", storageError);
+                }
+            }
+
+            // 3. PostHog: drop the distinct_id so the next user isn't
+            //    attributed to this account.
+            try {
+                posthog.reset();
+            } catch (phError) {
+                console.error("logout: posthog.reset failed", phError);
+            }
+
+            // 4. Local React state.
             setUser(null);
+            setFirebaseUser(null);
+
             router.push("/login");
         } catch (error) {
             console.error("Error signing out:", error);
