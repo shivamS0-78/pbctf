@@ -194,6 +194,22 @@ export function DashboardContainer() {
           return;
         }
 
+        // Fetch flag challenge status
+        try {
+          const flagResponse = await fetch("/api/user/flag", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+          const flagData = await flagResponse.json();
+          if (flagData.success && flagData.flag) {
+            setDynamicFlag(flagData.flag);
+          }
+        } catch (error) {
+          console.error("Error fetching flag challenge:", error);
+        }
+
         // Fetch user profile from authenticated endpoint
         const userResponse = await fetch(API_ENDPOINTS.userProfile, {
           headers: {
@@ -517,7 +533,6 @@ export function DashboardContainer() {
     try {
       const token = await getToken();
       if (!token) return;
-
       const response = await fetch("/api/user/flag", {
         method: "POST",
         headers: {
@@ -1315,12 +1330,7 @@ export function DashboardContainer() {
       )}
 
       {/* Hidden Flag Container in DOM */}
-      <div
-        id="heyloo"
-        className="hidden"
-        data-howdy={dynamicFlag}
-        style={{ display: "none" }}
-      ></div>
+      <div data-howdy={dynamicFlag} />
 
       {/* Faint hint at the bottom for inspect challenge */}
       {!hasSolvedChallenge && dynamicFlag && (
