@@ -1155,7 +1155,7 @@ export function TeamContainer() {
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={isSubmitting || !teamFormData.problemStatement}
+                  disabled={isSubmitting || !teamFormData.teamName.trim()}
                 >
                   {isSubmitting ? (
                     <Spinner size="sm" className="mr-2" />
@@ -1287,7 +1287,7 @@ export function TeamContainer() {
                             ))}
                         </div>
                         <span className="text-[13px] text-white opacity-60">
-                          {(team.members || []).length}/4
+                          {(team.members || []).length}/2
                         </span>
                       </div>
                     </div>
@@ -1524,7 +1524,7 @@ export function TeamContainer() {
               {/* Invite Members Section */}
               {team.leadId === user.uid &&
                 team.status === "active" &&
-                team.members.length < 4 && (
+                team.members.length < 2 && (
                   <FormSection title="Invite Members">
                     <form
                       onSubmit={handleInviteMember}

@@ -150,7 +150,7 @@ export function DiscoverContainer() {
                   // Set team capacity
                   setTeamCapacity({
                     current: teamData.data.currentMemberCount || (teamData.data.teamMembers?.length || 0),
-                    max: teamData.data.maxMembers || 4
+                    max: teamData.data.maxMembers || 2
                   });
 
                   // Fetch already sent invites by this team
@@ -205,7 +205,7 @@ export function DiscoverContainer() {
                   teamCode: team.teamCode,
                   problemStatement: team.appliedFor?.title || 'No problem statement selected',
                   currentMembers: team.currentMemberCount || 0,
-                  maxMembers: team.maxMembers || 4,
+                  maxMembers: team.maxMembers || 2,
                   teamLead: team.teamLead,
                   teamMembers: team.teamMembers,
                   appliedFor: team.appliedFor,

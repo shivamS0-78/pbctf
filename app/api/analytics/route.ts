@@ -32,9 +32,9 @@ export async function GET(request: NextRequest) {
             return createAuthErrorResponse(authResult);
         }
 
-        // Allow 'frai' and 'admin' roles
+        // Allow 'admin' role only
         const userRole = authResult.user.role;
-        if (userRole !== 'frai' && userRole !== 'admin') {
+        if (userRole !== 'admin') {
             return createErrorResponse("Access denied", "FORBIDDEN", 403);
         }
 
@@ -52,31 +52,20 @@ export async function GET(request: NextRequest) {
             Team.countDocuments({ submittedAt: { $exists: true, $ne: null } })
         ]);
 
-        const adjust = (value: number) => Math.ceil(value * 1);
-
-        const realRegistered = Math.max(0, totalTeams - (submittedCount + evaluatedCount));
-
-        const adjustedRegistered = adjust(realRegistered);
-        const adjustedSubmitted = adjust(submittedCount);
-        const adjustedEvaluated = adjust(evaluatedCount);
-        const adjustedShortlisted = adjust(shortlistedCount);
-        const adjustedActualSubmissions = adjust(actualSubmissionsCount);
-
-        // Ensure total equals the sum of mutually exclusive parts (Reg + Sub + Eval)
-        const adjustedTotalTeams = adjustedRegistered + adjustedSubmitted + adjustedEvaluated;
+        const registered = Math.max(0, totalTeams - (submittedCount + evaluatedCount));
 
         const currentStats = {
-            totalUsers: adjust(totalUsers),
-            totalTeams: adjustedTotalTeams,
-            totalSubmissions: adjustedActualSubmissions, // Count teams that have actually submitted (using submittedAt field)
-            totalEvaluated: adjustedEvaluated,
+            totalUsers,
+            totalTeams: registered + submittedCount + evaluatedCount,
+            totalSubmissions: actualSubmissionsCount,
+            totalEvaluated: evaluatedCount,
         };
 
         const teamDistribution = [
-            { name: 'Registered', value: adjustedRegistered },
-            { name: 'Submitted', value: adjustedSubmitted },
-            { name: 'Evaluated', value: Math.max(0, adjustedEvaluated - adjustedShortlisted) },
-            { name: 'Shortlisted', value: adjustedShortlisted },
+            { name: 'Registered', value: registered },
+            { name: 'Submitted', value: submittedCount },
+            { name: 'Evaluated', value: Math.max(0, evaluatedCount - shortlistedCount) },
+            { name: 'Shortlisted', value: shortlistedCount },
         ];
 
         // Fetch history (last 30 days)
@@ -110,7 +99,7 @@ export async function GET(request: NextRequest) {
 
         const submissionActivity = Array.from(activityMap.entries()).map(([time, count]) => ({
             time,
-            submissions: adjust(count)
+            submissions: count
         })).sort((a, b) => parseInt(a.time) - parseInt(b.time));
 
         // Calculate Problem Statement Distribution

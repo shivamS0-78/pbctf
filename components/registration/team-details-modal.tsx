@@ -115,7 +115,7 @@ export function TeamDetailsModal({
                 </p>
               )}
               <p className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white opacity-70 mt-[4px]">
-                Members: {teamDetails.memberCount || (teamDetails.teamMembers?.length || 0)}/{teamDetails.maxMembers || 4}
+                Members: {teamDetails.memberCount || (teamDetails.teamMembers?.length || 0)}/{teamDetails.maxMembers || 2}
               </p>
             </div>
 
