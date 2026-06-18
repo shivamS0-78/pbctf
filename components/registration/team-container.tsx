@@ -556,13 +556,12 @@ export function TeamContainer() {
       if (!response.ok) {
         throw new Error(data.message || `Failed to ${action} request`);
       }
-
-      setAlert({
-        type: action === "accept" ? "success" : "info",
-        message: data.message || `Request ${action}ed successfully`,
+      toast({
+        title: action === "accept" ? "Success" : "Rejected",
+       description: `Request ${action === "decline" ? "declined" : "accepted"} successfully`,
+        variant: action === "accept" ? "default" : "destructive",
       });
-      setTimeout(() => setAlert(null), 3000);
-
+     
       // Refresh team data and requests
       if (team.code) {
         const teamResponse = await fetch(API_ENDPOINTS.getTeam(team.code), {

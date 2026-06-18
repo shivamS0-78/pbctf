@@ -311,7 +311,7 @@ export function ProfileContainer() {
             className="text-[14px] font-semibold text-white cursor-pointer"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Discoverable Profile
+            Looking For Team
           </label>
         </div>
         <p
@@ -398,7 +398,7 @@ export function ProfileContainer() {
             <FormTextarea
               label="Bio"
               placeholder="Tell us about yourself..."
-              required
+              
               value={profileData.bio}
               onChange={(e) =>
                 setProfileData({ ...profileData, bio: e.target.value })

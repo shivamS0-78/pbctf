@@ -852,11 +852,11 @@ export function DiscoverContainer() {
                                       )}
                                       {!user?.hasSolvedChallenge && (
                                         <span className="px-[8px] py-[2px] bg-red-500/10 border border-red-500/20 rounded-[6px] text-[11px] text-red-400 font-semibold tracking-wide">
-                                          🔴 Unverified Noob
+                                          🔴 Bro wasn’t able even able to find a damn flag
                                         </span>
                                       )}
                                     </div>
-
+                                    
                                     <div className="flex items-center gap-[12px]">
                                       <span className="font-['Google_Sans_Flex',sans-serif] text-[12px] text-white opacity-60">
                                         {team.currentMembers}/{team.maxMembers}{" "}

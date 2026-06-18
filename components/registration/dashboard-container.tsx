@@ -1083,9 +1083,6 @@ export function DashboardContainer() {
 
         {/* Right Column - 1/3 width */}
         <div className="flex flex-col gap-[24px]">
-          
-
-
           {/* Quick Actions Card */}
           {team && teamStatus !== "none" && (
             <QuickActionsCard

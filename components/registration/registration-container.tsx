@@ -1225,6 +1225,7 @@ export function RegistrationContainer({
                   </li>
                   <li>Maintain a friendly and inclusive environment</li>
                   <li>Professional behavior is expected at all times</li>
+                  <li>Flag sharing is cheating.</li>
                 </ul>
               </div>
 

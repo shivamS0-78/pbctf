@@ -141,7 +141,7 @@ export function UserProfileModal({
                 <h3 className="font-['Google_Sans_Flex',sans-serif] text-[20px] text-white">{userDetails.name}</h3>
                 {!userDetails.hasSolvedChallenge && (
                   <span className="px-[8px] py-[2px] bg-red-500/10 border border-red-500/20 rounded-[6px] text-[11px] text-red-400 font-semibold tracking-wide">
-                    🔴 Unverified Noob
+                    🔴 Bro wasn’t able even able to find a damn flag
                   </span>
                 )}
               </div>
