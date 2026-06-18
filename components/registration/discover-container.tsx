@@ -856,9 +856,7 @@ export function DiscoverContainer() {
                                         </span>
                                       )}
                                     </div>
-                                    <p className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-70 mb-[8px]">
-                                      Problem: {team.problemStatement}
-                                    </p>
+
                                     <div className="flex items-center gap-[12px]">
                                       <span className="font-['Google_Sans_Flex',sans-serif] text-[12px] text-white opacity-60">
                                         {team.currentMembers}/{team.maxMembers}{" "}
