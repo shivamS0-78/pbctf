@@ -66,8 +66,8 @@
   /* Type system */
   --font-display: "JetBrains Mono", "Space Grotesk", ui-monospace, monospace;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
-  --font-body: "Inter", "Space Grotesk", system-ui, -apple-system, sans-serif;
-  --font-heading: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-body: "Lexend", "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --font-heading: "Space Grotesk", "Lexend", system-ui, sans-serif;
 
   /* Radii. terminal: tight */
   --radius-xs: 2px;
