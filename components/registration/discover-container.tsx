@@ -642,9 +642,12 @@ export function DiscoverContainer() {
             <p className="text-gray-300 mb-6">
               You need to enable "Public Profile" in your profile settings to see teams looking for members.
             </p>
-            <Button onClick={() => router.push("/dashboard/profile")} variant="primary">
-              Go to Profile Settings
-            </Button>
+
+            <div className="w-full h-full flex justify-center items-center">
+              <Button onClick={() => router.push("/dashboard/profile")} variant="primary">
+                Go to Profile Settings
+              </Button>
+            </div>
           </div>
             </div>
           ) : (
