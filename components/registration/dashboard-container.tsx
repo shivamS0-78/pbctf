@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { API_ENDPOINTS } from "@/lib/api-config";
@@ -350,6 +350,16 @@ export function DashboardContainer() {
     setMissingFields(missing);
   }, [user]);
 
+  // Idempotency guard. The effect below depends on firebaseUser?.uid +
+  // authLoading + router + refreshTrigger. During the auth cascade these
+  // can churn (firebaseUser arrives → authLoading flips, plus any router
+  // identity changes from Next's app router) and fire the effect 3–4 times
+  // back-to-back. Without this guard, each fire would issue a fresh
+  // /api/me/bootstrap call — observed as 4 duplicate fetches on prod.
+  // The ref records the last (uid, refreshTrigger) combo we actually
+  // fetched for; subsequent fires for the same combo no-op.
+  const lastBootstrapKey = useRef<string>("");
+
   useEffect(() => {
     // We kick off /api/me/bootstrap the moment Firebase confirms a session,
     // in parallel with the auth-provider's /api/user/profile fetch — they're
@@ -360,8 +370,13 @@ export function DashboardContainer() {
       // finished initialising — before that, firebaseUser==null just means
       // "we haven't heard back from onAuthStateChanged yet".
       if (!authLoading) router.push("/login");
+      lastBootstrapKey.current = "";
       return;
     }
+
+    const fetchKey = `${firebaseUser.uid}::${refreshTrigger}`;
+    if (lastBootstrapKey.current === fetchKey) return;
+    lastBootstrapKey.current = fetchKey;
 
     const fetchData = async () => {
       try {
