@@ -45,8 +45,8 @@ export function LandingContainer({ onNavigate }: LandingContainerProps) {
       <FormSection title="Event Timeline">
         <div className="flex flex-col gap-[16px]">
           <div className="flex items-start gap-[16px]">
-            <div className="flex items-center justify-center w-[40px] h-[40px] rounded-full bg-[rgba(34,197,94,0.2)] border border-[#22c55e]">
-              <Calendar className="w-5 h-5 text-[#22c55e]" />
+            <div className="flex items-center justify-center w-[40px] h-[40px] rounded-full bg-[rgba(0,255,136,0.2)] border border-[#00FF88]">
+              <Calendar className="w-5 h-5 text-[#00FF88]" />
             </div>
             <div className="flex-1">
               <h3 className="font-['Google_Sans_Flex',sans-serif] text-[16px] text-white">Registration</h3>
@@ -54,8 +54,8 @@ export function LandingContainer({ onNavigate }: LandingContainerProps) {
             </div>
           </div>
           <div className="flex items-start gap-[16px]">
-            <div className="flex items-center justify-center w-[40px] h-[40px] rounded-full bg-[rgba(34,197,94,0.2)] border border-[#22c55e]">
-              <Users className="w-5 h-5 text-[#22c55e]" />
+            <div className="flex items-center justify-center w-[40px] h-[40px] rounded-full bg-[rgba(0,255,136,0.2)] border border-[#00FF88]">
+              <Users className="w-5 h-5 text-[#00FF88]" />
             </div>
             <div className="flex-1">
               <h3 className="font-['Google_Sans_Flex',sans-serif] text-[16px] text-white">Team Formation</h3>
@@ -63,8 +63,8 @@ export function LandingContainer({ onNavigate }: LandingContainerProps) {
             </div>
           </div>
           <div className="flex items-start gap-[16px]">
-            <div className="flex items-center justify-center w-[40px] h-[40px] rounded-full bg-[rgba(34,197,94,0.2)] border border-[#22c55e]">
-              <FileText className="w-5 h-5 text-[#22c55e]" />
+            <div className="flex items-center justify-center w-[40px] h-[40px] rounded-full bg-[rgba(0,255,136,0.2)] border border-[#00FF88]">
+              <FileText className="w-5 h-5 text-[#00FF88]" />
             </div>
             <div className="flex-1">
               <h3 className="font-['Google_Sans_Flex',sans-serif] text-[16px] text-white">Capture the Flag (CTF)</h3>
@@ -72,8 +72,8 @@ export function LandingContainer({ onNavigate }: LandingContainerProps) {
             </div>
           </div>
           <div className="flex items-start gap-[16px]">
-            <div className="flex items-center justify-center w-[40px] h-[40px] rounded-full bg-[rgba(34,197,94,0.2)] border border-[#22c55e]">
-              <Award className="w-5 h-5 text-[#22c55e]" />
+            <div className="flex items-center justify-center w-[40px] h-[40px] rounded-full bg-[rgba(0,255,136,0.2)] border border-[#00FF88]">
+              <Award className="w-5 h-5 text-[#00FF88]" />
             </div>
             <div className="flex-1">
               <h3 className="font-['Google_Sans_Flex',sans-serif] text-[16px] text-white">Results & Awards</h3>
@@ -88,11 +88,11 @@ export function LandingContainer({ onNavigate }: LandingContainerProps) {
         <div className="grid grid-cols-3 gap-[16px]">
           <Card>
             <div className="flex flex-col items-center gap-[12px] text-center">
-              <div className="flex items-center justify-center w-[50px] h-[50px] rounded-full bg-gradient-to-br from-[#4ade80] to-[#22c55e]">
+              <div className="flex items-center justify-center w-[50px] h-[50px] rounded-full bg-gradient-to-br from-[#8CFF00] to-[#00FF88]">
                 <Gift className="w-6 h-6 text-white" />
               </div>
               <h3 className="font-['Google_Sans_Flex',sans-serif] text-[18px] text-white">1st Prize</h3>
-              <p className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-[#22c55e]">$5,000</p>
+              <p className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-[#00FF88]">$5,000</p>
             </div>
           </Card>
           <Card>
@@ -101,7 +101,7 @@ export function LandingContainer({ onNavigate }: LandingContainerProps) {
                 <Gift className="w-6 h-6 text-white" />
               </div>
               <h3 className="font-['Google_Sans_Flex',sans-serif] text-[18px] text-white">2nd Prize</h3>
-              <p className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-[#22c55e]">$3,000</p>
+              <p className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-[#00FF88]">$3,000</p>
             </div>
           </Card>
           <Card>
@@ -110,7 +110,7 @@ export function LandingContainer({ onNavigate }: LandingContainerProps) {
                 <Gift className="w-6 h-6 text-white" />
               </div>
               <h3 className="font-['Google_Sans_Flex',sans-serif] text-[18px] text-white">3rd Prize</h3>
-              <p className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-[#22c55e]">$1,500</p>
+              <p className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-[#00FF88]">$1,500</p>
             </div>
           </Card>
         </div>
@@ -134,7 +134,7 @@ export function LandingContainer({ onNavigate }: LandingContainerProps) {
       <FormSection title="Frequently Asked Questions">
         <div className="flex flex-col gap-[16px]">
           <div className="flex items-start gap-[12px]">
-            <HelpCircle className="w-5 h-5 text-[#22c55e] mt-[2px]" />
+            <HelpCircle className="w-5 h-5 text-[#00FF88] mt-[2px]" />
             <div>
               <h3 className="font-['Google_Sans_Flex',sans-serif] text-[15px] text-white mb-[4px]">Who can participate?</h3>
               <p className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-70">
@@ -143,7 +143,7 @@ export function LandingContainer({ onNavigate }: LandingContainerProps) {
             </div>
           </div>
           <div className="flex items-start gap-[12px]">
-            <HelpCircle className="w-5 h-5 text-[#22c55e] mt-[2px]" />
+            <HelpCircle className="w-5 h-5 text-[#00FF88] mt-[2px]" />
             <div>
               <h3 className="font-['Google_Sans_Flex',sans-serif] text-[15px] text-white mb-[4px]">Is it free to participate?</h3>
               <p className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-70">
@@ -152,7 +152,7 @@ export function LandingContainer({ onNavigate }: LandingContainerProps) {
             </div>
           </div>
           <div className="flex items-start gap-[12px]">
-            <HelpCircle className="w-5 h-5 text-[#22c55e] mt-[2px]" />
+            <HelpCircle className="w-5 h-5 text-[#00FF88] mt-[2px]" />
             <div>
               <h3 className="font-['Google_Sans_Flex',sans-serif] text-[15px] text-white mb-[4px]">What should I bring?</h3>
               <p className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-70">

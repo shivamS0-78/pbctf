@@ -43,11 +43,11 @@ export function StickyAlert({
   const getTypeClass = () => {
     switch (type) {
       case "success":
-        return "bg-[rgba(34,197,94,0.3)] border-[#22c55e]";
+        return "bg-[rgba(0,255,136,0.3)] border-[#00FF88]";
       case "error":
-        return "bg-black/60 border-[#22c55e]";
+        return "bg-black/60 border-[#00FF88]";
       case "warning":
-        return "bg-[rgba(34,197,94,0.2)] border-[#4ade80]";
+        return "bg-[rgba(0,255,136,0.2)] border-[#8CFF00]";
       default:
         return "bg-white/10 border-white/38";
     }
@@ -58,7 +58,7 @@ export function StickyAlert({
       case "success":
         return "text-white";
       case "error":
-        return "text-[#22c55e]";
+        return "text-[#00FF88]";
       case "warning":
         return "text-white";
       default:

@@ -532,43 +532,49 @@ export function AdminContainer() {
 
       <FormSection title="Platform Statistics">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px]">
-          <Card>
-            <div className="flex flex-col items-center gap-[8px] text-center">
-              <UserCircle className="w-8 h-8 text-[#22c55e]" />
-              <span className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-white">{stats.totalUsers}</span>
-              <span className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-90">Total Users</span>
-            </div>
-          </Card>
-          <Card>
-            <div className="flex flex-col items-center gap-[8px] text-center">
-              <Users className="w-8 h-8 text-[#22c55e]" />
-              <span className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-white">{stats.totalTeams}</span>
-              <span className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-90">Total Teams</span>
-            </div>
-          </Card>
-          <Card>
-            <div className="flex flex-col items-center gap-[8px] text-center">
-              <CheckCircle className="w-8 h-8 text-[#22c55e]" />
-              <span className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-white">{stats.totalEvaluated}</span>
-              <span className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-90">Evaluated</span>
-            </div>
-          </Card>
-          <Card>
-            <div className="flex flex-col items-center gap-[8px] text-center">
-              <CalendarCheck className="w-8 h-8 text-[#22c55e]" />
-              <span className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-white">{stats.rsvped}</span>
-              <span className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-90">RSVP Count</span>
-            </div>
-          </Card>
+          {[
+            { icon: UserCircle, value: stats.totalUsers, label: 'Total Users' },
+            { icon: Users, value: stats.totalTeams, label: 'Total Teams' },
+            { icon: CheckCircle, value: stats.totalEvaluated, label: 'Evaluated' },
+            { icon: CalendarCheck, value: stats.rsvped, label: 'RSVP Count' },
+          ].map(({ icon: Icon, value, label }) => (
+            <Card key={label}>
+              <div className="flex flex-col items-center gap-[10px] text-center">
+                <div className="w-10 h-10 rounded-[10px] bg-[rgba(0,255,136,0.08)] border border-[rgba(0,255,136,0.2)] flex items-center justify-center">
+                  <Icon className="w-5 h-5 text-[#00FF88]" />
+                </div>
+                <span
+                  className="text-[28px] font-semibold text-white"
+                  style={{ fontFamily: 'var(--font-heading)', textShadow: '0 0 20px rgba(0,255,136,0.35)' }}
+                >
+                  {value}
+                </span>
+                <span className="text-[12px] text-white/50 uppercase tracking-[0.06em]" style={{ fontFamily: 'var(--font-body)' }}>
+                  {label}
+                </span>
+              </div>
+            </Card>
+          ))}
         </div>
       </FormSection>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
-          <TabsTrigger value="users">Manage Users</TabsTrigger>
-          <TabsTrigger value="teams">Manage Teams</TabsTrigger>
-          <TabsTrigger value="selected-teams">Selected Teams</TabsTrigger>
-          <TabsTrigger value="evaluators">Evaluators</TabsTrigger>
+        <TabsList className="flex flex-wrap items-center gap-[8px] bg-transparent p-0 h-auto w-full">
+          {([
+            { value: 'users', label: 'Manage Users' },
+            { value: 'teams', label: 'Manage Teams' },
+            { value: 'selected-teams', label: 'Selected Teams' },
+            { value: 'evaluators', label: 'Evaluators' },
+          ] as const).map(({ value, label }) => (
+            <TabsTrigger
+              key={value}
+              value={value}
+              className="bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(0,255,136,0.15)] text-white/50 rounded-[10px] px-[18px] py-[10px] text-[13px] font-medium whitespace-nowrap data-[state=active]:bg-[rgba(0,255,136,0.1)] data-[state=active]:border-[rgba(0,255,136,0.55)] data-[state=active]:text-[#00FF88] data-[state=active]:shadow-[0_0_16px_rgba(0,255,136,0.18)] hover:border-[rgba(0,255,136,0.3)] hover:text-white transition-all duration-200"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              {label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="users" className="mt-6">
@@ -607,18 +613,18 @@ export function AdminContainer() {
                   <Card key={user.id}>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-[rgba(255,255,255,0.1)] flex items-center justify-center shrink-0">
-                          <UserCircle className="w-6 h-6 text-white opacity-90" />
+                        <div className="w-10 h-10 rounded-full bg-[rgba(0,255,136,0.08)] border border-[rgba(0,255,136,0.2)] flex items-center justify-center shrink-0">
+                          <UserCircle className="w-6 h-6 text-[#00FF88]" />
                         </div>
                         <div>
-                          <h3 className="font-['Google_Sans_Flex',sans-serif] text-[16px] text-white">{user.name}</h3>
-                          <p className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-90 break-all">{user.email}</p>
+                          <h3 className="text-[15px] font-medium text-white" style={{ fontFamily: 'var(--font-body)' }}>{user.name}</h3>
+                          <p className="text-[13px] text-white/50 break-all" style={{ fontFamily: 'var(--font-body)' }}>{user.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 pl-[56px] sm:pl-0 w-full sm:w-auto justify-between sm:justify-end">
                         {user.teamName && (
-                          <div className="bg-[rgba(255,255,255,0.05)] px-3 py-1 rounded-full">
-                            <span className="text-[12px] text-white opacity-90">Team: {user.teamName}</span>
+                          <div className="bg-[rgba(0,255,136,0.06)] border border-[rgba(0,255,136,0.15)] px-3 py-1 rounded-full">
+                            <span className="text-[12px] text-[#00FF88]/80">Team: {user.teamName}</span>
                           </div>
                         )}
                         <Button variant="secondary" onClick={() => handleViewUser(user.uid)}>
@@ -672,15 +678,15 @@ export function AdminContainer() {
                     <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-[4px]">
-                          <h3 className="font-['Google_Sans_Flex',sans-serif] text-[16px] text-white">{team.teamName}</h3>
+                          <h3 className="text-[15px] font-medium text-white" style={{ fontFamily: 'var(--font-body)' }}>{team.teamName}</h3>
                           {team.isShortlisted && (
-                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 text-[11px] text-[#22c55e] font-medium">
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[rgba(0,255,136,0.1)] border border-[rgba(0,255,136,0.3)] text-[11px] text-[#00FF88] font-medium">
                               <Star className="w-3 h-3 fill-current" />
                               Shortlisted
                             </span>
                           )}
                         </div>
-                        <p className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-90 mb-[8px]">
+                        <p className="text-[13px] text-white/50 mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>
                           Members: {team.memberCount} • Status: {team.status}
                         </p>
                       </div>
@@ -761,10 +767,10 @@ export function AdminContainer() {
                       <div className="flex flex-col gap-4">
                         <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                           <div className="flex-1">
-                            <h3 className="font-['Google_Sans_Flex',sans-serif] text-[16px] text-white mb-[4px]">
+                            <h3 className="text-[15px] font-medium text-white mb-[4px]" style={{ fontFamily: 'var(--font-body)' }}>
                               {team.teamName}
                             </h3>
-                            <p className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-90 mb-[8px]">
+                            <p className="text-[13px] text-white/50 mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>
                               Members: {team.memberCount} • Status: {team.status}
                             </p>
                             <div className="flex items-center gap-2 mt-2">
@@ -803,32 +809,32 @@ export function AdminContainer() {
                         {/* Expanded Members List */}
                         {isExpanded && team.teamMembers && team.teamMembers.length > 0 && (
                           <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.1)]">
-                            <h4 className="text-[14px] text-white font-semibold mb-3" style={{ fontFamily: 'var(--font-body)' }}>
+                            <h4 className="text-[13px] text-white/70 font-medium uppercase tracking-[0.06em] mb-3" style={{ fontFamily: 'var(--font-body)' }}>
                               Team Members
                             </h4>
-                            <div className="flex flex-col gap-3">
+                            <div className="flex flex-col gap-2">
                               {team.teamMembers.map((member) => {
                                 const rsvp = memberRSVPsMap.get(member.uid);
                                 const rsvpStatus = rsvp?.rsvpStatus || null;
-                                
+
                                 return (
                                   <div
                                     key={member.uid}
-                                    className="flex items-center justify-between p-3 bg-[rgba(138,138,138,0.05)] rounded-[12px] border border-[rgba(255,255,255,0.1)]"
+                                    className="flex items-center justify-between p-3 bg-[rgba(0,0,0,0.3)] rounded-[12px] border border-[rgba(0,255,136,0.08)]"
                                   >
                                     <div className="flex items-center gap-3 flex-1">
-                                      <div className="w-10 h-10 rounded-full bg-[rgba(255,255,255,0.1)] flex items-center justify-center shrink-0">
-                                        <UserCircle className="w-6 h-6 text-white opacity-90" />
+                                      <div className="w-9 h-9 rounded-full bg-[rgba(0,255,136,0.08)] border border-[rgba(0,255,136,0.2)] flex items-center justify-center shrink-0">
+                                        <UserCircle className="w-5 h-5 text-[#00FF88]" />
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <h5 className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white">
+                                        <h5 className="text-[14px] text-white flex items-center gap-2" style={{ fontFamily: 'var(--font-body)' }}>
                                           {member.name}
                                           {member.role === 'Team Lead' && (
-                                            <span className="ml-2 text-[12px] text-[#22c55e]">(Lead)</span>
+                                            <span className="text-[11px] text-[#00FF88] bg-[rgba(0,255,136,0.1)] border border-[rgba(0,255,136,0.3)] px-2 py-0.5 rounded-full">Lead</span>
                                           )}
                                         </h5>
                                         {member.email && (
-                                          <p className="font-['Google_Sans_Flex',sans-serif] text-[12px] text-white opacity-70 break-all">
+                                          <p className="text-[12px] text-white/50 break-all" style={{ fontFamily: 'var(--font-body)' }}>
                                             {member.email}
                                           </p>
                                         )}
@@ -836,9 +842,9 @@ export function AdminContainer() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                       {rsvpStatus === 'confirmed' ? (
-                                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
-                                          <Check className="w-3.5 h-3.5 text-green-400" />
-                                          <span className="text-[12px] text-green-400 font-medium">Confirmed</span>
+                                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[rgba(0,255,136,0.1)] border border-[rgba(0,255,136,0.2)]">
+                                          <Check className="w-3.5 h-3.5 text-[#00FF88]" />
+                                          <span className="text-[12px] text-[#00FF88] font-medium">Confirmed</span>
                                         </div>
                                       ) : rsvpStatus === 'declined' ? (
                                         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20">

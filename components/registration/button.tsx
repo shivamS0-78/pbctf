@@ -19,15 +19,15 @@ export function Button({
 }: ButtonProps) {
   const getVariantClass = () => {
     if (disabled)
-      return "bg-[rgba(138,138,138,0.2)] text-[rgba(255,255,255,0.3)] cursor-not-allowed";
+      return "bg-[rgba(13,13,13,0.5)] text-[rgba(255,255,255,0.2)] cursor-not-allowed border border-[rgba(255,255,255,0.05)]";
 
     switch (variant) {
       case "primary":
-        return "bg-[rgba(255,255,255,0.85)] hover:bg-[rgba(255,255,255,0.95)] text-black";
+        return "bg-[#00FF88] hover:bg-[#00CC70] text-black font-semibold hover:shadow-[0_0_24px_rgba(0,255,136,0.55)] transition-all duration-200";
       case "secondary":
-        return "backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.3)] hover:bg-[rgba(138,138,138,0.4)] text-white border border-[rgba(255,255,255,0.38)]";
+        return "bg-[rgba(13,13,13,0.8)] hover:bg-[rgba(13,13,13,0.95)] text-white border border-[rgba(0,255,136,0.25)] hover:border-[rgba(0,255,136,0.55)] backdrop-blur-[12px] transition-all duration-200";
       case "danger":
-        return "bg-black/50 hover:bg-black/60 text-white border border-[#22c55e]";
+        return "bg-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.7)] text-white border border-[rgba(0,255,136,0.3)] hover:border-[rgba(0,255,136,0.65)] hover:shadow-[0_0_16px_rgba(0,255,136,0.2)] transition-all duration-200";
       default:
         return "";
     }
@@ -38,11 +38,10 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center justify-center gap-[8px] px-[24px] py-[12px] rounded-[15px] transition-all text-[14px] ${getVariantClass()} ${className}`}
+      className={`flex items-center justify-center gap-[8px] px-[24px] py-[12px] rounded-[10px] text-[14px] ${getVariantClass()} ${className}`}
       style={{ fontFamily: 'var(--font-body)' }}
     >
       {children}
     </button>
   );
 }
-

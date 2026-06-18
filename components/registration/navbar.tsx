@@ -1,7 +1,6 @@
 import React from "react";
 import { LogOut, LogIn } from "lucide-react";
 import { Logo } from "./logo";
-import { Button } from "./button";
 
 interface User {
   uid: string;
@@ -25,44 +24,51 @@ export function NavBar({
     <div className="bg-gradient-to-t from-[rgba(10,10,10,0)] to-[#0a0a0a] h-[78px] w-full sticky top-0 z-50">
       <div className="flex items-center justify-center size-full pt-[16px]">
         <div className="flex items-center justify-between px-4 md:px-[40px] max-w-[1200px] w-full">
-          <div 
-            className="cursor-pointer" 
+          <div
+            className="cursor-pointer"
             onClick={() => onNavigate && onNavigate('landing')}
           >
             <Logo />
           </div>
+
           {user ? (
             <div className="flex items-center gap-[12px]">
-              <div className="text-[13px] text-white opacity-80" style={{ fontFamily: 'var(--font-body)' }}>
-                {user.name} {user.role === "admin" && <span className="text-[#22c55e] capitalize">({user.role})</span>}
+              <div
+                className="text-[13px] text-white hidden sm:block"
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
+                {user.name}{' '}
+                {user.role === 'admin' && (
+                  <span className="text-[#00FF88] capitalize">({user.role})</span>
+                )}
               </div>
               <button
                 onClick={onLogout}
-                className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.3)] flex items-center gap-[8px] justify-center overflow-clip px-[18px] py-[8px] rounded-[20px] relative cursor-pointer hover:bg-[rgba(138,138,138,0.4)] transition-all"
+                className="flex items-center gap-[8px] justify-center px-[18px] py-[8px] rounded-[10px]
+                  bg-[rgba(13,13,13,0.8)] hover:bg-[rgba(13,13,13,0.95)]
+                  border border-[rgba(0,255,136,0.25)] hover:border-[rgba(0,255,136,0.55)]
+                  text-white/60 hover:text-white
+                  backdrop-blur-[12px] transition-all duration-200
+                  hover:shadow-[0_0_16px_rgba(0,255,136,0.15)]"
+                style={{ fontFamily: 'var(--font-body)' }}
               >
                 <LogOut className="w-4 h-4" />
-                <p className="hidden sm:block text-[13.6px] text-white leading-[16.8px]" style={{ fontFamily: 'var(--font-body)' }}>
-                  Logout
-                </p>
-                <div className="absolute inset-0 rounded-[20px]">
-                  <div className="absolute border border-[rgba(255,255,255,0.38)] border-solid inset-0 pointer-events-none rounded-[20px]" />
-                </div>
-                <div className="absolute inset-0 pointer-events-none shadow-[inset_0px_0px_6px_3px_rgba(138,138,138,0.3)] rounded-[20px]" />
+                <span className="hidden sm:block text-[13px]">Logout</span>
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-[12px]">
               <button
                 onClick={() => onNavigate && onNavigate('login')}
-                className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.3)] flex items-center gap-[8px] justify-center overflow-clip px-[18px] py-[8px] rounded-[20px] relative cursor-pointer hover:bg-[rgba(138,138,138,0.4)] transition-all"
+                className="flex items-center gap-[8px] justify-center px-[18px] py-[8px] rounded-[10px]
+                  bg-[#00FF88] hover:bg-[#00CC70]
+                  text-black font-semibold
+                  transition-all duration-200
+                  hover:shadow-[0_0_20px_rgba(0,255,136,0.5)]"
+                style={{ fontFamily: 'var(--font-body)' }}
               >
                 <LogIn className="w-4 h-4" />
-                <p className="hidden sm:block text-[13.6px] text-white leading-[16.8px]" style={{ fontFamily: 'var(--font-body)' }}>
-                  Login
-                </p>
-                <div className="absolute inset-0 rounded-[20px]">
-                  <div className="absolute border border-[rgba(255,255,255,0.38)] border-solid inset-0 pointer-events-none rounded-[20px]" />
-                </div>
+                <span className="hidden sm:block text-[13px]">Login</span>
               </button>
             </div>
           )}
@@ -71,4 +77,3 @@ export function NavBar({
     </div>
   );
 }
-

@@ -51,7 +51,7 @@ export function QuickActionsCard({
         {/* Destructive Actions */}
         {(canDelete || canLeave) && (
           <>
-            <div className="h-[1px] bg-[rgba(255,255,255,0.1)] my-[4px]" />
+            <div className="h-[1px] bg-[rgba(0,255,136,0.1)] my-[4px]" />
 
             {canDelete && (
               <Button onClick={onDeleteTeam} variant="danger">

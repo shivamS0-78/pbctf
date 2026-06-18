@@ -64,7 +64,7 @@ export default function LoginPage() {
           className="flex flex-col items-center justify-center w-full min-h-screen pb-[40px] sm:pb-[80px] pt-[40px] sm:pt-[60px] px-[16px] sm:px-[24px] md:px-[40px] relative"
           style={{
             backgroundImage:
-              "url('data:image/svg+xml;utf8,<svg viewBox=\\'0 0 1440 652\\' xmlns=\\'http://www.w3.org/2000/svg\\' preserveAspectRatio=\\'none\\'><rect x=\\'0\\' y=\\'0\\' height=\\'100%\\' width=\\'100%\\' fill=\\'url(%23grad)\\' opacity=\\'1\\'/><defs><radialGradient id=\\'grad\\' gradientUnits=\\'userSpaceOnUse\\' cx=\\'0\\' cy=\\'0\\' r=\\'10\\' gradientTransform=\\'matrix(31.68 0 0 22.168 0 174.74)\\'><stop stop-color=\\'rgba(34,197,94,0.28)\\' offset=\\'0.10445\\'/><stop stop-color=\\'rgba(34,197,94,0)\\' offset=\\'1\\'/></radialGradient></defs></svg>')",
+              "url('data:image/svg+xml;utf8,<svg viewBox=\\'0 0 1440 652\\' xmlns=\\'http://www.w3.org/2000/svg\\' preserveAspectRatio=\\'none\\'><rect x=\\'0\\' y=\\'0\\' height=\\'100%\\' width=\\'100%\\' fill=\\'url(%23grad)\\' opacity=\\'1\\'/><defs><radialGradient id=\\'grad\\' gradientUnits=\\'userSpaceOnUse\\' cx=\\'0\\' cy=\\'0\\' r=\\'10\\' gradientTransform=\\'matrix(31.68 0 0 22.168 0 174.74)\\'><stop stop-color=\\'rgba(0,255,136,0.28)\\' offset=\\'0.10445\\'/><stop stop-color=\\'rgba(0,255,136,0)\\' offset=\\'1\\'/></radialGradient></defs></svg>')",
           }}
         >
           <div className="max-w-[600px] w-full z-10 flex flex-col gap-[24px] sm:gap-[32px] items-center">
@@ -116,7 +116,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => router.push("/register")}
-                    className="font-['Google_Sans_Flex',sans-serif] text-[13px] sm:text-[14px] text-[#22c55e] hover:underline"
+                    className="font-['Google_Sans_Flex',sans-serif] text-[13px] sm:text-[14px] text-[#00FF88] hover:underline"
                   >
                     Register here
                   </button>

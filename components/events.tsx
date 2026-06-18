@@ -74,14 +74,14 @@ const GlitchTitle = memo(({ glitchEffect }: { glitchEffect: boolean }) => {
       {glitchEffect && (
         <>
           <h2 
-            className="glitch-copy absolute top-0 left-0 w-full text-5xl md:text-7xl font-dystopian font-bold text-center text-[#16a34a] opacity-70"
+            className="glitch-copy absolute top-0 left-0 w-full text-5xl md:text-7xl font-dystopian font-bold text-center text-[#00CC70] opacity-70"
             style={{ clipPath: 'polygon(0 0, 100% 0, 100% 45%, 0 45%)', transform: 'translate(-5px, -5px)' }}
             aria-hidden="true"
           >
             About the Events
           </h2>
           <h2 
-            className="glitch-copy absolute top-0 left-0 w-full text-5xl md:text-7xl font-dystopian font-bold text-center text-[#4ade80] opacity-70"
+            className="glitch-copy absolute top-0 left-0 w-full text-5xl md:text-7xl font-dystopian font-bold text-center text-[#8CFF00] opacity-70"
             style={{ clipPath: 'polygon(0 60%, 100% 60%, 100% 100%, 0 100%)', transform: 'translate(5px, 5px)' }}
             aria-hidden="true"
           >

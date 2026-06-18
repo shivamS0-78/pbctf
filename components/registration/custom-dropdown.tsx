@@ -28,9 +28,9 @@ export function CustomDropdown({ label, value, options, onChange, required }: Cu
 
     return (
         <div className="flex flex-col gap-[8px]" ref={dropdownRef}>
-            <label className="font-['Google_Sans_Flex',sans-serif] text-[14px] font-medium text-white flex items-center gap-1">
+            <label className="text-[13px] text-white/70 uppercase tracking-[0.08em]" style={{ fontFamily: 'var(--font-body)' }}>
                 {label}
-                {required && <span className="text-[#22c55e]">*</span>}
+                {required && <span className="text-[#00FF88] ml-1">*</span>}
             </label>
 
             <div className="relative">
@@ -38,34 +38,35 @@ export function CustomDropdown({ label, value, options, onChange, required }: Cu
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
                     className={cn(
-                        "w-full flex items-center justify-between px-[16px] py-[12px] bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-[8px] text-left transition-all",
-                        "hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.2)]",
-                        isOpen && "border-[#22c55e] ring-1 ring-[#22c55e]/20"
+                        "w-full flex items-center justify-between px-[16px] py-[12px] bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] rounded-[12px] text-left transition-all duration-200",
+                        "hover:border-[rgba(0,255,136,0.35)]",
+                        isOpen && "border-[#00FF88] shadow-[0_0_16px_rgba(0,255,136,0.35)]"
                     )}
                 >
-                    <span className={cn("text-[14px]", value ? "text-white" : "text-white/40")}>
+                    <span className={cn("text-[14px]", value ? "text-white" : "text-[rgba(255,255,255,0.3)]")} style={{ fontFamily: 'var(--font-body)' }}>
                         {value || "Select score..."}
                     </span>
                     <ChevronDown className={cn("w-4 h-4 text-white/40 transition-transform", isOpen && "rotate-180")} />
                 </button>
 
                 {isOpen && (
-                    <div className="absolute z-50 w-full mt-2 bg-[#1A1A1A] border border-[rgba(255,255,255,0.1)] rounded-[8px] shadow-xl max-h-[200px] overflow-y-auto">
+                    <div className="absolute z-50 w-full mt-2 bg-[rgba(13,13,13,0.97)] border border-[rgba(0,255,136,0.2)] rounded-[12px] shadow-xl max-h-[200px] overflow-y-auto">
                         {options.map((option) => (
                             <button
                                 key={option}
                                 type="button"
                                 className={cn(
-                                    "w-full flex items-center justify-between px-[16px] py-[10px] text-[14px] text-white/80 hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-colors",
-                                    value === option && "bg-[rgba(34,197,94,0.1)] text-[#22c55e]"
+                                    "w-full flex items-center justify-between px-[16px] py-[10px] text-[14px] text-white/70 hover:bg-[rgba(0,255,136,0.05)] hover:text-white transition-colors",
+                                    value === option && "bg-[rgba(0,255,136,0.08)] text-[#00FF88]"
                                 )}
+                                style={{ fontFamily: 'var(--font-body)' }}
                                 onClick={() => {
                                     onChange(option);
                                     setIsOpen(false);
                                 }}
                             >
                                 {option}
-                                {value === option && <Check className="w-4 h-4 text-[#22c55e]" />}
+                                {value === option && <Check className="w-4 h-4 text-[#00FF88]" />}
                             </button>
                         ))}
                     </div>

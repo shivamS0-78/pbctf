@@ -15,9 +15,9 @@ export default function Loading() {
           animate={{
             opacity: [0.3, 1, 0.3],
             filter: [
-              "drop-shadow(0 0 20px rgba(34,197,94,0.3))",
-              "drop-shadow(0 0 40px rgba(34,197,94,0.6))",
-              "drop-shadow(0 0 20px rgba(34,197,94,0.3))",
+              "drop-shadow(0 0 20px rgba(0,255,136,0.3))",
+              "drop-shadow(0 0 40px rgba(0,255,136,0.6))",
+              "drop-shadow(0 0 20px rgba(0,255,136,0.3))",
             ]
           }}
           transition={{
