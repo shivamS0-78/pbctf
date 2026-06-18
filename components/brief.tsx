@@ -135,7 +135,7 @@ export function Brief() {
             <motion.h1 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="text-[6rem] sm:text-7xl xl:text-8xl text-center sm:text-left font-bold mb-8 tracking-wider font-dystopian text-[#4ade80]"
+              className="text-[6rem] sm:text-7xl xl:text-8xl text-center sm:text-left font-bold mb-8 tracking-wider font-dystopian text-[#8CFF00]"
               style={{
               textShadow: "0 0 20px rgba(42,215,219,0.3), 0 0 40px rgba(42,215,219,0.2), 0 0 60px rgba(42,215,219,0.1)"
               }}
@@ -166,10 +166,10 @@ export function Brief() {
                   onClick={() => setSelectedSection(item.id)}
                   className={`flex items-center gap-2 whitespace-nowrap px-4 py-2 rounded-full transition-all duration-300
                     ${selectedSection === item.id 
-                      ? 'bg-[#4ade80]/10 text-[#4ade80] border-[#4ade80]' 
+                      ? 'bg-[#8CFF00]/10 text-[#8CFF00] border-[#8CFF00]' 
                       : 'text-gray-400 hover:text-white border-gray-700'}`}
                 >
-                  <item.icon className={`w-5 h-5 ${selectedSection === item.id ? 'text-[#4ade80]' : 'text-gray-400'}`} />
+                  <item.icon className={`w-5 h-5 ${selectedSection === item.id ? 'text-[#8CFF00]' : 'text-gray-400'}`} />
                   <span className="text-base font-medium">{item.label}</span>
                 </motion.button>
               ))}
@@ -191,10 +191,10 @@ export function Brief() {
                     className={`w-full text-left py-5 border-b-2 transition-all duration-300 
                       flex items-center gap-4 hover:pl-2
                       ${selectedSection === item.id 
-                        ? 'border-[#4ade80] text-[#4ade80]' 
+                        ? 'border-[#8CFF00] text-[#8CFF00]' 
                         : 'border-gray-700 text-gray-400 hover:text-white'}`}
                   >
-                    <item.icon className={`w-6 h-6 ${selectedSection === item.id ? 'text-[#4ade80]' : 'text-gray-400'}`} />
+                    <item.icon className={`w-6 h-6 ${selectedSection === item.id ? 'text-[#8CFF00]' : 'text-gray-400'}`} />
                     <span className="text-xl tracking-wider font-medium">{item.label}</span>
                   </motion.button>
                 ))}
@@ -217,7 +217,7 @@ export function Brief() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
                       key={index}
-                      className="border-b border-gray-700/50 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 hover:border-[#4ade80]/30 group"
+                      className="border-b border-gray-700/50 rounded-lg bg-black/20 backdrop-blur-sm transition-all duration-300 hover:border-[#8CFF00]/30 group"
                       style={{
                         boxShadow: openQuestion === `${selectedSection}-${index}` 
                           ? '0 0 20px rgba(42,215,219,0.1)' 
@@ -226,7 +226,7 @@ export function Brief() {
                     >
                       <button
                         onClick={() => toggleQuestion(`${selectedSection}-${index}`)}
-                        className="w-full py-6 px-6 flex justify-between items-center text-left group-hover:text-[#4ade80] transition-colors"
+                        className="w-full py-6 px-6 flex justify-between items-center text-left group-hover:text-[#8CFF00] transition-colors"
                       >
                         <span className="text-xl font-medium pr-8">{item.question}</span>
                         <motion.div
@@ -234,8 +234,8 @@ export function Brief() {
                           transition={{ duration: 0.2 }}
                           className={`transition-colors duration-300 ${
                             openQuestion === `${selectedSection}-${index}` 
-                              ? 'text-[#4ade80]' 
-                              : 'group-hover:text-[#4ade80]'
+                              ? 'text-[#8CFF00]' 
+                              : 'group-hover:text-[#8CFF00]'
                           }`}
                         >
                           <ChevronDown className="w-6 h-6" />
@@ -283,7 +283,7 @@ export function Brief() {
                   >
                     <button
                       onClick={() => toggleQuestion(`${selectedSection}-${index}`)}
-                      className="w-full py-6 px-6 flex justify-between items-center text-left hover:text-[#4ade80] transition-colors"
+                      className="w-full py-6 px-6 flex justify-between items-center text-left hover:text-[#8CFF00] transition-colors"
                     >
                       <span className="text-xl font-medium pr-8">{item.question}</span>
                       <motion.div
@@ -291,8 +291,8 @@ export function Brief() {
                         transition={{ duration: 0.2 }}
                         className={`transition-colors duration-300 ${
                           openQuestion === `${selectedSection}-${index}` 
-                            ? 'text-[#4ade80]' 
-                            : 'group-hover:text-[#4ade80]'
+                            ? 'text-[#8CFF00]' 
+                            : 'group-hover:text-[#8CFF00]'
                         }`}
                       >
                         <ChevronDown className="w-6 h-6" />

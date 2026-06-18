@@ -304,7 +304,7 @@ export function ProfileContainer() {
             id="profileLookingForTeam"
             checked={profileData.isLooking}
             onCheckedChange={handleToggleLooking}
-            className="data-[state=checked]:bg-[#22c55e] border-[#22c55e]"
+            className="data-[state=checked]:bg-[#00FF88] border-[#00FF88]"
           />
           <label
             htmlFor="profileLookingForTeam"

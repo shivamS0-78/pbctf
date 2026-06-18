@@ -699,8 +699,8 @@ export function DiscoverContainer() {
 
           {user?.teamCode && !isTeamLead ? (
             <div className="flex flex-col items-center justify-center py-[60px] text-center">
-              <div className="bg-[rgba(34,197,94,0.1)] border border-[#22c55e]/30 rounded-lg p-8 max-w-2xl">
-                <h2 className="text-2xl font-bold text-[#22c55e] mb-4">
+              <div className="bg-[rgba(0,255,136,0.1)] border border-[#00FF88]/30 rounded-lg p-8 max-w-2xl">
+                <h2 className="text-2xl font-bold text-[#00FF88] mb-4">
                   You are already in a team!
                 </h2>
                 <p className="text-gray-300 mb-6">
@@ -726,8 +726,8 @@ export function DiscoverContainer() {
             !userHasTeam &&
             activeTab === "teams" ? (
             <div className="flex flex-col items-center justify-center py-[60px] text-center">
-              <div className="bg-[rgba(34,197,94,0.1)] border border-[#22c55e]/30 rounded-lg p-8 max-w-2xl">
-                <h2 className="text-2xl font-bold text-[#22c55e] mb-4">
+              <div className="bg-[rgba(0,255,136,0.1)] border border-[#00FF88]/30 rounded-lg p-8 max-w-2xl">
+                <h2 className="text-2xl font-bold text-[#00FF88] mb-4">
                   Enable "Public Profile" to Discover Teams
                 </h2>
                 <p className="text-gray-300 mb-6">
@@ -803,7 +803,7 @@ export function DiscoverContainer() {
                       placeholder={`Search ${activeTab === "teams" ? "teams" : "participants"}...`}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 bg-[rgba(138,138,138,0.1)] border border-[rgba(255,255,255,0.2)] rounded-[12px] text-white placeholder-white/60 focus:outline-none focus:border-[#22c55e] transition-colors"
+                      className="w-full pl-10 pr-4 py-2 bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] rounded-[12px] text-white placeholder:text-[rgba(255,255,255,0.3)] focus:outline-none focus:border-[#00FF88] focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200"
                       style={{ fontFamily: "var(--font-body)" }}
                     />
                   </div>
@@ -826,7 +826,7 @@ export function DiscoverContainer() {
                           {teamsLookingForMembers.map((team, idx) => (
                             <div
                               key={idx}
-                              className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-[rgba(34,197,94,0.2)]"
+                              className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-[rgba(0,255,136,0.2)]"
                             >
                               <Card>
                                 <div
@@ -928,7 +928,7 @@ export function DiscoverContainer() {
                             (participant, idx) => (
                               <div
                                 key={idx}
-                                className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-[rgba(34,197,94,0.2)]"
+                                className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-[rgba(0,255,136,0.2)]"
                               >
                                 <Card key={participant.id}>
                                   <div className="flex flex-col gap-[12px] w-full">

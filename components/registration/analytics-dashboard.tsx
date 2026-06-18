@@ -30,7 +30,7 @@ interface ShortlistedStats {
 
 
 
-const COLORS = ['#22c55e', '#4ade80', '#16a34a', '#86efac', '#0088FE', '#8884d8'];
+const COLORS = ['#00FF88', '#8CFF00', '#00CC70', '#8CFF00', '#0088FE', '#8884d8'];
 
 
 
@@ -170,21 +170,21 @@ export function AnalyticsDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[16px]">
                     <Card>
                         <div className="flex flex-col items-center gap-[8px] text-center">
-                            <UserCircle className="w-8 h-8 text-[#22c55e]" />
+                            <UserCircle className="w-8 h-8 text-[#00FF88]" />
                             <span className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-white">{stats.totalUsers}</span>
                             <span className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-90">Total Users</span>
                         </div>
                     </Card>
                     <Card>
                         <div className="flex flex-col items-center gap-[8px] text-center">
-                            <Users className="w-8 h-8 text-[#22c55e]" />
+                            <Users className="w-8 h-8 text-[#00FF88]" />
                             <span className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-white">{stats.totalTeams}</span>
                             <span className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-90">Total Teams</span>
                         </div>
                     </Card>
                     <Card>
                         <div className="flex flex-col items-center gap-[8px] text-center">
-                            <CheckCircle className="w-8 h-8 text-[#22c55e]" />
+                            <CheckCircle className="w-8 h-8 text-[#00FF88]" />
                             <span className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-white">{stats.totalEvaluated}</span>
                             <span className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-90">Evaluated</span>
                         </div>
@@ -216,7 +216,7 @@ export function AnalyticsDashboard() {
                                                 contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)' }}
                                                 itemStyle={{ color: '#fff' }}
                                             />
-                                            <Line type="monotone" dataKey="users" stroke="#22c55e" strokeWidth={2} />
+                                            <Line type="monotone" dataKey="users" stroke="#00FF88" strokeWidth={2} />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -270,14 +270,14 @@ export function AnalyticsDashboard() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px] mb-6">
                             <Card>
                                 <div className="flex flex-col items-center gap-[8px] text-center">
-                                    <Trophy className="w-8 h-8 text-[#22c55e]" />
+                                    <Trophy className="w-8 h-8 text-[#00FF88]" />
                                     <span className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-white">{shortlistedStats.totalTeams}</span>
                                     <span className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-90">Teams Selected</span>
                                 </div>
                             </Card>
                             <Card>
                                 <div className="flex flex-col items-center gap-[8px] text-center">
-                                    <Users className="w-8 h-8 text-[#22c55e]" />
+                                    <Users className="w-8 h-8 text-[#00FF88]" />
                                     <span className="font-['Google_Sans_Flex',sans-serif] text-[24px] text-white">{shortlistedStats.totalParticipants}</span>
                                     <span className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-90">Total Participants</span>
                                 </div>
@@ -286,16 +286,15 @@ export function AnalyticsDashboard() {
 
                         {/* Search Bar */}
                         <div className="mb-6">
-                            <div className="relative bg-[rgba(138,138,138,0.15)] border border-[rgba(255,255,255,0.2)] rounded-[15px] overflow-hidden max-w-md">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <Search className="w-5 h-5 text-white/50" />
-                                </div>
+                            <div className="relative max-w-md">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 z-10" />
                                 <input
                                     type="text"
                                     placeholder="Search teams by name, code, or leader..."
                                     value={shortlistedSearchQuery}
                                     onChange={(e) => setShortlistedSearchQuery(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3 bg-transparent text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/50 transition-all text-sm"
+                                    className="w-full bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] rounded-[12px] pl-11 pr-4 py-3 text-white text-sm placeholder:text-[rgba(255,255,255,0.3)] focus:outline-none focus:border-[#00FF88] focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200"
+                                    style={{ fontFamily: 'var(--font-body)' }}
                                 />
                             </div>
                         </div>
@@ -321,7 +320,7 @@ export function AnalyticsDashboard() {
                                                 <div
                                                     className="relative overflow-hidden rounded-[20px] p-[1px] transition-all duration-300 hover:-translate-y-2"
                                                     style={{
-                                                        background: `linear-gradient(135deg, rgba(34,197,94, 0.4), transparent 50%, rgba(34,197,94, 0.4))`,
+                                                        background: `linear-gradient(135deg, rgba(0,255,136, 0.4), transparent 50%, rgba(0,255,136, 0.4))`,
                                                     }}
                                                 >
                                                     {/* Inner card */}
@@ -330,7 +329,7 @@ export function AnalyticsDashboard() {
                                                         <div
                                                             className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
                                                             style={{
-                                                                background: `radial-gradient(circle at 50% 0%, rgba(34,197,94, 0.3), transparent 70%)`,
+                                                                background: `radial-gradient(circle at 50% 0%, rgba(0,255,136, 0.3), transparent 70%)`,
                                                             }}
                                                         />
 
@@ -346,8 +345,8 @@ export function AnalyticsDashboard() {
                                                                 <div
                                                                     className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold text-white shrink-0 transition-transform duration-300 group-hover:scale-110"
                                                                     style={{
-                                                                        background: `linear-gradient(135deg, rgba(34,197,94, 0.15), rgba(34,197,94, 0.4))`,
-                                                                        boxShadow: `0 4px 20px rgba(34,197,94, 0.3)`
+                                                                        background: `linear-gradient(135deg, rgba(0,255,136, 0.15), rgba(0,255,136, 0.4))`,
+                                                                        boxShadow: `0 4px 20px rgba(0,255,136, 0.3)`
                                                                     }}
                                                                 >
                                                                     {initials}
@@ -385,8 +384,8 @@ export function AnalyticsDashboard() {
                                                                 </div>
                                                                 {/* Finalist indicator */}
                                                                 <div className="flex items-center gap-1 ml-auto">
-                                                                    <Sparkles className="w-3.5 h-3.5 text-[#22c55e]" />
-                                                                    <span className="text-[10px] text-[#22c55e] uppercase tracking-wider font-medium">
+                                                                    <Sparkles className="w-3.5 h-3.5 text-[#00FF88]" />
+                                                                    <span className="text-[10px] text-[#00FF88] uppercase tracking-wider font-medium">
                                                                         Finalist
                                                                     </span>
                                                                 </div>
@@ -396,7 +395,7 @@ export function AnalyticsDashboard() {
                                                         {/* Decorative corner accent */}
                                                         <div
                                                             className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full opacity-10 group-hover:opacity-20 transition-opacity duration-300"
-                                                            style={{ background: 'rgba(34,197,94, 0.4)' }}
+                                                            style={{ background: 'rgba(0,255,136, 0.4)' }}
                                                         />
                                                     </div>
                                                 </div>

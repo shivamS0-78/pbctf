@@ -45,15 +45,15 @@ export function VerifyEmail({ email, onResend, onLogout }: VerifyEmailProps) {
                     className="flex flex-col items-center justify-center w-full min-h-screen pb-[80px] pt-[60px] px-[40px] relative"
                     style={{
                         backgroundImage:
-                            "url('data:image/svg+xml;utf8,<svg viewBox=\\'0 0 1440 652\\' xmlns=\\'http://www.w3.org/2000/svg\\' preserveAspectRatio=\\'none\\'><rect x=\\'0\\' y=\\'0\\' height=\\'100%\\' width=\\'100%\\' fill=\\'url(%23grad)\\' opacity=\\'1\\'/><defs><radialGradient id=\\'grad\\' gradientUnits=\\'userSpaceOnUse\\' cx=\\'0\\' cy=\\'0\\' r=\\'10\\' gradientTransform=\\'matrix(31.68 0 0 22.168 0 174.74)\\'><stop stop-color=\\'rgba(34,197,94,0.28)\\' offset=\\'0.10445\\'/><stop stop-color=\\'rgba(34,197,94,0)\\' offset=\\'1\\'/></radialGradient></defs></svg>')",
+                            "url('data:image/svg+xml;utf8,<svg viewBox=\\'0 0 1440 652\\' xmlns=\\'http://www.w3.org/2000/svg\\' preserveAspectRatio=\\'none\\'><rect x=\\'0\\' y=\\'0\\' height=\\'100%\\' width=\\'100%\\' fill=\\'url(%23grad)\\' opacity=\\'1\\'/><defs><radialGradient id=\\'grad\\' gradientUnits=\\'userSpaceOnUse\\' cx=\\'0\\' cy=\\'0\\' r=\\'10\\' gradientTransform=\\'matrix(31.68 0 0 22.168 0 174.74)\\'><stop stop-color=\\'rgba(0,255,136,0.28)\\' offset=\\'0.10445\\'/><stop stop-color=\\'rgba(0,255,136,0)\\' offset=\\'1\\'/></radialGradient></defs></svg>')",
                     }}
                 >
                     <div className="max-w-[600px] w-full z-10 flex flex-col gap-[32px] items-center">
                         {error && <StickyAlert type="error" message={error} onClose={() => setError("")} />}
 
                         <div className="flex flex-col gap-[12px] items-center text-center">
-                            <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[#22c55e]/10">
-                                <Mail className="h-8 w-8 text-[#22c55e]" />
+                            <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[#00FF88]/10">
+                                <Mail className="h-8 w-8 text-[#00FF88]" />
                             </div>
                             <h1 className="font-['Google_Sans_Flex',sans-serif] text-[48px] text-white leading-[52px] tracking-[-1px]">
                                 Verify your email
@@ -70,15 +70,15 @@ export function VerifyEmail({ email, onResend, onLogout }: VerifyEmailProps) {
                                     You must verify your email to access the dashboard.
                                 </p>
 
-                                <div className="bg-[#22c55e]/10 border border-[#22c55e]/30 p-4 rounded-xl flex items-center gap-3 backdrop-blur-[2.5px]">
-                                    <AlertCircle className="h-5 w-5 text-[#22c55e] flex-shrink-0" />
+                                <div className="bg-[#00FF88]/10 border border-[#00FF88]/30 p-4 rounded-xl flex items-center gap-3 backdrop-blur-[2.5px]">
+                                    <AlertCircle className="h-5 w-5 text-[#00FF88] flex-shrink-0" />
                                     <p className="text-sm text-white font-medium">
-                                        Don't see it? Check your <span className="text-[#22c55e] font-semibold">spam </span>folder.
+                                        Don't see it? Check your <span className="text-[#00FF88] font-semibold">spam </span>folder.
                                     </p>
                                 </div>
 
                                 {sent && (
-                                    <div className="p-3 rounded-lg bg-green-500/10 text-green-400 text-sm font-medium animate-in fade-in slide-in-from-top-2">
+                                    <div className="p-3 rounded-lg bg-[rgba(0,255,136,0.1)] text-[#00FF88] text-sm font-medium animate-in fade-in slide-in-from-top-2">
                                         Verification email sent! Please check your inbox.
                                     </div>
                                 )}

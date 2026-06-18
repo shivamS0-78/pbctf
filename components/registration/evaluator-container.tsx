@@ -249,7 +249,7 @@ export function EvaluatorContainer() {
                     Evaluator Dashboard
                 </h1>
                 <p className="text-[15.9px] text-white opacity-90 leading-[23.8px]" style={{ fontFamily: 'var(--font-body)' }}>
-                    Welcome back, {user?.name}. You have <span className="text-[#22c55e] font-bold">{stats.pending}</span> teams pending evaluation.
+                    Welcome back, {user?.name}. You have <span className="text-[#00FF88] font-bold">{stats.pending}</span> teams pending evaluation.
                 </p>
             </div>
 
@@ -260,7 +260,7 @@ export function EvaluatorContainer() {
                     <div className="flex border-b border-white/10 overflow-x-auto">
                         <button
                             onClick={() => handleTabChange('pending')}
-                            className={`px-6 py-3 text-[14px] font-medium transition-all relative whitespace-nowrap ${activeTab === 'pending' ? 'text-[#22c55e]' : 'text-white/60 hover:text-white'
+                            className={`px-6 py-3 text-[14px] font-medium transition-all relative whitespace-nowrap ${activeTab === 'pending' ? 'text-[#00FF88]' : 'text-white/60 hover:text-white'
                                 }`}
                             style={{ fontFamily: 'var(--font-body)' }}
                         >
@@ -268,16 +268,16 @@ export function EvaluatorContainer() {
                                 <LayoutGrid className="w-4 h-4" />
                                 My Pending
                                 {stats.pending > 0 && (
-                                    <span className="bg-[#22c55e] text-white text-[10px] px-2 py-0.5 rounded-full">{stats.pending}</span>
+                                    <span className="bg-[#00FF88] text-white text-[10px] px-2 py-0.5 rounded-full">{stats.pending}</span>
                                 )}
                             </div>
                             {activeTab === 'pending' && (
-                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#22c55e]" />
+                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#00FF88]" />
                             )}
                         </button>
                         <button
                             onClick={() => handleTabChange('evaluated')}
-                            className={`px-6 py-3 text-[14px] font-medium transition-all relative whitespace-nowrap ${activeTab === 'evaluated' ? 'text-[#22c55e]' : 'text-white/60 hover:text-white'
+                            className={`px-6 py-3 text-[14px] font-medium transition-all relative whitespace-nowrap ${activeTab === 'evaluated' ? 'text-[#00FF88]' : 'text-white/60 hover:text-white'
                                 }`}
                             style={{ fontFamily: 'var(--font-body)' }}
                         >
@@ -286,12 +286,12 @@ export function EvaluatorContainer() {
                                 My Evaluated
                             </div>
                             {activeTab === 'evaluated' && (
-                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#22c55e]" />
+                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#00FF88]" />
                             )}
                         </button>
                         <button
                             onClick={() => handleTabChange('all_teams')}
-                            className={`px-6 py-3 text-[14px] font-medium transition-all relative whitespace-nowrap ${activeTab === 'all_teams' ? 'text-[#22c55e]' : 'text-white/60 hover:text-white'
+                            className={`px-6 py-3 text-[14px] font-medium transition-all relative whitespace-nowrap ${activeTab === 'all_teams' ? 'text-[#00FF88]' : 'text-white/60 hover:text-white'
                                 }`}
                             style={{ fontFamily: 'var(--font-body)' }}
                         >
@@ -300,7 +300,7 @@ export function EvaluatorContainer() {
                                 All Teams
                             </div>
                             {activeTab === 'all_teams' && (
-                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#22c55e]" />
+                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#00FF88]" />
                             )}
                         </button>
                     </div>
@@ -314,14 +314,14 @@ export function EvaluatorContainer() {
                                 placeholder="Search teams..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder:text-white/30 focus:outline-none focus:border-[#22c55e]/50 transition-colors"
+                                className="w-full bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] rounded-[12px] pl-10 pr-4 py-2.5 text-white placeholder:text-[rgba(255,255,255,0.3)] focus:outline-none focus:border-[#00FF88] focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200"
                                 style={{ fontFamily: 'var(--font-body)' }}
                             />
                         </div>
                         <button
                             onClick={() => setShowFilters(prev => !prev)}
                             className={`p-2.5 rounded-lg border transition-all duration-200 ${showFilters
-                                ? 'bg-[#22c55e]/10 border-[#22c55e]/50 text-[#22c55e]'
+                                ? 'bg-[#00FF88]/10 border-[#00FF88]/50 text-[#00FF88]'
                                 : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:border-white/20'}`}
                         >
                             <Layers className="w-5 h-5" />
@@ -338,7 +338,7 @@ export function EvaluatorContainer() {
                                 </span>
                                 <div className="flex flex-wrap gap-2">
                                     {[
-                                        { id: 'strongly_accepted', label: 'Strongly Accepted', color: 'text-green-400 bg-green-500/10 border-green-500/20 hover:border-green-500/40', active: 'ring-1 ring-green-500/50 bg-green-500/20' },
+                                        { id: 'strongly_accepted', label: 'Strongly Accepted', color: 'text-[#00FF88] bg-[rgba(0,255,136,0.1)] border-[rgba(0,255,136,0.2)] hover:border-[rgba(0,255,136,0.4)]', active: 'ring-1 ring-[rgba(0,255,136,0.5)] bg-[rgba(0,255,136,0.2)]' },
                                         { id: 'accepted', label: 'Accepted', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 hover:border-emerald-500/40', active: 'ring-1 ring-emerald-500/50 bg-emerald-500/20' },
                                         { id: 'borderline', label: 'Borderline', color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20 hover:border-yellow-500/40', active: 'ring-1 ring-yellow-500/50 bg-yellow-500/20' },
                                         { id: 'rejected', label: 'Rejected', color: 'text-red-400 bg-red-500/10 border-red-500/20 hover:border-red-500/40', active: 'ring-1 ring-red-500/50 bg-red-500/20' },
@@ -382,13 +382,13 @@ export function EvaluatorContainer() {
                                     className="group relative bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer flex flex-col gap-3"
                                 >
                                     <div className="flex justify-between items-start">
-                                        <h3 className="text-lg font-medium text-white group-hover:text-[#22c55e] transition-colors line-clamp-1" style={{ fontFamily: 'var(--font-body)' }}>
+                                        <h3 className="text-lg font-medium text-white group-hover:text-[#00FF88] transition-colors line-clamp-1" style={{ fontFamily: 'var(--font-body)' }}>
                                             {team.teamName}
                                         </h3>
                                         <div className="flex items-center gap-2">
                                             {activeTab === 'all_teams' && (
                                                 <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded border border-white/5">
-                                                    <div className="flex items-center gap-1 text-[10px] text-green-400">
+                                                    <div className="flex items-center gap-1 text-[10px] text-[#00FF88]">
                                                         <ThumbsUp className="w-3 h-3" /> {team.upvoteCount || 0}
                                                     </div>
                                                     <div className="w-[1px] h-3 bg-white/10" />
@@ -408,7 +408,7 @@ export function EvaluatorContainer() {
                                     <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
                                         <span style={{ fontFamily: 'var(--font-body)' }}>Team Code: {team.teamCode}</span>
                                         {activeTab === 'evaluated' && team.myEvaluation && (
-                                            <span className={`px-2 py-0.5 rounded border ${team.myEvaluation.tier === 'strongly_accepted' ? 'bg-green-500/20 border-green-500/30 text-green-400' :
+                                            <span className={`px-2 py-0.5 rounded border ${team.myEvaluation.tier === 'strongly_accepted' ? 'bg-[rgba(0,255,136,0.2)] border-[rgba(0,255,136,0.3)] text-[#00FF88]' :
                                                 team.myEvaluation.tier === 'accepted' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
                                                     team.myEvaluation.tier === 'borderline' ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-400' :
                                                         'bg-red-500/20 border-red-500/30 text-red-400'
@@ -421,7 +421,7 @@ export function EvaluatorContainer() {
                                             const uniqueTiers = Array.from(new Set(team.evaluations.map(e => e.tier)));
                                             if (uniqueTiers.length === 0 && team.isEvaluated) return null;
                                             return uniqueTiers.map(tier => (
-                                                <span key={tier} className={`px-2 py-0.5 rounded border capitalize flex items-center ${tier === 'strongly_accepted' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
+                                                <span key={tier} className={`px-2 py-0.5 rounded border capitalize flex items-center ${tier === 'strongly_accepted' ? 'bg-[rgba(0,255,136,0.1)] border-[rgba(0,255,136,0.2)] text-[#00FF88]' :
                                                     tier === 'accepted' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
                                                         tier === 'borderline' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
                                                             'bg-red-500/10 border-red-500/20 text-red-400'

@@ -973,7 +973,7 @@ export function TeamContainer() {
               onClick={() => setActiveTab("create")}
               className={`flex-1 py-[12px] px-[20px] rounded-[8px] text-[14px] font-medium transition-all duration-300 ${
                 activeTab === "create"
-                  ? "bg-gradient-to-r from-[#22c55e] to-[#4ade80] text-white shadow-[0_4px_15px_rgba(34,197,94,0.3)]"
+                  ? "bg-gradient-to-r from-[#00FF88] to-[#8CFF00] text-white shadow-[0_4px_15px_rgba(0,255,136,0.3)]"
                   : "text-white opacity-70 hover:opacity-100"
               }`}
               style={{ fontFamily: "var(--font-body)" }}
@@ -984,7 +984,7 @@ export function TeamContainer() {
               onClick={() => setActiveTab("join")}
               className={`flex-1 py-[12px] px-[20px] rounded-[8px] text-[14px] font-medium transition-all duration-300 ${
                 activeTab === "join"
-                  ? "bg-gradient-to-r from-[#22c55e] to-[#4ade80] text-white shadow-[0_4px_15px_rgba(34,197,94,0.3)]"
+                  ? "bg-gradient-to-r from-[#00FF88] to-[#8CFF00] text-white shadow-[0_4px_15px_rgba(0,255,136,0.3)]"
                   : "text-white opacity-70 hover:opacity-100"
               }`}
               style={{ fontFamily: "var(--font-body)" }}
@@ -1023,7 +1023,7 @@ export function TeamContainer() {
                           lookingForMembers: checked,
                         })
                       }
-                      className="data-[state=checked]:bg-[#22c55e] border-[#22c55e]"
+                      className="data-[state=checked]:bg-[#00FF88] border-[#00FF88]"
                     />
                     <label
                       htmlFor="lookingForMembers"
@@ -1167,7 +1167,7 @@ export function TeamContainer() {
                             .map((member, i) => (
                               <div
                                 key={member.uid}
-                                className="w-[24px] h-[24px] rounded-full bg-gradient-to-br from-[#22c55e] to-[#4ade80] flex items-center justify-center text-[10px] text-white font-semibold border-2 border-[#1a1a1a]"
+                                className="w-[24px] h-[24px] rounded-full bg-gradient-to-br from-[#00FF88] to-[#8CFF00] flex items-center justify-center text-[10px] text-white font-semibold border-2 border-[#1a1a1a]"
                                 title={member.name}
                               >
                                 {member.name.charAt(0).toUpperCase()}
@@ -1187,7 +1187,7 @@ export function TeamContainer() {
                         Role
                       </span>
                       <span
-                        className={`text-[12px] px-[8px] py-[2px] rounded-full ${team.leadId === user.uid ? "bg-[rgba(34,197,94,0.2)] text-[#4ade80]" : "bg-[rgba(138,138,138,0.2)] text-white opacity-70"}`}
+                        className={`text-[12px] px-[8px] py-[2px] rounded-full ${team.leadId === user.uid ? "bg-[rgba(0,255,136,0.2)] text-[#8CFF00]" : "bg-[rgba(138,138,138,0.2)] text-white opacity-70"}`}
                         style={{ fontFamily: "var(--font-body)" }}
                       >
                         {team.leadId === user.uid ? "Team Lead" : "Member"}
@@ -1244,7 +1244,7 @@ export function TeamContainer() {
                           }
                         }}
                         disabled={team.status !== "active"}
-                        className="data-[state=checked]:bg-[#22c55e] border-[#22c55e]"
+                        className="data-[state=checked]:bg-[#00FF88] border-[#00FF88]"
                       />
                       <label
                         htmlFor="teamLookingForMembers"
@@ -1304,7 +1304,7 @@ export function TeamContainer() {
                           >
                             {member.name}
                             {member.role === "Team Lead" && (
-                              <span className="ml-[8px] text-[12px] text-[#22c55e] opacity-80">
+                              <span className="ml-[8px] text-[12px] text-[#00FF88] opacity-80">
                                 (Lead)
                               </span>
                             )}
@@ -1498,7 +1498,7 @@ export function TeamContainer() {
                             </span>
                           </div>
                           <div className="flex gap-[8px] items-center">
-                            <span className="text-[12px] text-white font-medium px-2 py-1 bg-[rgba(34,197,94,0.15)] border border-[#4ade80] rounded">
+                            <span className="text-[12px] text-white font-medium px-2 py-1 bg-[rgba(0,255,136,0.15)] border border-[#8CFF00] rounded">
                               Pending
                             </span>
                           </div>
@@ -1565,7 +1565,7 @@ export function TeamContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteTeam}
-              className="bg-black/50 hover:bg-black/60 text-white border border-[#22c55e]"
+              className="bg-black/50 hover:bg-black/60 text-white border border-[#00FF88]"
               style={{ fontFamily: "var(--font-body)" }}
             >
               Delete
@@ -1604,7 +1604,7 @@ export function TeamContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveMember}
-              className="bg-black/50 hover:bg-black/60 text-white border border-[#22c55e]"
+              className="bg-black/50 hover:bg-black/60 text-white border border-[#00FF88]"
               style={{ fontFamily: "var(--font-body)" }}
             >
               Remove
@@ -1643,7 +1643,7 @@ export function TeamContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleLeaveTeam}
-              className="bg-black/50 hover:bg-black/60 text-white border border-[#22c55e]"
+              className="bg-black/50 hover:bg-black/60 text-white border border-[#00FF88]"
               style={{ fontFamily: "var(--font-body)" }}
             >
               Leave Team

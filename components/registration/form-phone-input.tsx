@@ -27,11 +27,13 @@ export function FormPhoneInput({
 }: FormPhoneInputProps) {
   return (
     <div className={`flex flex-col gap-[8px] w-full ${disabled ? "opacity-50" : ""}`}>
-      <label className="text-[14px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
+      <label className="text-[13px] text-white/70 uppercase tracking-[0.08em]" style={{ fontFamily: 'var(--font-body)' }}>
         {label}{" "}
-        {required && <span className="text-[#22c55e]">*</span>}
+        {required && <span className="text-[#00FF88]">*</span>}
       </label>
-      <div className={`backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.2)] border ${error ? "border-[#22c55e]" : "border-[rgba(255,255,255,0.38)]"} border-solid rounded-[15px] overflow-hidden focus-within:border-[#22c55e] focus-within:shadow-[0px_0px_10px_0px_rgba(34,197,94,0.3)] transition-all`}>
+      <div className={`bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border ${
+        error ? "border-[rgba(0,255,136,0.6)]" : "border-[rgba(255,255,255,0.1)]"
+      } border-solid rounded-[12px] overflow-hidden focus-within:border-[#00FF88] focus-within:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200`}>
         <PhoneInput
           international
           defaultCountry="IN"
@@ -43,7 +45,7 @@ export function FormPhoneInput({
         />
       </div>
       {error && (
-        <span className="text-[12px] text-[#22c55e]" style={{ fontFamily: 'var(--font-body)' }}>
+        <span className="text-[12px] text-[#00FF88]" style={{ fontFamily: 'var(--font-body)' }}>
           {error}
         </span>
       )}
@@ -52,7 +54,7 @@ export function FormPhoneInput({
           display: flex;
           align-items: center;
         }
-        
+
         .PhoneInputInput {
           background: transparent !important;
           border: none !important;
@@ -64,24 +66,24 @@ export function FormPhoneInput({
           flex: 1;
           width: 100%;
         }
-        
+
         .PhoneInputInput::placeholder {
-          color: rgba(255, 255, 255, 0.5) !important;
+          color: rgba(255, 255, 255, 0.3) !important;
         }
-        
+
         .PhoneInputCountry {
           padding: 0 12px;
-          border-right: 1px solid rgba(255, 255, 255, 0.2);
+          border-right: 1px solid rgba(255, 255, 255, 0.1);
           margin-right: 0;
         }
-        
+
         .PhoneInputCountryIcon {
           width: 1.5em;
           height: 1.2em;
           box-shadow: none;
           border: none;
         }
-        
+
         .PhoneInputCountrySelect {
           background: transparent !important;
           color: white !important;
@@ -95,17 +97,17 @@ export function FormPhoneInput({
           -webkit-appearance: none !important;
           -moz-appearance: none !important;
         }
-        
+
         .PhoneInputCountrySelect:hover {
-          background: rgba(138, 138, 138, 0.1) !important;
+          background: rgba(0, 255, 136, 0.05) !important;
         }
-        
+
         .PhoneInputCountrySelectArrow {
-          opacity: 0.7;
+          opacity: 0.4;
           margin-left: 4px;
           color: white !important;
         }
-        
+
         .PhoneInputCountrySelect option {
           background: #0a0a0a !important;
           color: white !important;

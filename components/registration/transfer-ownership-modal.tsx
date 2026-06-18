@@ -44,7 +44,6 @@ export function TransferOwnershipModal({
 
     const handleConfirm = async () => {
         if (!selectedMemberId) return;
-
         setIsSubmitting(true);
         try {
             await onConfirm(selectedMemberId);
@@ -61,15 +60,15 @@ export function TransferOwnershipModal({
 
     return (
         <AlertDialog open={isOpen} onOpenChange={handleClose}>
-            <AlertDialogContent className="bg-[#1a1a1a] border-[#333] max-h-[80vh] overflow-y-auto">
+            <AlertDialogContent className="bg-[rgba(13,13,13,0.97)] border border-[rgba(0,255,136,0.2)] backdrop-blur-[24px] max-h-[80vh] overflow-y-auto shadow-[0_0_60px_rgba(0,255,136,0.08)]">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-white flex items-center gap-2">
-                        <Crown className="w-5 h-5 text-yellow-500" />
+                    <AlertDialogTitle className="text-white flex items-center gap-2" style={{ fontFamily: 'var(--font-heading)' }}>
+                        <Crown className="w-5 h-5 text-[#00FF88]" />
                         Transfer Team Ownership
                     </AlertDialogTitle>
-                    <AlertDialogDescription className="text-gray-400">
-                        Select a member to transfer ownership to. <br />
-                        <span className="text-yellow-500 flex items-center gap-1 mt-1 text-xs">
+                    <AlertDialogDescription className="text-white/50" style={{ fontFamily: 'var(--font-body)' }}>
+                        Select a member to transfer ownership to.{" "}
+                        <span className="text-[#8CFF00] flex items-center gap-1 mt-1 text-xs">
                             <AlertTriangle className="w-3 h-3" />
                             You will become a regular member after this action.
                         </span>
@@ -78,7 +77,7 @@ export function TransferOwnershipModal({
 
                 <div className="py-4 flex flex-col gap-2">
                     {eligibleMembers.length === 0 ? (
-                        <p className="text-sm text-gray-500 text-center py-4">
+                        <p className="text-sm text-white/30 text-center py-4" style={{ fontFamily: 'var(--font-body)' }}>
                             No other members to transfer ownership to.
                         </p>
                     ) : (
@@ -87,29 +86,28 @@ export function TransferOwnershipModal({
                                 key={member.uid}
                                 onClick={() => setSelectedMemberId(member.uid)}
                                 className={`
-                  p-3 rounded-[15px] border cursor-pointer transition-all flex items-center justify-between
+                  p-3 rounded-[12px] border cursor-pointer transition-all flex items-center justify-between
                   ${selectedMemberId === member.uid
-                                        ? "bg-[#2a2a2a] border-white/30 ring-1 ring-white/20"
-                                        : "bg-[#111] border-[#333] hover:border-white/20 hover:bg-[#1f1f1f]"
+                                        ? "bg-[rgba(0,255,136,0.06)] border-[#00FF88] shadow-[0_0_16px_rgba(0,255,136,0.15)]"
+                                        : "bg-[rgba(0,0,0,0.4)] border-[rgba(255,255,255,0.06)] hover:border-[rgba(0,255,136,0.25)]"
                                     }
                 `}
                             >
                                 <div className="flex items-center gap-3">
                                     <div className={`
-                    w-4 h-4 rounded-full border flex items-center justify-center
-                    ${selectedMemberId === member.uid ? "border-green-500 bg-green-500/20" : "border-gray-600"}
+                    w-4 h-4 rounded-full border flex items-center justify-center transition-all
+                    ${selectedMemberId === member.uid ? "border-[#00FF88] bg-[rgba(0,255,136,0.15)]" : "border-white/20"}
                   `}>
                                         {selectedMemberId === member.uid && (
-                                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                                            <div className="w-2 h-2 rounded-full bg-[#00FF88] shadow-[0_0_6px_rgba(0,255,136,0.8)]" />
                                         )}
                                     </div>
-                                    <span className="text-white text-sm font-medium">{member.name}</span>
+                                    <span className="text-white text-sm font-medium" style={{ fontFamily: 'var(--font-body)' }}>{member.name}</span>
                                 </div>
-                                {/* Visual indicator of role change */}
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <div className="flex items-center gap-2 text-xs text-white/30" style={{ fontFamily: 'var(--font-body)' }}>
                                     <span>Member</span>
                                     <span>→</span>
-                                    <span className={selectedMemberId === member.uid ? "text-yellow-500" : ""}>Lead</span>
+                                    <span className={selectedMemberId === member.uid ? "text-[#00FF88]" : ""}>Lead</span>
                                 </div>
                             </div>
                         ))
@@ -117,14 +115,19 @@ export function TransferOwnershipModal({
                 </div>
 
                 <AlertDialogFooter className="sm:justify-between gap-4">
-                    <AlertDialogCancel onClick={handleClose} disabled={isSubmitting} className="m-0 bg-transparent border-[#333] text-white hover:bg-[#2a2a2a] hover:text-white">
+                    <AlertDialogCancel
+                        onClick={handleClose}
+                        disabled={isSubmitting}
+                        className="m-0 bg-transparent border-[rgba(0,255,136,0.2)] text-white hover:bg-[rgba(0,255,136,0.05)] hover:text-white"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                    >
                         Cancel
                     </AlertDialogCancel>
                     <Button
                         onClick={handleConfirm}
                         disabled={!selectedMemberId || isSubmitting}
                         variant="primary"
-                        className="bg-yellow-600 hover:bg-yellow-700 text-white border-none m-0 w-full sm:w-auto"
+                        className="m-0 w-full sm:w-auto"
                     >
                         {isSubmitting ? (
                             <>

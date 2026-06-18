@@ -256,7 +256,7 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
                                         <label className="text-sm font-medium text-white/80" style={{ fontFamily: 'var(--font-body)' }}>Decision Tier</label>
                                         <div className="grid grid-cols-1 gap-2">
                                             {[
-                                                { value: 'strongly_accepted', label: 'Strongly Accepted', color: 'border-green-500/50 text-green-400 bg-green-500/10' },
+                                                { value: 'strongly_accepted', label: 'Strongly Accepted', color: 'border-[rgba(0,255,136,0.5)] text-[#00FF88] bg-[rgba(0,255,136,0.1)]' },
                                                 { value: 'accepted', label: 'Accepted', color: 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10' },
                                                 { value: 'borderline', label: 'Borderline', color: 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10' },
                                                 { value: 'rejected', label: 'Rejected', color: 'border-red-500/50 text-red-400 bg-red-500/10' }
@@ -281,7 +281,7 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
                                             value={comment}
                                             onChange={(e) => setComment(e.target.value)}
                                             placeholder="Add your evaluation notes..."
-                                            className="w-full h-32 bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder:text-white/30 resize-none focus:outline-none focus:border-[#22c55e]/50"
+                                            className="w-full h-32 bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] rounded-[12px] p-3 text-white placeholder:text-[rgba(255,255,255,0.3)] resize-none focus:outline-none focus:border-[#00FF88] focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200"
                                             style={{ fontFamily: 'var(--font-body)' }}
                                         />
                                     </div>
@@ -300,8 +300,8 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
                                             onClick={() => handleVoteSubmit('up')}
                                             disabled={isSubmitting}
                                             className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border transition-all ${localVote?.vote === 'up'
-                                                ? 'bg-green-500/20 border-green-500 text-green-400'
-                                                : 'bg-white/5 border-white/10 text-white/60 hover:bg-green-500/10 hover:text-green-400 hover:border-green-500/30'
+                                                ? 'bg-[rgba(0,255,136,0.2)] border-[#00FF88] text-[#00FF88]'
+                                                : 'bg-white/5 border-white/10 text-white/60 hover:bg-[rgba(0,255,136,0.1)] hover:text-[#00FF88] hover:border-[rgba(0,255,136,0.3)]'
                                                 }`}
                                             style={{ fontFamily: 'var(--font-body)' }}
                                         >
@@ -333,7 +333,7 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
                                                 value={voteComment}
                                                 onChange={(e) => setVoteComment(e.target.value)}
                                                 placeholder="Share your thoughts..."
-                                                className="w-full h-24 bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder:text-white/30 resize-none focus:outline-none focus:border-[#22c55e]/50 mb-2"
+                                                className="w-full h-24 bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] rounded-[12px] p-3 text-white placeholder:text-[rgba(255,255,255,0.3)] resize-none focus:outline-none focus:border-[#00FF88] focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200 mb-2"
                                                 style={{ fontFamily: 'var(--font-body)' }}
                                                 disabled={!localVote}
                                             />
@@ -347,7 +347,7 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
                                         </div>
                                         <div className="flex items-center justify-between mt-2">
                                             <div className="flex items-center gap-3 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 select-none">
-                                                <div className="flex items-center gap-1.5 text-xs text-green-400 font-medium">
+                                                <div className="flex items-center gap-1.5 text-xs text-[#00FF88] font-medium">
                                                     <ThumbsUp className="w-3.5 h-3.5" />
                                                     {displayUpvotes}
                                                 </div>
@@ -394,7 +394,7 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
               </span>
             </div>
             <div className="flex flex-col justify-center">
-              <span className="text-sm font-medium text-white group-hover:text-[#22c55e] transition-colors line-clamp-1">
+              <span className="text-sm font-medium text-white group-hover:text-[#00FF88] transition-colors line-clamp-1">
                 {member.name}
               </span>
               <span className="text-xs text-white/50 mt-0.5 break-words">
@@ -408,7 +408,7 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
             <span
               className={`text-[10px] uppercase px-2.5 py-1 rounded-full border ${
                 member.role === 'Team Lead'
-                  ? 'bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20'
+                  ? 'bg-[#00FF88]/10 text-[#00FF88] border-[#00FF88]/20'
                   : 'bg-white/5 text-white/40 border-white/5'
               }`}
               style={{ fontFamily: 'var(--font-body)' }}
@@ -487,7 +487,7 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
                                 </span>
                             </div>
                             <div className="mb-2">
-                                <span className={`text-xs px-2 py-0.5 rounded border ${ev.tier === 'strongly_accepted' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
+                                <span className={`text-xs px-2 py-0.5 rounded border ${ev.tier === 'strongly_accepted' ? 'bg-[rgba(0,255,136,0.1)] border-[rgba(0,255,136,0.2)] text-[#00FF88]' :
                                     ev.tier === 'accepted' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
                                         ev.tier === 'borderline' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
                                             'bg-red-500/10 border-red-500/20 text-red-400'
@@ -504,7 +504,7 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
                             <div className="flex justify-between items-start mb-2">
                                 <span className="font-medium text-white/60 text-sm" style={{ fontFamily: 'var(--font-body)' }}>{v.name || "Community Member"}</span>
                                 {v.vote === 'up' ? (
-                                    <ThumbsUp className="w-3 h-3 text-green-400" />
+                                    <ThumbsUp className="w-3 h-3 text-[#00FF88]" />
                                 ) : (
                                     <ThumbsDown className="w-3 h-3 text-red-400" />
                                 )}

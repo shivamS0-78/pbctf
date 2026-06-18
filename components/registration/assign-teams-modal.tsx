@@ -194,7 +194,7 @@ export function AssignTeamsModal({
                         placeholder="Search teams by name or code..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-[8px] pl-9 pr-4 py-2 text-white text-[14px] focus:outline-none focus:border-[#22c55e]"
+                        className="w-full bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] rounded-[12px] pl-9 pr-4 py-2 text-white text-[14px] placeholder:text-[rgba(255,255,255,0.3)] focus:outline-none focus:border-[#00FF88] focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200"
                     />
                 </div>
 
@@ -212,9 +212,9 @@ export function AssignTeamsModal({
                             <div
                                 key={team.teamCode}
                                 onClick={() => handleToggleTeam(team.teamCode)}
-                                className={`flex items-center justify-between p-3 rounded-[8px] border cursor-pointer transition-all ${selectedTeams.has(team.teamCode)
-                                    ? "bg-[rgba(34,197,94,0.1)] border-[#22c55e]"
-                                    : "bg-[rgba(255,255,255,0.03)] border-transparent hover:bg-[rgba(255,255,255,0.05)]"
+                                className={`flex items-center justify-between p-3 rounded-[12px] border cursor-pointer transition-all duration-200 ${selectedTeams.has(team.teamCode)
+                                    ? "bg-[rgba(0,255,136,0.08)] border-[#00FF88]"
+                                    : "bg-[rgba(13,13,13,0.4)] border-[rgba(255,255,255,0.06)] hover:border-[rgba(0,255,136,0.25)] hover:bg-[rgba(0,255,136,0.04)]"
                                     }`}
                             >
                                 <div className="flex flex-col">
@@ -229,7 +229,7 @@ export function AssignTeamsModal({
                                 </div>
                                 <div>
                                     {selectedTeams.has(team.teamCode) ? (
-                                        <CheckCircle className="w-5 h-5 text-[#22c55e]" />
+                                        <CheckCircle className="w-5 h-5 text-[#00FF88]" />
                                     ) : (
                                         <Circle className="w-5 h-5 text-white/20" />
                                     )}

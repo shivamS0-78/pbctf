@@ -82,9 +82,9 @@ export function Hero(){
               className="w-[85vw] max-w-[760px] mx-auto relative z-10 select-none"
               animate={{
                 filter: [
-                  "drop-shadow(0 0 20px rgba(34,197,94,0.5)) drop-shadow(0 0 45px rgba(34,197,94,0.35))",
-                  "drop-shadow(0 0 35px rgba(34,197,94,0.8)) drop-shadow(0 0 70px rgba(34,197,94,0.5))",
-                  "drop-shadow(0 0 20px rgba(34,197,94,0.5)) drop-shadow(0 0 45px rgba(34,197,94,0.35))",
+                  "drop-shadow(0 0 20px rgba(0,255,136,0.5)) drop-shadow(0 0 45px rgba(0,255,136,0.35))",
+                  "drop-shadow(0 0 35px rgba(0,255,136,0.8)) drop-shadow(0 0 70px rgba(0,255,136,0.5))",
+                  "drop-shadow(0 0 20px rgba(0,255,136,0.5)) drop-shadow(0 0 45px rgba(0,255,136,0.35))",
                 ]
               }}
               transition={{

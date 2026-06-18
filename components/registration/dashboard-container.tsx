@@ -814,8 +814,17 @@ export function DashboardContainer() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" />
+      <div className="flex flex-col items-center justify-center gap-[16px] min-h-[400px]">
+        <div className="relative w-[48px] h-[48px]">
+          <div className="absolute inset-0 rounded-full border-2 border-[rgba(0,255,136,0.1)]" />
+          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#00FF88] animate-spin" />
+        </div>
+        <span
+          className="text-[11px] uppercase tracking-[0.3em] text-[rgba(0,255,136,0.5)]"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          Initializing...
+        </span>
       </div>
     );
   }
@@ -849,7 +858,7 @@ export function DashboardContainer() {
 
       {/* Welcome Banner - Registration Success */}
       {/* {showWelcomeBanner && (
-        <div className="relative backdrop-blur-[2.5px] backdrop-filter bg-[rgba(34,197,94,0.15)] rounded-[15px] p-[20px] border border-[#22c55e]">
+        <div className="relative backdrop-blur-[2.5px] backdrop-filter bg-[rgba(0,255,136,0.15)] rounded-[15px] p-[20px] border border-[#00FF88]">
           <button
             onClick={handleDismissWelcomeBanner}
             className="absolute top-4 right-4 text-white opacity-70 hover:opacity-100 transition-opacity"
@@ -860,7 +869,7 @@ export function DashboardContainer() {
           
           <div className="flex flex-col gap-[16px] pr-8">
             <div className="flex items-center gap-[12px]">
-              <CheckCircle className="w-6 h-6 text-[#22c55e] flex-shrink-0" />
+              <CheckCircle className="w-6 h-6 text-[#00FF88] flex-shrink-0" />
               <h3 className="text-[20px] text-white font-semibold" style={{ fontFamily: 'var(--font-heading)' }}>
                 Registration Successful!
               </h3>
@@ -875,13 +884,13 @@ export function DashboardContainer() {
               </p>
               
               <div className="flex items-start gap-[8px] pt-[4px]">
-                <ArrowRight className="w-5 h-5 text-[#22c55e] flex-shrink-0 mt-0.5" />
+                <ArrowRight className="w-5 h-5 text-[#00FF88] flex-shrink-0 mt-0.5" />
                 <div className="flex-1 space-y-[8px]">
                   <p className="text-[14px] opacity-90 leading-[20px]">
                     <span className="font-semibold">After joining the Discord server:</span>
                   </p>
                   <ul className="list-disc list-inside space-y-[4px] text-[13px] opacity-85 ml-2">
-                    <li>Go to <span className="text-[#22c55e] font-semibold">#welcome-rules</span></li>
+                    <li>Go to <span className="text-[#00FF88] font-semibold">#welcome-rules</span></li>
                     <li>Click the green tick (✅) to accept the rules</li>
                     <li>This will unlock all channels for you</li>
                   </ul>
@@ -894,7 +903,7 @@ export function DashboardContainer() {
                 href="https://discord.gg/Und8vHaw5a"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center bg-[#22c55e] hover:bg-[#4ade80] text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
+                className="inline-flex items-center justify-center bg-[#00FF88] hover:bg-[#8CFF00] text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-[0_0_15px_rgba(0,255,136,0.4)] hover:shadow-[0_0_20px_rgba(0,255,136,0.6)]"
                 style={{ fontFamily: 'var(--font-body)' }}
               >
                 Join Discord
@@ -905,42 +914,60 @@ export function DashboardContainer() {
       )}
  */}
 
-      {/* Header */}
+      {/* Hero Header */}
       <div className="flex flex-col gap-[12px] items-center text-center">
-        <h1
-          className="text-[48px] text-white leading-[52px] tracking-[-1px]"
-          style={{ fontFamily: "var(--font-heading)" }}
-        >
-          Welcome, {user.name}!
-        </h1>
-        <p
-          className="text-[15.9px] text-white opacity-90 leading-[23.8px]"
+        <div
+          className="text-[11px] uppercase tracking-[0.35em] text-[#00FF88] font-medium opacity-70"
           style={{ fontFamily: "var(--font-body)" }}
         >
-          Manage your profile and team from your dashboard.
+          PBCTF 5.0 // OPERATOR TERMINAL
+        </div>
+        <h1
+          className="text-[48px] sm:text-[60px] text-white leading-[1.05] font-bold tracking-[-2px]"
+          style={{
+            fontFamily: "var(--font-heading)",
+            textShadow: "0 0 40px rgba(0,255,136,0.15)",
+          }}
+        >
+          Welcome,{" "}
+          <span className="text-white">
+            {user.name}
+          </span>
+        </h1>
+        <p
+          className="text-[14px] text-white/50 leading-[22px] max-w-[440px]"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          Manage your profile and team from your control panel.
         </p>
       </div>
 
       {/* Navigation */}
-      <div className="flex flex-wrap gap-[12px] justify-center">
-        <Button onClick={() => router.push("/dashboard")} variant="primary">
-          <Home className="w-4 h-4" />
+      <div className="flex flex-wrap items-center gap-[10px] justify-center">
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[#00FF88] hover:bg-[#00CC70] text-black text-[13px] font-semibold transition-all duration-200 shadow-[0_0_16px_rgba(0,255,136,0.35)] hover:shadow-[0_0_24px_rgba(0,255,136,0.55)]"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          <Home className="w-3.5 h-3.5" />
           Dashboard
-        </Button>
-        <Button
+        </button>
+        <button
           onClick={() => router.push("/dashboard/profile")}
-          variant="secondary"
+          className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[rgba(13,13,13,0.8)] hover:bg-[rgba(13,13,13,0.95)] text-white/60 hover:text-white border border-[rgba(0,255,136,0.25)] hover:border-[rgba(0,255,136,0.55)] text-[13px] backdrop-blur-[12px] transition-all duration-200"
+          style={{ fontFamily: "var(--font-body)" }}
         >
-          <UserCircle className="w-4 h-4" />
+          <UserCircle className="w-3.5 h-3.5" />
           Profile
-        </Button>
-        <Button
+        </button>
+        <button
           onClick={() => router.push("/dashboard/team")}
-          variant="secondary"
+          className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[rgba(13,13,13,0.8)] hover:bg-[rgba(13,13,13,0.95)] text-white/60 hover:text-white border border-[rgba(0,255,136,0.25)] hover:border-[rgba(0,255,136,0.55)] text-[13px] backdrop-blur-[12px] transition-all duration-200"
+          style={{ fontFamily: "var(--font-body)" }}
         >
-          <Users className="w-4 h-4" />
+          <Users className="w-3.5 h-3.5" />
           Team
-        </Button>
+        </button>
       </div>
 
       {/* Registration Deadline Timer */}
@@ -960,7 +987,7 @@ export function DashboardContainer() {
           {!hasSolvedChallenge && isChallengeCardOpen && (
             <FormSection title="Challenge: Don't be a Noob">
               <div className="flex flex-col gap-[16px]">
-                <div className="p-[16px] rounded-[12px] bg-white/5 border border-white/10 space-y-[12px]">
+                <div className="p-[16px] rounded-[12px] bg-[rgba(0,0,0,0.4)] border border-[rgba(0,255,136,0.12)] space-y-[12px]">
                   <p
                     className="text-[14.5px] leading-[22px] text-white/90"
                     style={{ fontFamily: "var(--font-body)" }}
@@ -971,7 +998,7 @@ export function DashboardContainer() {
                     Find the exposed artifact .
                   </p>
                   <p
-                    className="text-[14px] leading-[20px] text-[#22c55e] font-medium"
+                    className="text-[14px] leading-[20px] text-[#00FF88] font-medium"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
                     💡 <span className="underline">CTF Hint</span>: The browser receives more information than the interface chooses to present. Trace the flow of data.
@@ -1103,7 +1130,7 @@ export function DashboardContainer() {
                 {teamRequests.map((request) => (
                   <div
                     key={request.requestId}
-                    className="flex flex-col gap-[8px] p-[12px] bg-[rgba(138,138,138,0.1)] rounded-[12px] border border-[rgba(255,255,255,0.1)] min-w-0 items-center text-center"
+                    className="flex flex-col gap-[8px] p-[14px] bg-[rgba(0,0,0,0.3)] rounded-[12px] border border-[rgba(0,255,136,0.1)] min-w-0 items-center text-center hover:border-[rgba(0,255,136,0.25)] transition-all"
                   >
                     <span
                       className="text-[14px] text-white break-words"
@@ -1151,7 +1178,7 @@ export function DashboardContainer() {
                 {invites.map((invite) => (
                   <div
                     key={invite.requestId}
-                    className="flex flex-col gap-[8px] p-[12px] bg-[rgba(138,138,138,0.1)] rounded-[12px] border border-[rgba(255,255,255,0.1)] min-w-0 items-center text-center"
+                    className="flex flex-col gap-[8px] p-[14px] bg-[rgba(0,0,0,0.3)] rounded-[12px] border border-[rgba(0,255,136,0.1)] min-w-0 items-center text-center hover:border-[rgba(0,255,136,0.25)] transition-all"
                   >
                     <span
                       className="text-[14px] text-white break-words"
@@ -1203,7 +1230,7 @@ export function DashboardContainer() {
         open={deleteTeamDialogOpen}
         onOpenChange={setDeleteTeamDialogOpen}
       >
-        <AlertDialogContent className="bg-[rgba(138,138,138,0.15)] backdrop-blur-[2.5px] border-[rgba(255,255,255,0.2)]">
+        <AlertDialogContent className="bg-[rgba(13,13,13,0.97)] backdrop-blur-[24px] border-[rgba(0,255,136,0.2)] shadow-[0_0_60px_rgba(0,255,136,0.08)]">
           <AlertDialogHeader>
             <AlertDialogTitle
               className="text-white"
@@ -1229,7 +1256,7 @@ export function DashboardContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={executeDeleteTeam}
-              className="bg-black/50 hover:bg-black/60 text-white border border-[#22c55e]"
+              className="bg-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.7)] text-white border border-[rgba(0,255,136,0.4)] hover:border-[#00FF88]"
               style={{ fontFamily: "var(--font-body)" }}
             >
               Delete Team
@@ -1243,7 +1270,7 @@ export function DashboardContainer() {
         open={removeMemberDialogOpen}
         onOpenChange={setRemoveMemberDialogOpen}
       >
-        <AlertDialogContent className="bg-[rgba(138,138,138,0.15)] backdrop-blur-[2.5px] border-[rgba(255,255,255,0.2)]">
+        <AlertDialogContent className="bg-[rgba(13,13,13,0.97)] backdrop-blur-[24px] border-[rgba(0,255,136,0.2)] shadow-[0_0_60px_rgba(0,255,136,0.08)]">
           <AlertDialogHeader>
             <AlertDialogTitle
               className="text-white"
@@ -1268,7 +1295,7 @@ export function DashboardContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={executeRemoveMember}
-              className="bg-black/50 hover:bg-black/60 text-white border border-[#22c55e]"
+              className="bg-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.7)] text-white border border-[rgba(0,255,136,0.4)] hover:border-[#00FF88]"
               style={{ fontFamily: "var(--font-body)" }}
             >
               Remove Member
@@ -1282,7 +1309,7 @@ export function DashboardContainer() {
         open={leaveTeamDialogOpen}
         onOpenChange={setLeaveTeamDialogOpen}
       >
-        <AlertDialogContent className="bg-[rgba(138,138,138,0.15)] backdrop-blur-[2.5px] border-[rgba(255,255,255,0.2)]">
+        <AlertDialogContent className="bg-[rgba(13,13,13,0.97)] backdrop-blur-[24px] border-[rgba(0,255,136,0.2)] shadow-[0_0_60px_rgba(0,255,136,0.08)]">
           <AlertDialogHeader>
             <AlertDialogTitle
               className="text-white"
@@ -1307,7 +1334,7 @@ export function DashboardContainer() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleLeaveTeam}
-              className="bg-black/50 hover:bg-black/60 text-white border border-[#22c55e]"
+              className="bg-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.7)] text-white border border-[rgba(0,255,136,0.4)] hover:border-[#00FF88]"
               style={{ fontFamily: "var(--font-body)" }}
             >
               Leave Team

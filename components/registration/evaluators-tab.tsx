@@ -156,17 +156,17 @@ export function EvaluatorsTab() {
                             <Card key={evaluator.id}>
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-[rgba(255,255,255,0.1)] flex items-center justify-center shrink-0">
-                                            <UserCog className="w-6 h-6 text-[#22c55e]" />
+                                        <div className="w-10 h-10 rounded-full bg-[rgba(0,255,136,0.08)] border border-[rgba(0,255,136,0.2)] flex items-center justify-center shrink-0">
+                                            <UserCog className="w-5 h-5 text-[#00FF88]" />
                                         </div>
                                         <div>
-                                            <h3 className="font-['Google_Sans_Flex',sans-serif] text-[16px] text-white font-medium">{evaluator.name}</h3>
-                                            <p className="font-['Google_Sans_Flex',sans-serif] text-[13px] text-white opacity-70 mb-1 break-all">{evaluator.email}</p>
-                                            <div className="flex flex-wrap gap-3 text-[12px]">
-                                                <span className="text-white/60 flex items-center gap-1">
+                                            <h3 className="text-[15px] font-medium text-white" style={{ fontFamily: 'var(--font-body)' }}>{evaluator.name}</h3>
+                                            <p className="text-[13px] text-white/50 mb-1 break-all" style={{ fontFamily: 'var(--font-body)' }}>{evaluator.email}</p>
+                                            <div className="flex flex-wrap gap-3 text-[12px]" style={{ fontFamily: 'var(--font-body)' }}>
+                                                <span className="text-white/50 flex items-center gap-1">
                                                     <LayoutGrid className="w-3 h-3" /> Assigned: {evaluator.assignedCount}
                                                 </span>
-                                                <span className="text-green-400/80 flex items-center gap-1">
+                                                <span className="text-[#00FF88]/70 flex items-center gap-1">
                                                     <CheckCircle2 className="w-3 h-3" /> Evaluated: {evaluator.evaluatedCount}
                                                 </span>
                                             </div>

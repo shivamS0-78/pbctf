@@ -162,7 +162,7 @@ export function AddEvaluatorModal({
                     {users.map((user) => (
                         <div
                             key={user.uid}
-                            className="flex items-center justify-between p-3 rounded-[8px] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.05)]"
+                            className="flex items-center justify-between p-3 rounded-[12px] bg-[rgba(13,13,13,0.4)] border border-[rgba(255,255,255,0.06)]"
                         >
                             <div className="flex flex-col overflow-hidden mr-3">
                                 <span className="text-white text-[14px] font-medium truncate">{user.name}</span>
@@ -170,7 +170,7 @@ export function AddEvaluatorModal({
                             </div>
 
                             {user.isEvaluator ? (
-                                <div className="flex items-center gap-1 text-green-400 text-[12px] px-3 py-1.5 bg-green-400/10 rounded-full border border-green-400/20">
+                                <div className="flex items-center gap-1 text-[#00FF88] text-[12px] px-3 py-1.5 bg-[rgba(0,255,136,0.1)] rounded-full border border-[rgba(0,255,136,0.3)]">
                                     <Check className="w-3 h-3" />
                                     <span>Evaluator</span>
                                 </div>

@@ -2,6 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Star field drift animations — each layer moves by exactly one tile so the loop is seamless */
+@keyframes stars-drift-a {
+  from { background-position: 0 0; }
+  to   { background-position: 130px 130px; }
+}
+
+@keyframes stars-drift-b {
+  from { background-position: 45px 45px; }
+  to   { background-position: -45px 135px; }
+}
+
+.stars-layer-a {
+  animation: stars-drift-a 35s linear infinite;
+  will-change: background-position;
+}
+
+.stars-layer-b {
+  animation: stars-drift-b 22s linear infinite;
+  will-change: background-position;
+}
+
+/* Twinkling star layers — each has its own timing so stars appear to blink independently */
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0; }
+  40%, 60%  { opacity: 1; }
+}
+
+.stars-twinkle-1 { animation: star-twinkle 4.0s ease-in-out infinite 0.3s; }
+.stars-twinkle-3 { animation: star-twinkle 3.8s ease-in-out infinite 2.9s; }
+.stars-twinkle-5 { animation: star-twinkle 4.5s ease-in-out infinite 3.5s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stars-layer-a,
+  .stars-layer-b {
+    animation: none;
+  }
+  .stars-twinkle-1,
+  .stars-twinkle-3,
+  .stars-twinkle-5 {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
 @keyframes selectSlide {
   0% {
     transform: scale(0.98);
@@ -35,10 +79,10 @@
   --foreground-disabled: rgba(255, 255, 255, 0.3);
   
   /* Primary Colors */
-  --primary: #22c55e;
-  --primary-hover: #4ade80;
-  --primary-light: rgba(34,197,94, 0.3);
-  --primary-shadow: rgba(34,197,94, 0.3);
+  --primary: #00FF88;
+  --primary-hover: #8CFF00;
+  --primary-light: rgba(0,255,136, 0.15);
+  --primary-shadow: rgba(0,255,136, 0.4);
   
   /* Glassmorphism Colors */
   --glass-bg: rgba(138, 138, 138, 0.2);
@@ -49,8 +93,8 @@
   --glass-border-light: rgba(255, 255, 255, 0.2);
   
   /* Status Colors */
-  --success-bg: rgba(0, 200, 0, 0.2);
-  --success-border: #00c800;
+  --success-bg: rgba(0, 255, 136, 0.08);
+  --success-border: #00FF88;
   --warning-bg: rgba(234, 179, 8, 0.2);
   --warning-border: #eab308;
   --error-bg: rgba(200, 0, 0, 0.2);
@@ -73,19 +117,19 @@
   
   /* Border Colors */
   --border-default: rgba(255, 255, 255, 0.38);
-  --border-focus: #22c55e;
+  --border-focus: #00FF88;
   --border-error: #ff4d4d;
   
   /* Shadow Colors */
-  --shadow-focus: 0px 0px 10px 0px rgba(34,197,94, 0.3);
-  --shadow-inset: inset_0px_0px_8px_2px_rgba(138, 138, 138, 0.2);
-  --shadow-inset-button: inset_0px_0px_6px_3px_rgba(138, 138, 138, 0.3);
-  --shadow-badge: 0px_3px_10px_0px_rgba(22,163,74, 0.5);
+  --shadow-focus: 0px 0px 15px 0px rgba(0,255,136, 0.4);
+  --shadow-inset: inset_0px_0px_40px_rgba(0,0,0,0.4);
+  --shadow-inset-button: inset_0px_0px_6px_3px_rgba(0,255,136,0.1);
+  --shadow-badge: 0px_3px_10px_0px_rgba(0,255,136, 0.5);
   
   /* Fonts */
-  --font-heading: 'Google Sans Flex', sans-serif;
-  --font-body: 'Google Sans Flex', sans-serif;
-  --font-mono: 'Google Sans Flex', sans-serif;
+  --font-heading: 'Space Grotesk', 'Google Sans Flex', sans-serif;
+  --font-body: 'Lexend', 'Google Sans Flex', sans-serif;
+  --font-mono: 'Google Sans Flex', monospace;
   
   /* Spacing */
   --radius-sm: 12px;

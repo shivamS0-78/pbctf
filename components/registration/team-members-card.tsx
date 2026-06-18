@@ -27,14 +27,12 @@ export function TeamMembersCard({
   onRemoveMember,
   onTransferOwnership,
 }: TeamMembersCardProps & { onTransferOwnership?: () => void }) {
-  // Can remove members only if lead and team is in active state
-  // Can transfer ownership only if lead and team is in active state
-  const isActionable = isLead &&
+  const isActionable =
+    isLead &&
     teamStatus !== "submitted" &&
     teamStatus !== "shortlisted" &&
     teamStatus !== "confirmed";
 
-  // Generate initials from name
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -44,14 +42,13 @@ export function TeamMembersCard({
       .slice(0, 2);
   };
 
-  // Generate consistent color from name
   const getAvatarColor = (name: string) => {
     const colors = [
-      "from-blue-500 to-purple-600",
-      "from-green-500 to-teal-600",
-      "from-emerald-500 to-green-600",
-      "from-pink-500 to-rose-600",
-      "from-indigo-500 to-blue-600",
+      "from-[#00FF88] to-[#0ea47a]",
+      "from-[#8CFF00] to-[#5caa00]",
+      "from-[#00d4ff] to-[#0060ff]",
+      "from-[#a855f7] to-[#6d28d9]",
+      "from-[#f97316] to-[#b45309]",
     ];
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
@@ -76,36 +73,42 @@ export function TeamMembersCard({
         ) : undefined
       }
     >
-      <div className="flex flex-col gap-[12px]">
+      <div className="flex flex-col gap-[10px]">
         {members.map((member) => (
           <div
             key={member.uid}
-            className="flex items-center justify-between p-[12px] bg-[rgba(138,138,138,0.1)] rounded-[12px] border border-[rgba(255,255,255,0.1)]"
+            className="flex items-center justify-between p-[14px] bg-[rgba(0,0,0,0.3)] rounded-[12px] border border-[rgba(0,255,136,0.08)] hover:border-[rgba(0,255,136,0.2)] transition-all duration-200"
           >
             <div className="flex items-center gap-[12px]">
               {/* Avatar */}
               <div
-                className={`w-[40px] h-[40px] rounded-full bg-gradient-to-br ${getAvatarColor(member.name)} flex items-center justify-center`}
+                className={`w-[40px] h-[40px] rounded-full bg-gradient-to-br ${getAvatarColor(member.name)} flex items-center justify-center shadow-[0_0_12px_rgba(0,255,136,0.2)]`}
               >
-                <span className="text-[14px] text-white font-semibold">
+                <span className="text-[14px] text-black font-bold">
                   {getInitials(member.name)}
                 </span>
               </div>
-              
+
               {/* Name and Email */}
               <div className="flex flex-col gap-[2px]">
                 <div className="flex items-center gap-[8px]">
-                  <span className="text-[14px] text-white font-medium" style={{ fontFamily: 'var(--font-body)' }}>
+                  <span
+                    className="text-[14px] text-white font-medium"
+                    style={{ fontFamily: 'var(--font-body)' }}
+                  >
                     {member.name}
                   </span>
                   {member.role === "Team Lead" && (
-                    <span className="text-[11px] text-[#22c55e] bg-[rgba(34,197,94,0.15)] px-[8px] py-[2px] rounded-full font-medium">
+                    <span className="text-[10px] text-[#00FF88] bg-[rgba(0,255,136,0.1)] border border-[rgba(0,255,136,0.3)] px-[8px] py-[2px] rounded-full font-semibold tracking-wide uppercase">
                       Lead
                     </span>
                   )}
                 </div>
                 {member.email && (
-                  <span className="text-[12px] text-white opacity-50" style={{ fontFamily: 'var(--font-body)' }}>
+                  <span
+                    className="text-[12px] text-white/40"
+                    style={{ fontFamily: 'var(--font-body)' }}
+                  >
                     {member.email}
                   </span>
                 )}
