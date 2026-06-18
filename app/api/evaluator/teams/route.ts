@@ -133,8 +133,9 @@ export async function GET(request: NextRequest) {
 
     const uniqueUids = [...new Set([...teamMemberUids, ...evaluatorUids, ...voterUids])] as string[];
 
-    // Fetch users for members, evaluators, and voters
-    const users = await User.find({ uid: { $in: uniqueUids } }).select('uid name organisation');
+    // FIXED: Added social media and resume parameters to the model projection selector
+    const users = await User.find({ uid: { $in: uniqueUids } })
+      .select('uid name organisation github_link linkedin_link resume_link');
 
     const userMap = new Map(users.map((u: any) => [u.uid, u]));
 
@@ -154,7 +155,11 @@ export async function GET(request: NextRequest) {
           uid: m.uid,
           role: m.role,
           name: user?.name || "Unknown User",
-          organisation: user?.organisation || "N/A"
+          organisation: user?.organisation || "N/A",
+         
+          github_link: user?.github_link || null,
+          linkedin_link: user?.linkedin_link || null,
+          resume_link: user?.resume_link || null,
         };
       });
 
