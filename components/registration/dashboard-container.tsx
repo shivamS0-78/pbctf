@@ -253,7 +253,7 @@ function StatusStrip({
 }
 
 export function DashboardContainer() {
-  const { user, isAuthenticated, isLoading: authLoading, getToken } = useAuth();
+  const { user, firebaseUser, isLoading: authLoading, getToken } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [team, setTeam] = useState<Team | null>(null);
@@ -351,11 +351,15 @@ export function DashboardContainer() {
   }, [user]);
 
   useEffect(() => {
-    // Wait for the auth provider to finish initialising before deciding
-    // whether to redirect or kick off the data fetch.
-    if (authLoading) return;
-    if (!isAuthenticated || !user) {
-      router.push("/login");
+    // We kick off /api/me/bootstrap the moment Firebase confirms a session,
+    // in parallel with the auth-provider's /api/user/profile fetch — they're
+    // independent, and waiting for profile to finish before starting bootstrap
+    // adds an unnecessary serial RTT to the dashboard's first paint.
+    if (!firebaseUser) {
+      // No Firebase session. Only redirect once the auth-provider has actually
+      // finished initialising — before that, firebaseUser==null just means
+      // "we haven't heard back from onAuthStateChanged yet".
+      if (!authLoading) router.push("/login");
       return;
     }
 
@@ -447,13 +451,13 @@ export function DashboardContainer() {
     };
 
     fetchData();
-    // Depend on user?.uid (stable string) rather than user (object reference
-    // that the auth-provider recreates on every emailVerified refresh / Strict
-    // Mode double-mount). Without this, bootstrap re-fires whenever the user
-    // object identity changes — even though the actual uid hasn't — and the
-    // dashboard flashes back into its skeleton state.
+    // Key on firebaseUser?.uid (stable string available as soon as Firebase
+    // confirms the session) rather than user?.uid (set later, after profile
+    // fetch). This lets bootstrap run in parallel with /api/user/profile
+    // instead of in series. Strict Mode / token rotations don't change uid,
+    // so the effect doesn't re-fire and flash the skeleton.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid, isAuthenticated, authLoading, router, refreshTrigger]);
+  }, [firebaseUser?.uid, authLoading, router, refreshTrigger]);
 
   const getTeamStatus = ():
     | "none"

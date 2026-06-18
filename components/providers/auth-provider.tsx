@@ -33,6 +33,10 @@ interface UserProfile {
 
 interface AuthContextType {
     user: UserProfile | null;
+    // The raw Firebase user, exposed so consumers (like the dashboard) can
+    // start their own authenticated fetches as soon as Firebase confirms the
+    // session — without waiting for /api/user/profile to also come back.
+    firebaseUser: FirebaseUser | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
     register: (formData: FormData) => Promise<void>;
@@ -45,6 +49,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
     user: null,
+    firebaseUser: null,
     loading: true,
     login: async () => { },
     register: async () => { },
@@ -59,15 +64,28 @@ import { useToast } from "@/hooks/use-toast";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<UserProfile | null>(null);
+    const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const { toast } = useToast();
 
-    const fetchUserProfile = async (currentUser: FirebaseUser) => {
+    // forceRefresh: when true, force-reloads the Firebase user (network call)
+    //   and force-refreshes the ID token (another network call). Use this only
+    //   when something has actually changed server-side that we need to pick
+    //   up — e.g. after email verification (emailVerified flag flipped) or an
+    //   explicit "refresh" action.
+    // Default false: skip both extra round-trips. The cached token is still
+    //   valid (Firebase auto-refreshes ~5min before expiry) and emailVerified
+    //   is persisted in the SDK's local store. Saves ~600-800ms per call.
+    const fetchUserProfile = async (
+        currentUser: FirebaseUser,
+        forceRefresh: boolean = false,
+    ) => {
         try {
-            // Force reload user to get latest emailVerified status
-            await currentUser.reload();
-            const token = await currentUser.getIdToken(true);
+            if (forceRefresh) {
+                await currentUser.reload();
+            }
+            const token = await currentUser.getIdToken(forceRefresh);
             const response = await fetch(API_ENDPOINTS.userProfile, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -112,9 +130,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                await fetchUserProfile(firebaseUser);
+        const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+            // Publish the Firebase user IMMEDIATELY (before profile fetch) so
+            // consumers can fire their own authenticated calls in parallel
+            // with /api/user/profile instead of waiting in series.
+            setFirebaseUser(fbUser);
+            if (fbUser) {
+                await fetchUserProfile(fbUser);
             } else {
                 setUser(null);
             }
@@ -248,10 +270,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const refreshUser = useCallback(async () => {
         if (auth.currentUser) {
-            // Force token refresh to update emailVerified claim in the token if needed
-            await auth.currentUser.reload();
             setLoading(true);
-            await fetchUserProfile(auth.currentUser);
+            // Force reload + token refresh — this is the explicit "I changed
+            // something server-side, pick it up" path (e.g. after email
+            // verification). fetchUserProfile handles both internally.
+            await fetchUserProfile(auth.currentUser, true);
             setLoading(false);
         }
     }, []);
@@ -292,6 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const contextValue = useMemo(() => ({
         user,
+        firebaseUser,
         loading,
         login,
         register,
@@ -300,7 +324,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         getToken,
         sendVerificationEmail,
         resetPassword
-    }), [user, loading, login, register, logout, refreshUser, getToken, sendVerificationEmail, resetPassword]);
+    }), [user, firebaseUser, loading, login, register, logout, refreshUser, getToken, sendVerificationEmail, resetPassword]);
 
     return (
         <AuthContext.Provider value={contextValue}>
