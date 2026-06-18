@@ -41,24 +41,33 @@ export async function GET(request: NextRequest) {
         await dbConnect();
 
         // Fetch real stats
-        const [totalUsers, totalTeams, submittedCount, evaluatedCount, shortlistedCount, actualSubmissionsCount] = await Promise.all([
+        const [totalUsers, totalTeams, submittedCount, evaluatedCount, shortlistedCount] = await Promise.all([
             User.countDocuments({ role: 'user' }),
             Team.countDocuments({}),
             Team.countDocuments({ teamStatus: { $in: ['submitted', 'under-review'] } }),
             Team.countDocuments({ evaluations: { $exists: true, $ne: [] } }),
-            Team.countDocuments({ 
+            Team.countDocuments({
                 'evaluations.tier': { $in: ['accepted', 'strongly_accepted'] }
-            }),
-            Team.countDocuments({ submittedAt: { $exists: true, $ne: null } })
+            })
         ]);
 
-        const registered = Math.max(0, totalTeams - (submittedCount + evaluatedCount));
+        const adjust = (value: number) => Math.ceil(value * 1);
+
+        const realRegistered = Math.max(0, totalTeams - (submittedCount + evaluatedCount));
+
+        const adjustedRegistered = adjust(realRegistered);
+        const adjustedSubmitted = adjust(submittedCount);
+        const adjustedEvaluated = adjust(evaluatedCount);
+        const adjustedShortlisted = adjust(shortlistedCount);
+
+        // Ensure total equals the sum of mutually exclusive parts (Reg + Sub + Eval)
+        const adjustedTotalTeams = adjustedRegistered + adjustedSubmitted + adjustedEvaluated;
 
         const currentStats = {
-            totalUsers,
-            totalTeams: registered + submittedCount + evaluatedCount,
-            totalSubmissions: actualSubmissionsCount,
-            totalEvaluated: evaluatedCount,
+            totalUsers: adjust(totalUsers),
+            totalTeams: adjustedTotalTeams,
+            totalSubmissions: adjustedSubmitted,
+            totalEvaluated: adjustedEvaluated,
         };
 
         const teamDistribution = [
@@ -74,33 +83,6 @@ export async function GET(request: NextRequest) {
             date: doc.date,
             totalUsers: doc.totalUsers,
         }));
-
-        // Calculate Submission Activity
-        const submissions = await Team.find({
-            submittedAt: { $exists: true, $ne: null }
-        }).select('submittedAt');
-
-        const activityMap = new Map<string, number>();
-        // Initialize standard hours 10:00 - 18:00
-        for (let i = 10; i <= 18; i++) {
-            activityMap.set(`${i}:00`, 0);
-        }
-
-        submissions.forEach(team => {
-            if (team.submittedAt) {
-                const hour = new Date(team.submittedAt).getHours();
-                // Map to closest bucket or just raw hour if within range
-                if (hour >= 10 && hour <= 18) {
-                    const key = `${hour}:00`;
-                    activityMap.set(key, (activityMap.get(key) || 0) + 1);
-                }
-            }
-        });
-
-        const submissionActivity = Array.from(activityMap.entries()).map(([time, count]) => ({
-            time,
-            submissions: count
-        })).sort((a, b) => parseInt(a.time) - parseInt(b.time));
 
         // Calculate Problem Statement Distribution
         const psAggregation = await Team.aggregate([
@@ -130,7 +112,7 @@ export async function GET(request: NextRequest) {
             value: item.count
         }));
 
-        return createSuccessResponse({ ...currentStats, history, teamDistribution, submissionActivity, psDistribution });
+        return createSuccessResponse({ ...currentStats, history, teamDistribution, psDistribution });
 
     } catch (error: any) {
         console.error("Analytics data fetch error:", error);
