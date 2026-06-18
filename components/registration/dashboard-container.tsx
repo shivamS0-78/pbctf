@@ -891,7 +891,7 @@ export function DashboardContainer() {
             
             <div className="pt-[4px]">
               <a
-                href="https://discord.gg/kqNUEVGmXA"
+                href="https://discord.gg/Und8vHaw5a"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center bg-[#22c55e] hover:bg-[#4ade80] text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
@@ -974,9 +974,7 @@ export function DashboardContainer() {
                     className="text-[14px] leading-[20px] text-[#22c55e] font-medium"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
-                    💡 <span className="underline">CTF Hint</span>: The
-                    application may reveal more information than it chooses to
-                    display to the user.
+                    💡 <span className="underline">CTF Hint</span>: The browser receives more information than the interface chooses to present. Trace the flow of data.
                   </p>
                   <p
                     className="text-[13px] text-white/60 leading-[18px]"
@@ -1334,7 +1332,6 @@ export function DashboardContainer() {
 
       {/* Hidden Flag Container in DOM */}
       <div data-howdy={dynamicFlag} />
-
       {/* Faint hint at the bottom for inspect challenge */}
       {!hasSolvedChallenge && dynamicFlag && (
         <div className="text-[10px] text-white/5 select-all hover:text-white/20 transition-colors text-center mt-12 mb-6"></div>

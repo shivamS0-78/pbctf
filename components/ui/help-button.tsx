@@ -34,7 +34,7 @@ export function HelpButton() {
 
                     <div className="flex justify-end pt-4">
                         <a
-                            href="https://discord.gg/kqNUEVGmXA"
+                            href="https://discord.gg/Und8vHaw5a"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center bg-[var(--primary)] hover:brightness-110 text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 w-full sm:w-auto shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"

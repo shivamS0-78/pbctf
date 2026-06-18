@@ -7,7 +7,7 @@ import crypto from "crypto";
 export const dynamic = 'force-dynamic';
 
 const FLAG_SECRET = process.env.FLAG_SECRET || "pbctf_default_secret_key_2026";
-const FLAG_PREFIX = process.env.FLAG_PREFIX || "pbctf";
+const FLAG_PREFIX ="pbctf";
 
 // Logic for generating the dynamic flag using hmac
 function generateFlag(sessionId: string): string {
@@ -15,7 +15,7 @@ function generateFlag(sessionId: string): string {
     .createHmac("sha256", FLAG_SECRET)
     .update(sessionId)
     .digest("hex");
-  return `{${hmac.slice(0, 24)}}`;
+  return `${FLAG_PREFIX}{${hmac.slice(0, 24)}}`;
 }
 
 // GET /api/user/flag
@@ -73,9 +73,8 @@ export async function POST(request: NextRequest) {
     }
 
     const expectedFlag = generateFlag(authResult.user.uid);
-    const fullExpectedFlag = `${FLAG_PREFIX}${expectedFlag}`;
 
-    if (flag.trim() !== fullExpectedFlag) {
+    if (flag.trim() !== expectedFlag) {
       return NextResponse.json(
         { success: false, message: "Incorrect flag. Try again!" },
         { status: 400 }
