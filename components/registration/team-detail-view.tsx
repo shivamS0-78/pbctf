@@ -438,55 +438,62 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
                                 <div
                                     key={member.uid}
                                     onClick={() => handleMemberClick(member.uid)}
-                                    className="flex-1 min-h-[72px] w-full flex items-center justify-between gap-3 p-3 bg-surface-2 border border-[var(--border-soft)] rounded-md hover:border-brand/40 hover:bg-surface-1 cursor-pointer transition-all duration-200 group"
+                                    className="w-full flex flex-col gap-2.5 p-3 bg-surface-2 border border-[var(--border-soft)] rounded-md hover:border-brand/40 hover:bg-surface-1 cursor-pointer transition-all duration-200 group"
                                 >
+                                    {/* Row 1: identity gets the full card width minus the role chip */}
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className="w-9 h-9 rounded-full bg-surface-inset flex items-center justify-center border border-brand/30 group-hover:border-brand/60 transition-colors flex-shrink-0">
                                             <span className="text-[13px] font-semibold text-brand">
                                                 {member.name.charAt(0).toUpperCase()}
                                             </span>
                                         </div>
-                                        <div className="flex flex-col min-w-0">
-                                            <span className="text-[13px] font-medium text-ink group-hover:text-brand transition-colors line-clamp-1">
+                                        <div className="flex flex-col min-w-0 flex-1">
+                                            <span
+                                                className="text-[13px] font-medium text-ink group-hover:text-brand transition-colors truncate"
+                                                title={member.name}
+                                            >
                                                 {member.name}
                                             </span>
-                                            <span className="text-[11.5px] text-ink-muted line-clamp-1">
+                                            <span
+                                                className="text-[11.5px] text-ink-muted truncate"
+                                                title={member.organisation || undefined}
+                                            >
                                                 {member.organisation || "-"}
                                             </span>
                                         </div>
+                                        <span
+                                            className={[
+                                                "shrink-0 font-mono text-[9.5px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-sm border",
+                                                member.role === "Team Lead"
+                                                    ? "bg-brand-soft text-brand border-brand/45"
+                                                    : "bg-surface-1 text-ink-secondary border-[var(--border-soft)]",
+                                            ].join(" ")}
+                                        >
+                                            {member.role === "Team Lead" ? "lead" : "member"}
+                                        </span>
                                     </div>
 
-                                    <div className="flex flex-col items-end gap-2 shrink-0">
-                                        <div className="flex items-center gap-1.5">
-                                            <span
-                                                className={[
-                                                    "inline-flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm border",
-                                                    member.hasSolvedChallenge
-                                                        ? "bg-brand-soft text-brand border-brand/45"
-                                                        : "bg-white/[0.03] text-ink-muted border-[var(--border-soft)]",
-                                                ].join(" ")}
-                                                title={
-                                                    member.hasSolvedChallenge
-                                                        ? "Captured the warm-up flag"
-                                                        : "Hasn't captured the warm-up flag"
-                                                }
-                                            >
-                                                <Flag className="w-2.5 h-2.5" />
-                                                {member.hasSolvedChallenge ? "warm-up ✓" : "no warm-up"}
-                                            </span>
-                                            <span
-                                                className={[
-                                                    "font-mono text-[9.5px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-sm border",
-                                                    member.role === "Team Lead"
-                                                        ? "bg-brand-soft text-brand border-brand/45"
-                                                        : "bg-surface-1 text-ink-secondary border-[var(--border-soft)]",
-                                                ].join(" ")}
-                                            >
-                                                {member.role === "Team Lead" ? "lead" : "member"}
-                                            </span>
-                                        </div>
+                                    {/* Row 2: status + socials, indented under the name so the
+                                        eye still tracks down the same column */}
+                                    <div className="flex items-center justify-between gap-2 pl-12">
+                                        <span
+                                            className={[
+                                                "inline-flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm border shrink-0",
+                                                member.hasSolvedChallenge
+                                                    ? "bg-brand-soft text-brand border-brand/45"
+                                                    : "bg-white/[0.03] text-ink-muted border-[var(--border-soft)]",
+                                            ].join(" ")}
+                                            title={
+                                                member.hasSolvedChallenge
+                                                    ? "Captured the warm-up flag"
+                                                    : "Hasn't captured the warm-up flag"
+                                            }
+                                        >
+                                            <Flag className="w-2.5 h-2.5" />
+                                            {member.hasSolvedChallenge ? "warm-up ✓" : "no warm-up"}
+                                        </span>
 
-                                        <div className="flex items-center gap-2.5 z-10">
+                                        <div className="flex items-center gap-2.5 z-10 shrink-0">
                                             {member.github_link && (
                                                 <a
                                                     href={member.github_link}

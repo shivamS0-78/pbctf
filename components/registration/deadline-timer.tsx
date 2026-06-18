@@ -296,7 +296,14 @@ export function DeadlineTimer({
 
                     {isRsvpExpired && (
                       <p className="text-[12px] text-[var(--warning)] font-medium font-body text-center max-w-[44ch] mt-1">
-                        RSVP deadline has passed (January 24, 2026, 11:59 PM IST)
+                        RSVP deadline has passed
+                        {rsvpDeadline
+                          ? ` (${new Date(rsvpDeadline).toLocaleString("en-IN", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                              timeZone: "Asia/Kolkata",
+                            })} IST)`
+                          : ""}
                       </p>
                     )}
 

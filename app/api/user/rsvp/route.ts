@@ -41,7 +41,8 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
-    const RSVP_DEADLINE = new Date('2026-01-24T23:59:00+05:30');
+    // Keep this in sync with app/api/config/deadline/route.ts (RSVP_DEADLINE).
+    const RSVP_DEADLINE = new Date('2026-07-21T23:59:00+05:30');
     const now = new Date();
     if (now > RSVP_DEADLINE) {
       return NextResponse.json(
@@ -49,7 +50,7 @@ export async function PUT(request: NextRequest) {
           message: "RSVP deadline has passed",
           error: {
             code: 'RSVP_DEADLINE_PASSED',
-            message: "The RSVP deadline was January 24, 2026, 11:59 PM IST. RSVP submissions are now closed."
+            message: "The RSVP deadline was July 21, 2026, 11:59 PM IST. RSVP submissions are now closed."
           }
         },
         { status: 400 }

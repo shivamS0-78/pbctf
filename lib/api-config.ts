@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
   joinTeam: '/api/team/join',                          // PUT
   joinRequest: '/api/team/join-request',               // POST, GET
   respondToJoinRequest: (requestId: string) => `/api/team/join-request/${requestId}`,  // PUT
+  cancelInvite: (requestId: string) => `/api/team/join-request/${requestId}`,           // DELETE
   leaveTeam: '/api/team/leave',                        // PUT
   removeMember: '/api/team/remove-member',             // PUT
   deleteTeam: '/api/team/delete',                      // DELETE

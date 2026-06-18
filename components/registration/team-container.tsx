@@ -130,6 +130,16 @@ export function TeamContainer() {
   // Collapsible requests state
   const [requestsExpanded, setRequestsExpanded] = useState(false);
 
+  // Cancel-invite state. mirrors the `respondingTo` pattern in dashboard-container,
+  // but scoped to outbound invites a team lead is revoking.
+  const [cancellingInviteId, setCancellingInviteId] = useState<string | null>(null);
+  const [inviteToCancel, setInviteToCancel] = useState<{
+    requestId: string;
+    userName: string;
+    userEmail: string;
+  } | null>(null);
+  const [cancelInviteDialogOpen, setCancelInviteDialogOpen] = useState(false);
+
   const { toast } = useToast();
 
   // Memoized filtered requests
@@ -730,6 +740,83 @@ export function TeamContainer() {
             : `Failed to ${action} request`,
       });
       setTimeout(() => setAlert(null), 3000);
+    }
+  };
+
+  const handleCancelInviteClick = (
+    requestId: string,
+    userName: string,
+    userEmail: string,
+  ) => {
+    setInviteToCancel({ requestId, userName, userEmail });
+    setCancelInviteDialogOpen(true);
+  };
+
+  const confirmCancelInvite = async () => {
+    if (!team || !inviteToCancel) return;
+    if (cancellingInviteId) return; // already in flight
+
+    const { requestId } = inviteToCancel;
+    setCancellingInviteId(requestId);
+
+    try {
+      const token = await getToken();
+      if (!token) {
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please log in again to cancel the invite",
+        });
+        return;
+      }
+
+      const response = await fetch(API_ENDPOINTS.cancelInvite(requestId), {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to cancel invitation");
+      }
+
+      // Optimistically drop the row, then refresh from the server.
+      setJoinRequests((prev) =>
+        prev.filter((r) => r.requestId !== requestId),
+      );
+
+      toast({
+        title: "Invitation cancelled",
+        description: `Invite to ${inviteToCancel.userName} has been revoked.`,
+      });
+
+      if (team.code) {
+        await fetchJoinRequests(team.code, token);
+      }
+    } catch (error) {
+      console.error("Error cancelling invitation:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to cancel invite",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to cancel invitation",
+      });
+      // If the invite was already accepted/declined elsewhere, refresh the
+      // list so the stale pending row disappears.
+      const token = await getToken().catch(() => null);
+      if (token && team.code) {
+        await fetchJoinRequests(team.code, token);
+      }
+    } finally {
+      setCancellingInviteId(null);
+      setCancelInviteDialogOpen(false);
+      setInviteToCancel(null);
     }
   };
 
@@ -1639,30 +1726,56 @@ export function TeamContainer() {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    {sentInvites.map((request) => (
-                      <div
-                        key={request.requestId}
-                        className="flex items-center justify-between gap-3 p-3 bg-surface-2 rounded-md border border-[var(--border-soft)]"
-                      >
-                        <div className="flex flex-col gap-1 min-w-0">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Mail className="w-3.5 h-3.5 text-ink-muted shrink-0" />
-                            <span className="text-[14px] text-ink font-medium truncate">
-                              {request.userName}
+                    {sentInvites.map((request) => {
+                      const cancelling =
+                        cancellingInviteId === request.requestId;
+                      return (
+                        <div
+                          key={request.requestId}
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-surface-2 rounded-md border border-[var(--border-soft)]"
+                        >
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Mail className="w-3.5 h-3.5 text-ink-muted shrink-0" />
+                              <span className="text-[14px] text-ink font-medium truncate">
+                                {request.userName}
+                              </span>
+                            </div>
+                            <span className="text-[12px] text-ink-muted truncate pl-5">
+                              {request.userEmail}
+                            </span>
+                            <span className="font-mono text-[10.5px] text-ink-muted pl-5">
+                              &gt; sent {new Date(request.requestedAt).toLocaleDateString()}
                             </span>
                           </div>
-                          <span className="text-[12px] text-ink-muted truncate pl-5">
-                            {request.userEmail}
-                          </span>
-                          <span className="font-mono text-[10.5px] text-ink-muted pl-5">
-                            &gt; sent {new Date(request.requestedAt).toLocaleDateString()}
-                          </span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="font-mono text-[10.5px] uppercase tracking-[0.18em] px-2 py-1 rounded-sm bg-[var(--warning-soft)] border border-[var(--warning)]/40 text-[var(--warning)]">
+                              pending
+                            </span>
+                            <Button
+                              onClick={() =>
+                                handleCancelInviteClick(
+                                  request.requestId,
+                                  request.userName,
+                                  request.userEmail,
+                                )
+                              }
+                              variant="danger"
+                              size="sm"
+                              disabled={!!cancellingInviteId}
+                              aria-label={`Cancel invitation to ${request.userName}`}
+                            >
+                              {cancelling ? (
+                                <Spinner size="sm" />
+                              ) : (
+                                <X className="w-3.5 h-3.5" />
+                              )}
+                              Cancel
+                            </Button>
+                          </div>
                         </div>
-                        <span className="font-mono text-[10.5px] uppercase tracking-[0.18em] px-2 py-1 rounded-sm bg-[var(--warning-soft)] border border-[var(--warning)]/40 text-[var(--warning)] shrink-0">
-                          pending
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </FormSection>
@@ -1820,6 +1933,66 @@ export function TeamContainer() {
               className="bg-[var(--danger-soft)] hover:bg-[var(--danger-soft)] text-[var(--danger)] border border-[var(--danger)]/40"
             >
               Confirm exit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Invitation Confirmation Dialog */}
+      <AlertDialog
+        open={cancelInviteDialogOpen}
+        onOpenChange={(open) => {
+          // Block closing while the cancel request is in flight.
+          if (!open && cancellingInviteId) return;
+          setCancelInviteDialogOpen(open);
+          if (!open) setInviteToCancel(null);
+        }}
+      >
+        <AlertDialogContent className="bg-surface-2 border-[var(--border-default)]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-ink font-heading flex items-center gap-2">
+              <X className="w-4 h-4 text-[var(--danger)]" />
+              Cancel invitation
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-ink-secondary">
+              Revoke the pending invitation to{" "}
+              <span className="font-mono text-ink">
+                {inviteToCancel?.userName}
+              </span>
+              {inviteToCancel?.userEmail ? (
+                <>
+                  {" "}
+                  (
+                  <span className="font-mono text-ink">
+                    {inviteToCancel.userEmail}
+                  </span>
+                  )
+                </>
+              ) : null}
+              ? They won't be able to accept it after this.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              className="text-ink"
+              disabled={!!cancellingInviteId}
+            >
+              Keep invite
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                // Prevent the radix default close-on-click. confirmCancelInvite
+                // closes the dialog itself on completion.
+                e.preventDefault();
+                confirmCancelInvite();
+              }}
+              disabled={!!cancellingInviteId}
+              className="bg-[var(--danger-soft)] hover:bg-[var(--danger-soft)] text-[var(--danger)] border border-[var(--danger)]/40"
+            >
+              {cancellingInviteId ? (
+                <Spinner size="sm" className="mr-2" />
+              ) : null}
+              Cancel invite
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

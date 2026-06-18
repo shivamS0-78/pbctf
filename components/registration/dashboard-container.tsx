@@ -316,6 +316,40 @@ export function DashboardContainer() {
     }
   };
 
+  // Derive hasSolvedChallenge + profileCompleteness/missingFields from the
+  // auth-provider's user (which already owns the full profile globally).
+  // Keeps bootstrap free of duplicate profile data while preserving the
+  // dashboard's per-field completeness chip + missing-field list.
+  useEffect(() => {
+    if (!user) return;
+    setHasSolvedChallenge(!!(user as any).hasSolvedChallenge);
+
+    const profileFields = [
+      { key: "name", label: "Name" },
+      { key: "email", label: "Email" },
+      { key: "phone", label: "Phone" },
+      { key: "discord_username", label: "Discord" },
+      { key: "age", label: "Age" },
+      { key: "organisation", label: "Organisation" },
+      { key: "bio", label: "Bio" },
+      { key: "profile_picture", label: "Profile Picture" },
+      { key: "resume_link", label: "Resume" },
+      { key: "github_link", label: "GitHub" },
+      { key: "linkedin_link", label: "LinkedIn" },
+      { key: "portfolio_link", label: "Portfolio" },
+      { key: "ctf_profile", label: "CTF Profile" },
+    ];
+    let completed = 0;
+    const missing: string[] = [];
+    profileFields.forEach((field) => {
+      const value = (user as any)[field.key];
+      if (value && value !== null && value !== "") completed++;
+      else missing.push(field.label);
+    });
+    setProfileCompleteness(Math.round((completed / profileFields.length) * 100));
+    setMissingFields(missing);
+  }, [user]);
+
   useEffect(() => {
     // Wait for the auth provider to finish initialising before deciding
     // whether to redirect or kick off the data fetch.
@@ -339,178 +373,67 @@ export function DashboardContainer() {
           "Content-Type": "application/json",
         };
 
-        // Phase 1: kick off all independent calls in parallel. None of these
-        // need data from another, so they don't have to be sequential.
-        const [flagSettled, profileSettled, rsvpSettled, invitesSettled] =
-          await Promise.allSettled([
-            fetch("/api/user/flag", { headers }),
-            fetch(API_ENDPOINTS.userProfile, { headers }),
-            fetch("/api/user/rsvp-status", { headers }),
-            fetch(`${API_ENDPOINTS.joinRequest}?type=user`, { headers }),
-          ]);
+        // One unified call replaces the previous 5 sequential serverless
+        // roundtrips (flag, profile, rsvp, invites, team, team-requests).
+        // Each of those would re-verify the Firebase token and re-open a
+        // Mongo connection; the bootstrap route does both once.
+        const response = await fetch("/api/me/bootstrap", { headers });
+        if (!response.ok) {
+          console.error("bootstrap fetch failed:", response.status);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load dashboard data. Please refresh the page.",
+          });
+          return;
+        }
 
-        // Process flag (best-effort, ignore failures)
-        if (flagSettled.status === "fulfilled") {
-          try {
-            const flagData = await flagSettled.value.json();
-            if (flagData.success && flagData.flag) setDynamicFlag(flagData.flag);
-          } catch (error) {
-            console.error("Error parsing flag challenge:", error);
-          }
+        const json = await response.json();
+        if (!json.success || !json.data) return;
+
+        const {
+          team: teamPayload,
+          rsvp,
+          invites: invitesPayload,
+          teamRequests: teamRequestsPayload,
+          flag,
+        } = json.data;
+
+        if (flag) setDynamicFlag(flag);
+
+        // hasSolvedChallenge + profileCompleteness/missingFields are derived
+        // from the auth-provider's user object (see the effect below). Bootstrap
+        // intentionally no longer returns profile to avoid duplicating the
+        // /api/user/profile fetch already done by the auth provider.
+
+        setInvites(
+          Array.isArray(invitesPayload)
+            ? invitesPayload.filter(
+                (r: any) => r.type === "invite" && r.status === "pending",
+              )
+            : [],
+        );
+
+        if (!teamPayload) {
+          setTeam(null);
+          setRsvpStatus("pending");
+          setTeamRequests([]);
+          return;
+        }
+
+        setTeam(teamPayload);
+
+        if (rsvp?.userRSVP) {
+          setRsvpStatus(rsvp.userRSVP.rsvpStatus as "confirmed" | "declined");
         } else {
-          console.error("Error fetching flag challenge:", flagSettled.reason);
-        }
-
-        // Process profile -- gates everything downstream
-        if (profileSettled.status !== "fulfilled" || !profileSettled.value.ok) {
-          if (profileSettled.status === "rejected") {
-            console.error("Error fetching profile:", profileSettled.reason);
-          }
-          return;
-        }
-
-        const userData = await profileSettled.value.json();
-        const profileData = userData.success ? userData.data : userData;
-        if (!profileData) return;
-
-        setHasSolvedChallenge(profileData.hasSolvedChallenge || false);
-        const profileFields = [
-          { key: "name", label: "Name" },
-          { key: "email", label: "Email" },
-          { key: "phone", label: "Phone" },
-          { key: "discord_username", label: "Discord" },
-          { key: "age", label: "Age" },
-          { key: "organisation", label: "Organisation" },
-          { key: "bio", label: "Bio" },
-          { key: "profile_picture", label: "Profile Picture" },
-          { key: "resume_link", label: "Resume" },
-          { key: "github_link", label: "GitHub" },
-          { key: "linkedin_link", label: "LinkedIn" },
-          { key: "portfolio_link", label: "Portfolio" },
-          { key: "ctf_profile", label: "CTF Profile" },
-        ];
-        let completed = 0;
-        const missing: string[] = [];
-        profileFields.forEach((field) => {
-          const value = profileData[field.key];
-          if (value && value !== null && value !== "") completed++;
-          else missing.push(field.label);
-        });
-        setProfileCompleteness(Math.round((completed / profileFields.length) * 100));
-        setMissingFields(missing);
-
-        // Process invites (best-effort, gated on profile success to match prior behavior)
-        if (invitesSettled.status === "fulfilled" && invitesSettled.value.ok) {
-          try {
-            const invitesData = await invitesSettled.value.json();
-            if (invitesData.success && invitesData.data && invitesData.data.requests) {
-              setInvites(
-                invitesData.data.requests.filter(
-                  (r: any) => r.type === "invite" && r.status === "pending",
-                ),
-              );
-            }
-          } catch (error) {
-            console.error("Error parsing invites:", error);
-          }
-        } else if (invitesSettled.status === "rejected") {
-          console.error("Error fetching invites:", invitesSettled.reason);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to load team invitations.",
-          });
-        }
-
-        // No team -> reset and bail out before the team-dependent calls
-        if (!profileData.teamCode) {
-          setTeam(null);
           setRsvpStatus("pending");
-          return;
         }
 
-        // Phase 2: fetch team (depends on profile.teamCode)
-        let teamInfo: any = null;
-        try {
-          const teamResponse = await fetch(API_ENDPOINTS.getTeam(profileData.teamCode), {
-            headers,
-          });
-          if (teamResponse.ok) {
-            const teamData = await teamResponse.json();
-            if (teamData.success && teamData.data) {
-              teamInfo = teamData.data;
-              setTeam(teamInfo);
-            } else {
-              setTeam(null);
-              setRsvpStatus("pending");
-              return;
-            }
-          } else {
-            setTeam(null);
-            setRsvpStatus("pending");
-            return;
-          }
-        } catch (error) {
-          console.error("Error fetching team data:", error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to load team details.",
-          });
-          setTeam(null);
-          setRsvpStatus("pending");
-          return;
-        }
-
-        // Process RSVP from Phase 1 (semantics preserved: only when user has a team)
-        if (rsvpSettled.status === "fulfilled" && rsvpSettled.value.ok) {
-          try {
-            const rsvpData = await rsvpSettled.value.json();
-            if (rsvpData.success && rsvpData.data) {
-              if (rsvpData.data.userRSVP) {
-                setRsvpStatus(
-                  rsvpData.data.userRSVP.rsvpStatus as "confirmed" | "declined",
-                );
-              } else {
-                setRsvpStatus("pending");
-              }
-            }
-          } catch (error) {
-            console.error("Error parsing RSVP status:", error);
-          }
-        } else if (rsvpSettled.status === "rejected") {
-          console.error("Error fetching RSVP status:", rsvpSettled.reason);
-        }
-
-        // Phase 3: team-requests, only if the user is the team lead
-        const isLead =
-          teamInfo.teamLead === user.uid ||
-          (typeof teamInfo.teamLead === "object" && teamInfo.teamLead.id === user.uid);
-        if (isLead) {
-          try {
-            const requestsResponse = await fetch(
-              `${API_ENDPOINTS.joinRequest}?teamCode=${teamInfo.teamCode}&type=team`,
-              { headers },
-            );
-            if (requestsResponse.ok) {
-              const requestsData = await requestsResponse.json();
-              if (requestsData.success && requestsData.data && requestsData.data.requests) {
-                setTeamRequests(
-                  requestsData.data.requests.filter(
-                    (r: any) => r.type === "request" && r.status === "pending",
-                  ),
-                );
-              }
-            }
-          } catch (error) {
-            console.error("Error fetching team requests:", error);
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: "Failed to load team join requests.",
-            });
-          }
-        }
+        // bootstrap already filters teamRequests to [] for non-leads, so
+        // the dashboard can trust it without re-checking role here.
+        setTeamRequests(
+          Array.isArray(teamRequestsPayload) ? teamRequestsPayload : [],
+        );
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
         toast({
@@ -524,7 +447,13 @@ export function DashboardContainer() {
     };
 
     fetchData();
-  }, [user, isAuthenticated, authLoading, router, refreshTrigger]);
+    // Depend on user?.uid (stable string) rather than user (object reference
+    // that the auth-provider recreates on every emailVerified refresh / Strict
+    // Mode double-mount). Without this, bootstrap re-fires whenever the user
+    // object identity changes — even though the actual uid hasn't — and the
+    // dashboard flashes back into its skeleton state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, isAuthenticated, authLoading, router, refreshTrigger]);
 
   const getTeamStatus = ():
     | "none"
@@ -837,31 +766,84 @@ export function DashboardContainer() {
 
       {/* Challenge banner. compact, dismissible chip-style */}
       {!hasSolvedChallenge ? (
-        <button
-          onClick={() => setIsChallengeCardOpen((v) => !v)}
-          className="group text-left rounded-md border border-[var(--danger)]/35 bg-[var(--danger-soft)] hover:border-[var(--danger)]/60 transition-all p-3 md:p-3.5 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)] min-h-[44px]"
-        >
-          <span className="shrink-0 inline-flex w-7 h-7 items-center justify-center rounded-md bg-[var(--danger)]/15 border border-[var(--danger)]/40">
-            <ShieldAlert className="w-3.5 h-3.5 text-[var(--danger)]" />
-          </span>
-          <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-[var(--danger)]">
-              WARM-UP · 001
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={() => setIsChallengeCardOpen((v) => !v)}
+            aria-expanded={isChallengeCardOpen}
+            aria-controls="warmup-flag-panel"
+            className="group text-left rounded-md border border-[var(--danger)]/35 bg-[var(--danger-soft)] hover:border-[var(--danger)]/60 transition-all p-3 md:p-3.5 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)] min-h-[44px]"
+          >
+            <span className="shrink-0 inline-flex w-7 h-7 items-center justify-center rounded-md bg-[var(--danger)]/15 border border-[var(--danger)]/40">
+              <ShieldAlert className="w-3.5 h-3.5 text-[var(--danger)]" />
             </span>
-            <span className="text-[13px] md:text-[13.5px] text-ink font-body truncate">
-              You haven&apos;t captured the warm-up flag yet. Tap to solve it.
+            <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-[var(--danger)]">
+                WARM-UP · 001
+              </span>
+              <span className="text-[13px] md:text-[13.5px] text-ink font-body truncate">
+                You haven&apos;t captured the warm-up flag yet. Tap to solve it.
+              </span>
+            </div>
+            <span className="hidden sm:inline font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--danger)]/80">
+              {isChallengeCardOpen ? "collapse" : "expand"}
             </span>
-          </div>
-          <span className="hidden sm:inline font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--danger)]/80">
-            {isChallengeCardOpen ? "collapse" : "expand"}
-          </span>
-          <ChevronDown
-            className={[
-              "w-4 h-4 text-[var(--danger)] transition-transform shrink-0",
-              isChallengeCardOpen ? "rotate-180" : "",
-            ].join(" ")}
-          />
-        </button>
+            <ChevronDown
+              className={[
+                "w-4 h-4 text-[var(--danger)] transition-transform shrink-0",
+                isChallengeCardOpen ? "rotate-180" : "",
+              ].join(" ")}
+            />
+          </button>
+
+          {isChallengeCardOpen && (
+            <div id="warmup-flag-panel">
+              <FormSection title="Acquire the Flag" eyebrow="// CTF · 001. DON'T BE A NOOB">
+                <div className="flex flex-col gap-4">
+                  <div className="p-4 rounded-md bg-surface-inset border border-[var(--border-soft)] space-y-3">
+                    <div className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand">
+                      <span className="text-ink-disabled">&gt;</span>
+                      <span>intel.briefing</span>
+                    </div>
+                    <p className="text-[13.5px] leading-relaxed text-ink font-body">
+                      A sensitive artifact is being disclosed somewhere within the application. The
+                      leak affects only the currently authenticated user. Find the exposed artifact.
+                    </p>
+                    <p className="text-[13px] leading-relaxed text-brand font-body">
+                      <span className="underline underline-offset-2">hint</span>. The browser
+                      receives more than the interface chooses to render. Trace the flow of data.
+                    </p>
+                    <p className="font-mono text-[11px] text-ink-muted uppercase tracking-[0.18em]">
+                      Format · pbctf{"{...}"}
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleSubmitFlag} className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                    <div className="flex-1">
+                      <FormInput
+                        label="Submit flag"
+                        placeholder="pbctf{...}"
+                        value={flagInput}
+                        onChange={(e) => setFlagInput(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" variant="primary" disabled={isSubmittingFlag}>
+                      {isSubmittingFlag ? <Spinner size="sm" className="mr-2" /> : <Flag className="w-4 h-4" />}
+                      Acquire Flag
+                    </Button>
+                  </form>
+
+                  {flagError && (
+                    <p className="text-[13px] text-[var(--danger)] font-body flex items-center gap-2">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--danger)] animate-pulse" />
+                      {flagError}
+                    </p>
+                  )}
+                </div>
+              </FormSection>
+            </div>
+          )}
+        </div>
       ) : (
         <AlertBanner type="success" message="Warm-up flag captured." />
       )}
@@ -892,53 +874,6 @@ export function DashboardContainer() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
         {/* Left column */}
         <div className="lg:col-span-2 flex flex-col gap-5 md:gap-6">
-          {!hasSolvedChallenge && isChallengeCardOpen && (
-            <FormSection title="Acquire the Flag" eyebrow="// CTF · 001. DON'T BE A NOOB">
-              <div className="flex flex-col gap-4">
-                <div className="p-4 rounded-md bg-surface-inset border border-[var(--border-soft)] space-y-3">
-                  <div className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand">
-                    <span className="text-ink-disabled">&gt;</span>
-                    <span>intel.briefing</span>
-                  </div>
-                  <p className="text-[13.5px] leading-relaxed text-ink font-body">
-                    A sensitive artifact is being disclosed somewhere within the application. The
-                    leak affects only the currently authenticated user. Find the exposed artifact.
-                  </p>
-                  <p className="text-[13px] leading-relaxed text-brand font-body">
-                    <span className="underline underline-offset-2">hint</span>. The browser
-                    receives more than the interface chooses to render. Trace the flow of data.
-                  </p>
-                  <p className="font-mono text-[11px] text-ink-muted uppercase tracking-[0.18em]">
-                    Format · pbctf{"{...}"}
-                  </p>
-                </div>
-
-                <form onSubmit={handleSubmitFlag} className="flex flex-col sm:flex-row gap-3 sm:items-end">
-                  <div className="flex-1">
-                    <FormInput
-                      label="Submit flag"
-                      placeholder="pbctf{...}"
-                      value={flagInput}
-                      onChange={(e) => setFlagInput(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" variant="primary" disabled={isSubmittingFlag}>
-                    {isSubmittingFlag ? <Spinner size="sm" className="mr-2" /> : <Flag className="w-4 h-4" />}
-                    Acquire Flag
-                  </Button>
-                </form>
-
-                {flagError && (
-                  <p className="text-[13px] text-[var(--danger)] font-body flex items-center gap-2">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--danger)] animate-pulse" />
-                    {flagError}
-                  </p>
-                )}
-              </div>
-            </FormSection>
-          )}
-
           {teamStatus === "none" && (
             <FormSection title="No team detected" eyebrow="// 01 · NEXT STEP. INITIALIZE">
               <div className="flex flex-col gap-5">

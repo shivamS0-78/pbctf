@@ -171,3 +171,85 @@ export async function PUT(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { requestId: string } }
+) {
+  try {
+    const authResult = await authenticateUser(request);
+    if (!authResult.success) {
+      return NextResponse.json(
+        { message: authResult.error.message },
+        { status: authResult.status }
+      );
+    }
+
+    await dbConnect();
+
+    const joinRequest = await TeamJoinRequest.findById(params.requestId);
+    if (!joinRequest) {
+      return NextResponse.json(
+        { message: "Join request not found" },
+        { status: 404 }
+      );
+    }
+
+    if (joinRequest.type !== 'invite') {
+      return NextResponse.json(
+        { message: "Only outbound invites can be cancelled" },
+        { status: 400 }
+      );
+    }
+
+    if (joinRequest.status !== 'pending') {
+      return NextResponse.json(
+        { message: `Invitation has already been ${joinRequest.status}` },
+        { status: 409 }
+      );
+    }
+
+    const team = await Team.findOne({ teamCode: joinRequest.teamCode });
+    if (!team) {
+      return NextResponse.json(
+        { message: "Team not found" },
+        { status: 404 }
+      );
+    }
+
+    if (team.teamLead !== authResult.user.uid) {
+      return NextResponse.json(
+        { message: "Only team lead can cancel invitations" },
+        { status: 403 }
+      );
+    }
+
+    if (['submitted', 'shortlisted', 'rsvped'].includes(team.teamStatus)) {
+      return NextResponse.json(
+        { message: "Cannot modify team after submission" },
+        { status: 400 }
+      );
+    }
+
+    joinRequest.status = 'cancelled';
+    joinRequest.respondedAt = new Date();
+    joinRequest.respondedBy = authResult.user.uid;
+    await joinRequest.save();
+
+    return NextResponse.json({
+      success: true,
+      message: "Invitation cancelled",
+      data: {
+        requestId: joinRequest._id.toString(),
+        teamCode: team.teamCode,
+        status: 'cancelled',
+      },
+    });
+  } catch (error: any) {
+    console.error("Cancel invitation error:", error);
+    return NextResponse.json(
+      { message: "Server error" },
+      { status: 500 }
+    );
+  }
+}

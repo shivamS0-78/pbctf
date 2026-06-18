@@ -661,7 +661,6 @@ export function ProfileContainer() {
               <FormTextarea
                 label="Operator brief"
                 placeholder="Stacks you run with, categories you crush, what you're hunting at PBCTF…"
-                required
                 value={profileData.bio}
                 onChange={(e) =>
                   setProfileData({ ...profileData, bio: e.target.value })
@@ -755,7 +754,7 @@ export function ProfileContainer() {
                       href={`/dashboard/resume?url=${encodeURIComponent(currentResumeUrl)}&name=${encodeURIComponent(profileData.name || "your")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 self-start font-mono text-[10.5px] uppercase tracking-[0.18em] text-brand hover:text-brand-hover underline underline-offset-2"
+                      className="pointer-events-auto inline-flex items-center gap-1.5 self-start font-mono text-[10.5px] uppercase tracking-[0.18em] text-brand hover:text-brand-hover underline underline-offset-2"
                     >
                       View current resume
                       <Link2 className="w-3 h-3" />
@@ -796,7 +795,7 @@ export function ProfileContainer() {
                         href={currentPhotoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 self-start font-mono text-[10.5px] uppercase tracking-[0.18em] text-brand hover:text-brand-hover underline underline-offset-2"
+                        className="pointer-events-auto inline-flex items-center gap-1.5 self-start font-mono text-[10.5px] uppercase tracking-[0.18em] text-brand hover:text-brand-hover underline underline-offset-2"
                       >
                         Open full size
                         <Link2 className="w-3 h-3" />

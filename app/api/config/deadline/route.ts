@@ -23,10 +23,10 @@ export async function GET(request: NextRequest) {
         deadline: SUBMISSION_DEADLINE.toISOString(),
         serverTime: serverTime.toISOString(),
         isExpired: isSubmissionExpired,
-        deadlineIST: "January 21, 2026, 10:00:00 AM IST",
+        deadlineIST: "July 19, 2026, 10:00:00 AM IST",
         rsvpDeadline: RSVP_DEADLINE.toISOString(),
         isRsvpExpired,
-        rsvpDeadlineIST: "January 24, 2026, 11:59:00 PM IST",
+        rsvpDeadlineIST: "July 21, 2026, 11:59:00 PM IST",
       },
     });
   } catch (error: any) {

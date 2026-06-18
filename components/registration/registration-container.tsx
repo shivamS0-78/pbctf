@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -122,26 +123,6 @@ export function RegistrationContainer({
     };
   };
 
-  // Helper function to get initial file names from localStorage
-  const getInitialFileNames = () => {
-    try {
-      const savedData = localStorage.getItem(REGISTRATION_FORM_STORAGE_KEY);
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        return {
-          resumeFileName: parsed.resumeFileName || "",
-          profilePhotoFileName: parsed.profilePhotoFileName || "",
-        };
-      }
-    } catch (error) {
-      console.error("Error reading file names from localStorage:", error);
-    }
-    return {
-      resumeFileName: "",
-      profilePhotoFileName: "",
-    };
-  };
-
   // Registration form state - initialized from localStorage
   const [registerData, setRegisterData] = useState(getInitialFormData);
 
@@ -151,19 +132,14 @@ export function RegistrationContainer({
     password: "",
   });
 
-  // File states
+  // File states. Files (and their displayed metadata) are intentionally NOT
+  // persisted to localStorage — File objects can't be serialized, and showing
+  // a stale filename when the underlying File ref is null misleads the user
+  // into thinking the file is still attached on retry. Always start empty.
   const [resume, setResume] = useState<File | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-
-  // File names - initialized from localStorage using lazy initialization
-  const [resumeFileName, setResumeFileName] = useState(() => {
-    const fileNames = getInitialFileNames();
-    return fileNames.resumeFileName;
-  });
-  const [profilePhotoFileName, setProfilePhotoFileName] = useState(() => {
-    const fileNames = getInitialFileNames();
-    return fileNames.profilePhotoFileName;
-  });
+  const [resumeFileName, setResumeFileName] = useState("");
+  const [profilePhotoFileName, setProfilePhotoFileName] = useState("");
 
   // Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -185,6 +161,28 @@ export function RegistrationContainer({
     }
   }, [isCodeOfConductModalOpen]);
 
+  // Lock background scroll + close on Escape while CoC modal is open.
+  // Without this the user can scroll the page behind the overlay (and
+  // on iOS the modal can drift off-screen if it's portalled into a
+  // transformed ancestor).
+  useEffect(() => {
+    if (!isCodeOfConductModalOpen) return;
+    const { body, documentElement } = document;
+    const prevBodyOverflow = body.style.overflow;
+    const prevHtmlOverflow = documentElement.style.overflow;
+    body.style.overflow = "hidden";
+    documentElement.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsCodeOfConductModalOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      body.style.overflow = prevBodyOverflow;
+      documentElement.style.overflow = prevHtmlOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [isCodeOfConductModalOpen]);
+
   const handleCocScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     // 16px slack so the gate doesn't require pixel-perfect scrolling
@@ -202,7 +200,8 @@ export function RegistrationContainer({
   // Key for file inputs to force reset when clearing
   const [fileInputKey, setFileInputKey] = useState(0);
 
-  // Save form data to localStorage whenever it changes (excluding sensitive password fields)
+  // Save form data to localStorage whenever it changes (excluding sensitive
+  // password fields and file metadata — see comment on file state above).
   useEffect(() => {
     // Skip saving on initial mount since we just loaded from localStorage
     if (isInitialMount.current) {
@@ -215,8 +214,6 @@ export function RegistrationContainer({
       const { password, confirmPassword, ...safeRegisterData } = registerData;
       const dataToSave = {
         registerData: safeRegisterData,
-        resumeFileName,
-        profilePhotoFileName,
       };
       localStorage.setItem(
         REGISTRATION_FORM_STORAGE_KEY,
@@ -225,7 +222,7 @@ export function RegistrationContainer({
     } catch (error) {
       console.error("Error saving form data to localStorage:", error);
     }
-  }, [registerData, resumeFileName, profilePhotoFileName]);
+  }, [registerData]);
 
   // DEBUG: Auto-fill function
   const handleAutoFill = () => {
@@ -527,13 +524,12 @@ export function RegistrationContainer({
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setIsSubmitting(false);
-      // Save form data even when validation fails
+      // Save form data even when validation fails (text fields only — files
+      // and their displayed names are intentionally not persisted).
       try {
         const { password, confirmPassword, ...safeRegisterData } = registerData;
         const dataToSave = {
           registerData: safeRegisterData,
-          resumeFileName,
-          profilePhotoFileName,
         };
         localStorage.setItem(
           REGISTRATION_FORM_STORAGE_KEY,
@@ -548,13 +544,12 @@ export function RegistrationContainer({
     setIsSubmitting(true);
     setAlert(null);
     try {
-      // Save form data before submission to ensure it's persisted
+      // Save form data before submission to ensure it's persisted (text fields
+      // only — files and their displayed names are intentionally not persisted).
       try {
         const { password, confirmPassword, ...safeRegisterData } = registerData;
         const dataToSave = {
           registerData: safeRegisterData,
-          resumeFileName,
-          profilePhotoFileName,
         };
         localStorage.setItem(
           REGISTRATION_FORM_STORAGE_KEY,
@@ -1604,7 +1599,7 @@ export function RegistrationContainer({
       </div>
 
       {/* ===================== CODE OF CONDUCT MODAL ===================== */}
-      {isCodeOfConductModalOpen && (
+      {isCodeOfConductModalOpen && typeof document !== "undefined" && createPortal(
         <div
           className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6"
           role="dialog"
@@ -1745,7 +1740,8 @@ export function RegistrationContainer({
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
