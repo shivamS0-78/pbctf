@@ -44,6 +44,7 @@ interface ParticipantLookingForTeam {
   interests: string;
   university?: string;
   email?: string;
+  hasSolvedChallenge?: boolean;
 }
 
 export function DiscoverContainer() {
@@ -253,6 +254,7 @@ export function DiscoverContainer() {
                   interests: user.bio || 'No interests listed',
                   university: user.organisation || undefined,
                   email: user.email,
+                  hasSolvedChallenge: user.hasSolvedChallenge || false,
                 }));
               setParticipantsLookingForTeams(transformed);
               // Store pagination info
@@ -809,6 +811,11 @@ export function DiscoverContainer() {
                                       {sentInvites.has(participant.id) && (
                                         <span className="px-[8px] py-[2px] bg-[rgba(255,235,59,0.2)] border border-[#ffeb3b] rounded-[6px] text-[12px] text-[#ffeb3b] font-medium">
                                           Invite Sent
+                                        </span>
+                                      )}
+                                      {!participant.hasSolvedChallenge && (
+                                        <span className="px-[8px] py-[2px] bg-red-500/10 border border-red-500/20 rounded-[6px] text-[11px] text-red-400 font-semibold tracking-wide">
+                                          🔴 Unverified Noob
                                         </span>
                                       )}
                                     </div>

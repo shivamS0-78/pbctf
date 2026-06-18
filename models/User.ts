@@ -19,6 +19,7 @@ export interface IUser extends Document {
   isLooking: boolean;
   role: "user" | "admin" | "evaluator" | "frai";
   teamCode?: string;
+  hasSolvedChallenge?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +47,7 @@ const UserSchema: Schema = new Schema(
       default: "user",
     },
     teamCode: { type: String, index: true },
+    hasSolvedChallenge: { type: Boolean, default: false },
   },
   {
     timestamps: true,
