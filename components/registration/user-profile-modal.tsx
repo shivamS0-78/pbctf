@@ -1,7 +1,22 @@
 "use client";
 
 import { useEffect } from "react";
-import { User, Mail, MessageSquare, Building, FileText, Github, Linkedin, ExternalLink, UserPlus, Check } from "lucide-react";
+import {
+  User,
+  Mail,
+  MessageSquare,
+  Building,
+  FileText,
+  Github,
+  Linkedin,
+  ExternalLink,
+  UserPlus,
+  Check,
+  X,
+  Award,
+  Globe,
+  Flag,
+} from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "./button";
 import { AlertBanner } from "./alert-banner";
@@ -34,17 +49,49 @@ interface UserProfileModalProps {
   canInvite?: boolean;
   showCreateTeamHint?: boolean;
   error?: string | null;
-  /**
-   * If true, clicking resume opens in a new tab via `/api/resume/view`
-   * instead of forcing a download. Used on admin dashboard.
-   */
   openResumeInNewTab?: boolean;
 }
 
-export function UserProfileModal({ 
-  isOpen, 
-  onClose, 
-  userDetails, 
+function LinkRow({
+  href,
+  onClick,
+  label,
+  Icon,
+}: {
+  href?: string;
+  onClick?: () => void;
+  label: string;
+  Icon: typeof Github;
+}) {
+  const cls =
+    "group flex items-center gap-3 px-3 py-2.5 rounded-md bg-surface-inset border border-[var(--border-soft)] hover:border-brand/35 hover:bg-surface-2 transition-[background,border-color] cursor-pointer";
+  const inner = (
+    <>
+      <span className="inline-flex w-7 h-7 items-center justify-center rounded-sm bg-surface-2 border border-[var(--border-soft)] group-hover:border-brand/40 transition-colors">
+        <Icon className="w-3.5 h-3.5 text-ink-secondary group-hover:text-brand transition-colors" />
+      </span>
+      <span className="text-[13.5px] text-ink font-body font-medium">{label}</span>
+      <ExternalLink className="w-3.5 h-3.5 text-ink-muted ml-auto group-hover:text-brand transition-colors" />
+    </>
+  );
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={`${cls} w-full text-left`}>
+        {inner}
+      </button>
+    );
+  }
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+      {inner}
+    </a>
+  );
+}
+
+export function UserProfileModal({
+  isOpen,
+  onClose,
+  userDetails,
   isLoading,
   onInvite,
   isInviting = false,
@@ -57,230 +104,253 @@ export function UserProfileModal({
   const handleResumeClick = async (url: string) => {
     try {
       if (openResumeInNewTab) {
-        const viewerUrl = `/api/resume/view?url=${encodeURIComponent(url)}`;
+        // Route to the in-app viewer wrapper so the navbar / app chrome
+        // stays visible instead of dropping the user onto a raw PDF tab.
+        const name = userDetails?.name || "Operator";
+        const viewerUrl = `/dashboard/resume?url=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
         window.open(viewerUrl, "_blank", "noopener,noreferrer");
         return;
       }
-
       const response = await fetch(url);
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = 'resume.pdf';
+      a.download = "resume.pdf";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
-    } catch (error) {
-      console.error('Error downloading resume:', error);
+    } catch (e) {
+      console.error("Error downloading resume:", e);
     }
   };
 
-  // Prevent background scrolling when modal is open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+    if (isOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
-  // For stacked modals, user modal uses z-110 to appear above team modal
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
-  
+
+  const initials =
+    (userDetails?.name || "?")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase())
+      .join("") || "?";
+
+  const hasLinks = !!(
+    userDetails?.github_link ||
+    userDetails?.linkedin_link ||
+    userDetails?.resume_link ||
+    userDetails?.portfolio_link ||
+    userDetails?.ctf_profile
+  );
+
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 pointer-events-none">
-      <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-auto"
+    <div
+      className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center p-0 sm:p-6 pointer-events-none"
+      role="dialog"
+      aria-modal="true"
+      aria-label="User Profile"
+    >
+      {/* backdrop */}
+      <div
+        className="absolute inset-0 bg-black/75 backdrop-blur-[6px] pointer-events-auto"
         onClick={onClose}
+        aria-hidden
       />
-      <div className="relative z-[111] w-full max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.15)] rounded-[20px] p-[32px] border border-[rgba(255,255,255,0.2)] pointer-events-auto no-scrollbar">
-        <div className="flex items-center justify-between mb-[24px]">
-          <h2 className="text-[28px] text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-            User Profile
-          </h2>
+
+      {/* dialog */}
+      <div className="relative z-[111] pointer-events-auto w-full max-w-xl max-h-[92vh] overflow-y-auto thin-scrollbar bg-surface-2 border border-[var(--border-default)] rounded-t-xl sm:rounded-lg shadow-modal anim-fade-up">
+        {/* sticky header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 px-5 md:px-6 py-4 bg-surface-2/95 backdrop-blur-md">
+          <div className="min-w-0 flex items-center gap-2.5">
+            <span className="text-mono text-brand text-[12px] leading-none">{">"}</span>
+            <h2 className="font-heading text-[16px] md:text-[18px] font-semibold text-ink truncate tracking-tight">
+              Operator Profile
+            </h2>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-white opacity-70 hover:opacity-100 transition-opacity"
+            aria-label="Close"
+            className="inline-flex w-8 h-8 items-center justify-center rounded-md text-ink-muted hover:text-ink hover:bg-white/[0.05] transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-4 h-4" />
           </button>
         </div>
-      {isLoading ? (
-        <div className="flex justify-center py-[40px]">
-          <Spinner size="lg" />
-        </div>
-      ) : error ? (
-        <div className="text-white text-center py-[40px]">
-          <p className="text-[#00FF88] mb-[8px]">Error loading user details</p>
-          <p className="text-white opacity-70 text-[14px]">{error}</p>
-        </div>
-      ) : userDetails ? (
-        <div className="flex flex-col gap-[24px]">
-          <div className="flex items-start gap-[16px]">
-            {userDetails.profile_picture ? (
-              <img 
-                src={userDetails.profile_picture} 
-                alt={userDetails.name}
-                className="w-20 h-20 rounded-full object-cover border-2 border-[rgba(255,255,255,0.2)]"
-              />
-            ) : (
-              <div className="w-20 h-20 rounded-full bg-[rgba(138,138,138,0.2)] border-2 border-[rgba(255,255,255,0.2)] flex items-center justify-center">
-                <User className="w-10 h-10 text-white opacity-50" />
-              </div>
-            )}
-            <div className="flex-1">
-              <div className="flex items-center gap-[12px] flex-wrap mb-[4px]">
-                <h3 className="font-['Google_Sans_Flex',sans-serif] text-[20px] text-white">{userDetails.name}</h3>
-                {!userDetails.hasSolvedChallenge && (
-                  <span className="px-[8px] py-[2px] bg-red-500/10 border border-red-500/20 rounded-[6px] text-[11px] text-red-400 font-semibold tracking-wide">
-                    🔴 Bro wasn’t able even able to find a damn flag
+
+        <div className="px-5 md:px-6 py-5 md:py-6">
+          {isLoading ? (
+            <div className="flex justify-center py-10">
+              <Spinner size="lg" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-10">
+              <p className="text-[var(--danger)] mb-1 font-medium">Failed to load profile</p>
+              <p className="text-[13.5px] text-ink-secondary font-body">{error}</p>
+            </div>
+          ) : userDetails ? (
+            <div className="flex flex-col gap-6">
+              {/* Identity */}
+              <div className="flex items-start gap-4">
+                {userDetails.profile_picture ? (
+                  <img
+                    src={userDetails.profile_picture}
+                    alt={userDetails.name}
+                    className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-md object-cover border border-[var(--border-default)]"
+                  />
+                ) : (
+                  <span className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 inline-flex items-center justify-center rounded-md bg-surface-inset border border-[var(--border-default)] font-mono text-[22px] sm:text-[26px] font-bold text-ink">
+                    {initials}
                   </span>
                 )}
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-heading text-[20px] sm:text-[22px] font-semibold text-ink tracking-tight leading-tight">
+                    {userDetails.name}
+                  </h3>
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    {userDetails.email && (
+                      <div className="flex items-center gap-2 text-[12.5px] text-ink-secondary font-body min-w-0">
+                        <Mail className="w-3.5 h-3.5 text-ink-muted shrink-0" />
+                        <span className="truncate">{userDetails.email}</span>
+                      </div>
+                    )}
+                    {userDetails.discord_username && (
+                      <div className="flex items-center gap-2 text-[12.5px] text-ink-secondary font-body min-w-0">
+                        <MessageSquare className="w-3.5 h-3.5 text-ink-muted shrink-0" />
+                        <span className="truncate">{userDetails.discord_username}</span>
+                      </div>
+                    )}
+                    {userDetails.organisation && (
+                      <div className="flex items-center gap-2 text-[12.5px] text-ink-secondary font-body min-w-0">
+                        <Building className="w-3.5 h-3.5 text-ink-muted shrink-0" />
+                        <span className="truncate">{userDetails.organisation}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+                    {userDetails.hasSolvedChallenge ? (
+                      <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.18em] text-brand bg-brand-soft border border-brand/35 px-1.5 py-0.5 rounded">
+                        <Award className="w-3 h-3" />
+                        Warm-up Solved
+                      </span>
+                    ) : (
+                      <span
+                        className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted bg-white/[0.04] border border-[var(--border-soft)] px-1.5 py-0.5 rounded"
+                        title="Hasn't captured the warm-up flag yet"
+                      >
+                        <Flag className="w-3 h-3" />
+                        No Warm-up Flag
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-              {userDetails.email && (
-                <div className="flex items-center gap-[8px] mb-[4px]">
-                  <Mail className="w-4 h-4 text-white opacity-60" />
-                  <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white opacity-70">{userDetails.email}</span>
+
+              {/* Bio */}
+              {userDetails.bio && (
+                <div className="flex flex-col gap-2">
+                  <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-muted">
+                    Bio
+                  </div>
+                  <p className="text-[13.5px] text-ink-secondary font-body leading-relaxed">
+                    {userDetails.bio}
+                  </p>
                 </div>
               )}
-              {userDetails.discord_username && (
-                <div className="flex items-center gap-[8px] mb-[4px]">
-                  <MessageSquare className="w-4 h-4 text-white opacity-60" />
-                  <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white opacity-70">{userDetails.discord_username}</span>
+
+              {/* Links */}
+              {hasLinks && (
+                <div className="flex flex-col gap-2.5">
+                  <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-muted">
+                    Links & Profiles
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {userDetails.github_link && (
+                      <LinkRow href={userDetails.github_link} label="GitHub" Icon={Github} />
+                    )}
+                    {userDetails.linkedin_link && (
+                      <LinkRow href={userDetails.linkedin_link} label="LinkedIn" Icon={Linkedin} />
+                    )}
+                    {userDetails.resume_link && (
+                      <LinkRow
+                        onClick={() => handleResumeClick(userDetails.resume_link!)}
+                        label="Resume"
+                        Icon={FileText}
+                      />
+                    )}
+                    {userDetails.portfolio_link && (
+                      <LinkRow href={userDetails.portfolio_link} label="Portfolio" Icon={Globe} />
+                    )}
+                    {userDetails.ctf_profile && (
+                      <LinkRow href={userDetails.ctf_profile} label="CTF Profile" Icon={Flag} />
+                    )}
+                  </div>
                 </div>
               )}
-              {userDetails.organisation && (
-                <div className="flex items-center gap-[8px]">
-                  <Building className="w-4 h-4 text-white opacity-60" />
-                  <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white opacity-70">{userDetails.organisation}</span>
+
+              {/* Hints / actions */}
+              {showCreateTeamHint && (
+                <div className="pt-2">
+                  <AlertBanner
+                    type="info"
+                    message="Want to invite members? You need to create a team first to send invitations."
+                  />
+                </div>
+              )}
+
+              {canInvite && userDetails.email && onInvite && (
+                <div className="pt-2 flex justify-end">
+                  <Button
+                    variant="primary"
+                    onClick={() => onInvite(userDetails.email!, userDetails.uid)}
+                    disabled={isInviting || isInvited}
+                  >
+                    {isInviting ? (
+                      <>
+                        <Spinner size="sm" />
+                        Sending Invite…
+                      </>
+                    ) : isInvited ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Invited
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        Invite to Team
+                      </>
+                    )}
+                  </Button>
                 </div>
               )}
             </div>
-          </div>
-
-          {userDetails.bio && (
-            <div>
-              <h4 className="font-['Google_Sans_Flex',sans-serif] text-[16px] text-white mb-[8px]">Bio</h4>
-              <p className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white opacity-70">{userDetails.bio}</p>
-            </div>
-          )}
-
-          {(userDetails.github_link || userDetails.linkedin_link || userDetails.resume_link || userDetails.portfolio_link || userDetails.ctf_profile) && (
-            <div>
-              <h4 className="font-['Google_Sans_Flex',sans-serif] text-[16px] text-white mb-[12px]">Links & Profiles</h4>
-              <div className="flex flex-col gap-[8px]">
-                {userDetails.github_link && (
-                  <a 
-                    href={userDetails.github_link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                  >
-                    <Github className="w-4 h-4 text-white opacity-70" />
-                    <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white">GitHub</span>
-                    <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                  </a>
-                )}
-                {userDetails.linkedin_link && (
-                  <a 
-                    href={userDetails.linkedin_link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                  >
-                    <Linkedin className="w-4 h-4 text-white opacity-70" />
-                    <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white">LinkedIn</span>
-                    <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                  </a>
-                )}
-                {userDetails.resume_link && (
-                  <button
-                    onClick={() => handleResumeClick(userDetails.resume_link!)}
-                    className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors cursor-pointer w-full"
-                  >
-                    <FileText className="w-4 h-4 text-white opacity-70" />
-                    <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white">Resume</span>
-                    <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                  </button>
-                )}
-                {userDetails.portfolio_link && (
-                  <a 
-                    href={userDetails.portfolio_link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                  >
-                    <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white">Portfolio</span>
-                    <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                  </a>
-                )}
-                {userDetails.ctf_profile && (
-                  <a 
-                    href={userDetails.ctf_profile} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-[8px] p-[8px] bg-[rgba(138,138,138,0.1)] rounded-[8px] hover:bg-[rgba(138,138,138,0.2)] transition-colors"
-                  >
-                    <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white">CTF Profile</span>
-                    <ExternalLink className="w-3 h-3 text-white opacity-50 ml-auto" />
-                  </a>
-                )}
-              </div>
-                </div>
-              )}
-
-            {showCreateTeamHint && (
-              <div className="mt-[12px] pt-[24px] border-t border-[rgba(255,255,255,0.1)]">
-                <AlertBanner
-                  type="info"
-                  message="Want to invite members? You need to create a team first to send invitations."
-                />
-              </div>
-            )}
-
-          {canInvite && userDetails.email && onInvite && (
-            <div className="mt-[12px] pt-[24px] border-t border-[rgba(255,255,255,0.1)] flex justify-end">
-              <Button
-                variant="primary"
-                onClick={() => onInvite(userDetails.email!, userDetails.uid)}
-                disabled={isInviting || isInvited}
-                className="w-full sm:w-auto"
-              >
-                {isInviting ? (
-                  <>
-                    <Spinner size="sm" className="mr-2" />
-                    Sending Invite...
-                  </>
-                ) : isInvited ? (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    Invited
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Invite to Team
-                  </>
-                )}
-              </Button>
+          ) : (
+            <div className="text-ink-secondary text-center py-10 font-body text-[13.5px]">
+              Failed to load user details
             </div>
           )}
         </div>
-      ) : (
-        <div className="text-white text-center py-[40px]">Failed to load user details        </div>
-      )}
       </div>
     </div>
   );
 }
 
 export type { UserDetails };
-

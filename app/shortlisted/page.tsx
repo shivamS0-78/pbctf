@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DotPattern } from "@/components/registration/dot-pattern";
 import { Button } from "@/components/registration/button";
@@ -8,320 +8,184 @@ import { motion } from "framer-motion";
 import { Users, Trophy, ArrowLeft, Search, Sparkles } from "lucide-react";
 import { shortlistedTeams, totalParticipants } from "@/data/shortlisted-teams";
 
-// Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.03,
-      delayChildren: 0.2
-    }
-  }
+    transition: { staggerChildren: 0.025, delayChildren: 0.1 },
+  },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 30, scale: 0.9 },
+  hidden: { opacity: 0, y: 12 },
   visible: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.4,
-      ease: [0.25, 0.46, 0.45, 0.94] as const
-    }
-  }
+    transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const },
+  },
 };
 
-const heroVariants = {
-  hidden: { opacity: 0, y: -20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: "easeOut" as const
-    }
-  }
-};
-
-const statVariants = {
-  hidden: { opacity: 0, scale: 0.8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.5,
-      ease: "easeOut" as const
-    }
-  }
-};
-
-// Theme accent color (green)
-const accentColor = {
-  bg: 'rgba(0,255,136, 0.15)',
-  border: 'rgba(0,255,136, 0.4)',
-  glow: 'rgba(0,255,136, 0.3)'
-};
-
-// Generate initials from team name
 const getTeamInitials = (teamName: string) => {
-  const words = teamName.replace(/[^a-zA-Z0-9\s]/g, '').trim().split(/\s+/);
-  if (words.length === 1) {
-    return words[0].substring(0, 2).toUpperCase();
-  }
+  const words = teamName.replace(/[^a-zA-Z0-9\s]/g, "").trim().split(/\s+/);
+  if (words.length === 1) return words[0].substring(0, 2).toUpperCase();
   return (words[0][0] + words[1][0]).toUpperCase();
 };
 
 export default function ShortlistedPage() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter teams based on search query
-  const filteredTeams = shortlistedTeams.filter(team =>
-    team.teamName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    team.teamCode.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredTeams = shortlistedTeams.filter(
+    (team) =>
+      team.teamName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      team.teamCode.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
-    <div
-      className="min-h-screen w-full flex flex-col items-center relative overflow-x-hidden"
-      style={{
-        backgroundImage: "linear-gradient(90deg, rgb(10,10,10) 0%, rgb(10,10,10) 100%)",
-      }}
-    >
-      {/* Background gradient overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            "url('data:image/svg+xml;utf8,<svg viewBox=\"0 0 1440 652\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><rect x=\"0\" y=\"0\" height=\"100%\" width=\"100%\" fill=\"url(%23grad)\" opacity=\"1\"/><defs><radialGradient id=\"grad\" gradientUnits=\"userSpaceOnUse\" cx=\"0\" cy=\"0\" r=\"10\" gradientTransform=\"matrix(31.68 0 0 22.168 0 174.74)\"><stop stop-color=\"rgba(62,32,19,1)\" offset=\"0.10445\"/><stop stop-color=\"rgba(62,32,19,0)\" offset=\"1\"/></radialGradient></defs></svg>')",
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'cover'
-        }}
-      />
-
-      {/* Dot pattern */}
+    <div className="min-h-screen w-full bg-void relative overflow-x-hidden">
       <DotPattern />
 
-      {/* Main content */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 sm:py-12 lg:py-16">
-        {/* Back button */}
+      <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
+        {/* Back */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.4 }}
           className="mb-8"
         >
-          <Button onClick={() => router.push("/dashboard")} variant="secondary">
-            <ArrowLeft className="w-4 h-4" />
+          <Button onClick={() => router.push("/dashboard")} variant="secondary" size="sm">
+            <ArrowLeft className="w-3.5 h-3.5" />
             Back to Dashboard
           </Button>
         </motion.div>
 
-        {/* Hero Section */}
+        {/* Hero */}
         <motion.div
-          className="flex flex-col gap-4 sm:gap-6 items-center text-center mb-12 sm:mb-16"
-          variants={heroVariants}
-          initial="hidden"
-          animate="visible"
+          className="flex flex-col items-center text-center gap-4 mb-12 sm:mb-16"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          {/* Badge */}
-          <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(255,255,255,0)] flex items-center justify-center px-4 py-2 rounded-[15px] shadow-[0px_3px_10px_0px_rgba(22,163,74,0.5)] relative">
-            <Trophy className="w-4 h-4 text-[#00FF88] mr-2" />
-            <p className="text-[14px] text-white leading-[16.8px]" style={{ fontFamily: 'var(--font-body)' }}>
-              Shortlisted Teams
-            </p>
-            <div className="absolute inset-0 rounded-[15px]">
-              <div className="absolute border border-[#b85c00] border-solid inset-0 pointer-events-none rounded-[15px]" />
-            </div>
+          <div className="inline-flex items-center gap-2 h-7 px-3 rounded-full border border-brand/45 bg-brand-soft text-brand font-mono text-[10.5px] uppercase tracking-[0.22em]">
+            <Trophy className="w-3 h-3" />
+            Shortlisted · Finals
           </div>
 
-          {/* Title */}
-          <h1 
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-tight tracking-[-1px] drop-shadow-[0_0_30px_rgba(0,255,136,0.3)]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Congratulations!
+          <h1 className="font-heading text-balance text-[40px] sm:text-[56px] md:text-[72px] font-bold text-ink leading-[1.02] tracking-tight">
+            Congratulations<span className="text-brand">.</span>
           </h1>
 
-          {/* Subtitle */}
-          <p 
-            className="text-base sm:text-lg text-white opacity-90 leading-relaxed max-w-[700px] px-4"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
-            We are thrilled to announce the 32 teams that have been shortlisted for the PBCTF 5.0 Finals.
-            These exceptional teams stood out among hundreds of registrations with their skills and determination.
+          <p className="text-[14px] sm:text-[15.5px] text-ink-secondary font-body leading-relaxed max-w-[680px]">
+            We are thrilled to announce the {shortlistedTeams.length} teams shortlisted for the
+            PBCTF 5.0 Finals. These teams stood out among hundreds with their skills and grit.
           </p>
         </motion.div>
 
-        {/* Stats Section */}
+        {/* Stats */}
         <motion.div
-          className="grid grid-cols-2 gap-4 sm:gap-6 mb-12 sm:mb-16 max-w-3xl mx-auto"
+          className="grid grid-cols-2 gap-3 sm:gap-4 mb-10 sm:mb-12 max-w-[640px] mx-auto"
           initial="hidden"
           animate="visible"
           variants={containerVariants}
         >
-          <motion.div
-            variants={statVariants}
-            className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.1)] rounded-[16px] p-4 sm:p-6 border border-[rgba(255,255,255,0.15)] text-center"
-          >
-            <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[rgba(0,255,136,0.2)] border border-[#00FF88] mx-auto mb-3">
-              <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-[#00FF88]" />
-            </div>
-            <p className="text-3xl sm:text-4xl text-white font-bold" style={{ fontFamily: 'var(--font-heading)' }}>
-              {shortlistedTeams.length}
-            </p>
-            <p className="text-sm text-white opacity-70" style={{ fontFamily: 'var(--font-body)' }}>
-              Teams Selected
-            </p>
-          </motion.div>
-
-          <motion.div
-            variants={statVariants}
-            className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.1)] rounded-[16px] p-4 sm:p-6 border border-[rgba(255,255,255,0.15)] text-center"
-          >
-            <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[rgba(0,255,136,0.2)] border border-[#00FF88] mx-auto mb-3">
-              <Users className="w-5 h-5 sm:w-6 sm:h-6 text-[#00FF88]" />
-            </div>
-            <p className="text-3xl sm:text-4xl text-white font-bold" style={{ fontFamily: 'var(--font-heading)' }}>
-              {totalParticipants}
-            </p>
-            <p className="text-sm text-white opacity-70" style={{ fontFamily: 'var(--font-body)' }}>
-              Participants
-            </p>
-          </motion.div>
+          {[
+            { Icon: Trophy, value: shortlistedTeams.length, label: "Teams Selected" },
+            { Icon: Users, value: totalParticipants, label: "Participants" },
+          ].map(({ Icon, value, label }) => (
+            <motion.div
+              key={label}
+              variants={itemVariants}
+              className="relative overflow-hidden rounded-lg bg-surface-1 border border-[var(--border-soft)] p-5 sm:p-6 text-center"
+            >
+<div className="relative">
+                <div className="inline-flex w-10 h-10 items-center justify-center rounded-md bg-brand-soft border border-brand/35 mx-auto mb-3">
+                  <Icon className="w-4 h-4 text-brand" />
+                </div>
+                <p className="font-mono text-[28px] sm:text-[34px] font-bold text-brand tabular-nums leading-none mb-1.5">
+                  {value}
+                </p>
+                <p className="font-mono text-[10.5px] text-ink-muted uppercase tracking-[0.2em]">
+                  {label}
+                </p>
+              </div>
+            </motion.div>
+          ))}
         </motion.div>
 
-        {/* Search Bar */}
+        {/* Search */}
         <motion.div
-          className="max-w-md mx-auto mb-8 sm:mb-12"
-          initial={{ opacity: 0, y: 20 }}
+          className="max-w-md mx-auto mb-8 sm:mb-10"
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
         >
-          <div className="relative bg-[rgba(138,138,138,0.15)] border border-[rgba(255,255,255,0.2)] rounded-[15px] overflow-hidden">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-              <Search className="w-5 h-5 text-white/50" />
-            </div>
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
             <input
               type="text"
-              placeholder="Search teams..."
+              placeholder="Search teams by name or code…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-transparent text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#00FF88]/50 transition-all"
-              style={{ fontFamily: 'var(--font-body)' }}
+              className="w-full pl-10 pr-4 py-2.5 rounded-md bg-surface-inset border border-[var(--border-soft)] hover:border-[var(--border-default)] focus:border-brand focus:shadow-[0_0_0_3px_var(--brand-soft)] focus:outline-none text-ink text-[14px] font-body placeholder:text-ink-disabled transition-[border-color,box-shadow]"
             />
           </div>
         </motion.div>
 
         {/* Teams Grid */}
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {filteredTeams.map((team, index) => {
             const initials = getTeamInitials(team.teamName);
-            
             return (
-              <motion.div
-                key={team.teamCode}
-                variants={itemVariants}
-                whileHover={{ 
-                  y: -8,
-                  transition: { duration: 0.2 }
-                }}
-                className="group relative"
-              >
-                {/* Card */}
-                <div 
-                  className="relative overflow-hidden rounded-[20px] p-[1px] transition-all duration-300"
-                  style={{
-                    background: `linear-gradient(135deg, ${accentColor.border}, transparent 50%, ${accentColor.border})`,
-                  }}
-                >
-                  {/* Inner card */}
-                  <div className="relative bg-[#1a1a1a] rounded-[19px] p-5 h-full overflow-hidden">
-                    {/* Glow effect on hover */}
-                    <div 
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                      style={{
-                        background: `radial-gradient(circle at 50% 0%, ${accentColor.glow}, transparent 70%)`,
-                      }}
-                    />
-                    
-                    {/* Rank number */}
-                    <div className="absolute top-3 right-3 text-[10px] text-white/20 font-mono">
-                      #{String(index + 1).padStart(2, '0')}
+              <motion.div key={team.teamCode} variants={itemVariants} className="group relative">
+                <div className="relative rounded-lg overflow-hidden bg-surface-1 border border-[var(--border-soft)] p-4 transition-[border-color,background] duration-200 hover:border-brand/45 hover:bg-surface-2">
+<div className="relative flex flex-col gap-3.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <span
+                        className="w-10 h-10 shrink-0 rounded-md inline-flex items-center justify-center font-mono text-[13px] font-bold text-brand-ink bg-brand"
+                        style={{ boxShadow: "0 0 16px rgba(0,255,136,0.32)" }}
+                      >
+                        {initials}
+                      </span>
+                      <span className="font-mono text-[10.5px] text-ink-subtle uppercase tracking-[0.16em]">
+                        #{String(index + 1).padStart(2, "0")}
+                      </span>
                     </div>
 
-                    {/* Content */}
-                    <div className="relative z-10 flex flex-col gap-4">
-                      {/* Avatar/Initials */}
+                    <div className="min-w-0">
+                      <h3
+                        className="text-[14px] text-ink font-semibold font-body truncate"
+                        title={team.teamName}
+                      >
+                        {team.teamName}
+                      </h3>
+                      <p
+                        className="text-[12px] text-ink-muted font-body truncate mt-0.5"
+                        title={team.leaderName}
+                      >
+                        Led by {team.leaderName}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
                       <div className="flex items-center gap-3">
-                        <div 
-                          className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold text-white shrink-0 transition-transform duration-300 group-hover:scale-110"
-                          style={{ 
-                            background: `linear-gradient(135deg, ${accentColor.bg}, ${accentColor.border})`,
-                            boxShadow: `0 4px 20px ${accentColor.glow}`
-                          }}
-                        >
-                          {initials}
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          {/* Team Name */}
-                          <h3 
-                            className="text-white font-semibold text-base leading-tight truncate group-hover:text-white/90 transition-colors"
-                            style={{ fontFamily: 'var(--font-body)' }}
-                            title={team.teamName}
-                          >
-                            {team.teamName}
-                          </h3>
-                          
-                          {/* Leader Name */}
-                          <p 
-                            className="text-xs text-white/50 mt-0.5 truncate"
-                            style={{ fontFamily: 'var(--font-body)' }}
-                            title={team.leaderName}
-                          >
-                            Led by {team.leaderName}
-                          </p>
-                        </div>
+                        <span className="font-mono text-[10.5px] text-brand tracking-[0.16em]">
+                          {team.teamCode}
+                        </span>
+                        <span className="flex items-center gap-1 font-mono text-[10.5px] text-ink-muted">
+                          <Users className="w-3 h-3" />
+                          {team.memberCount}
+                        </span>
                       </div>
-
-                      {/* Bottom row */}
-                      <div className="flex items-center justify-between">
-                        {/* Team Code & Member count */}
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-white/40 font-mono">
-                            {team.teamCode}
-                          </span>
-                          <div className="flex items-center gap-1.5">
-                            <Users className="w-3.5 h-3.5 text-white/40" />
-                            <span className="text-xs text-white/60" style={{ fontFamily: 'var(--font-body)' }}>
-                              {team.memberCount}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {/* Sparkle indicator */}
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <Sparkles className="w-3.5 h-3.5 text-[#00FF88]" />
-                          <span className="text-[10px] text-[#00FF88] uppercase tracking-wider font-medium">
-                            Finalist
-                          </span>
-                        </div>
-                      </div>
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 inline-flex items-center gap-1 font-mono text-[10px] text-brand uppercase tracking-[0.18em]">
+                        <Sparkles className="w-3 h-3" />
+                        Finalist
+                      </span>
                     </div>
-
-                    {/* Decorative corner accent */}
-                    <div 
-                      className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full opacity-10 group-hover:opacity-20 transition-opacity duration-300"
-                      style={{ background: accentColor.border }}
-                    />
                   </div>
                 </div>
               </motion.div>
@@ -329,44 +193,42 @@ export default function ShortlistedPage() {
           })}
         </motion.div>
 
-        {/* No results message */}
         {filteredTeams.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-12"
+            className="text-center py-14"
           >
-            <p className="text-white opacity-70 text-lg" style={{ fontFamily: 'var(--font-body)' }}>
-              No teams found matching &quot;{searchQuery}&quot;
+            <p className="text-ink-secondary text-[14px] font-body">
+              No teams found matching &ldquo;{searchQuery}&rdquo;
             </p>
           </motion.div>
         )}
 
-        {/* Footer Section */}
+        {/* Footer */}
         <motion.div
-          className="mt-16 sm:mt-20 text-center"
-          initial={{ opacity: 0, y: 20 }}
+          className="mt-14 sm:mt-20"
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <div className="backdrop-blur-[2.5px] backdrop-filter bg-[rgba(138,138,138,0.1)] rounded-[20px] p-6 sm:p-8 border border-[rgba(255,255,255,0.15)] max-w-2xl mx-auto">
-            <h2 
-              className="text-2xl sm:text-3xl text-white mb-4"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Best of Luck!
-            </h2>
-            <p 
-              className="text-white opacity-80 mb-6"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              To all the shortlisted teams, we wish you the very best for the finals. Don't forget to finish your RSVP before the deadline.
-              May the best solution win!
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={() => router.push("/dashboard")} variant="primary">
-                Go to Dashboard
-              </Button>
+          <div className="relative overflow-hidden rounded-lg bg-surface-1 border border-[var(--border-soft)] p-6 sm:p-8 max-w-2xl mx-auto text-center">
+<div className="relative">
+              <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand mb-2">
+                · End Transmission ·
+              </div>
+              <h2 className="font-heading text-[24px] sm:text-[30px] font-bold text-ink mb-3 tracking-tight">
+                Best of Luck
+              </h2>
+              <p className="text-[14px] text-ink-secondary font-body mb-6 leading-relaxed">
+                To all the shortlisted teams. finish your RSVP before the deadline.
+                May the best solution win.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button onClick={() => router.push("/dashboard")} variant="primary">
+                  Go to Dashboard
+                </Button>
+              </div>
             </div>
           </div>
         </motion.div>

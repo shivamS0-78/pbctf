@@ -2,13 +2,23 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/registration/button";
-import { ChevronLeft, ThumbsUp, ThumbsDown, MessageSquare, User } from "lucide-react";
-import { useAuth } from '@/hooks/use-auth';
+import {
+    ChevronLeft,
+    ThumbsUp,
+    ThumbsDown,
+    MessageSquare,
+    User,
+    Shield,
+    Vote,
+    Github,
+    Linkedin,
+    Flag,
+} from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import { API_ENDPOINTS } from "@/lib/api-config";
 import { StickyAlert } from "@/components/registration/sticky-alert";
 import { Spinner } from "@/components/ui/spinner";
 import { FormSection } from "@/components/registration/form-section";
-import { Github,Linkedin,FileEdit } from "lucide-react";
 import { UserProfileModal, UserDetails } from "./user-profile-modal";
 
 interface TeamDetailViewProps {
@@ -18,8 +28,35 @@ interface TeamDetailViewProps {
     onVoteSuccess: (teamCode: string, vote: any) => void;
 }
 
+const TIER_OPTIONS = [
+    {
+        value: "strongly_accepted",
+        label: "Strongly accept",
+        hint: "Top-tier work",
+        activeCls: "border-brand/55 text-brand bg-brand-soft",
+    },
+    {
+        value: "accepted",
+        label: "Accept",
+        hint: "Solid submission",
+        activeCls: "border-emerald-500/55 text-emerald-300 bg-emerald-500/10",
+    },
+    {
+        value: "borderline",
+        label: "Borderline",
+        hint: "Mixed signals",
+        activeCls: "border-[var(--warning)]/55 text-[var(--warning)] bg-[var(--warning-soft)]",
+    },
+    {
+        value: "rejected",
+        label: "Reject",
+        hint: "Below the bar",
+        activeCls: "border-[var(--danger)]/55 text-[var(--danger)] bg-[var(--danger-soft)]",
+    },
+];
+
 export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSuccess }: TeamDetailViewProps) {
-    const { getToken, user } = useAuth();
+    const { getToken } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [tier, setTier] = useState<string>(team.myEvaluation?.tier || "");
     const [comment, setComment] = useState<string>(team.myEvaluation?.comment || "");
@@ -50,7 +87,7 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
         try {
             const token = await getToken();
             const response = await fetch(`${API_ENDPOINTS.users}/${uid}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             const data = await response.json();
             if (response.ok && data.user) {
@@ -77,16 +114,16 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
         try {
             const token = await getToken();
             const response = await fetch(API_ENDPOINTS.evaluatorEvaluate, {
-                method: 'PUT',
+                method: "PUT",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     teamCode: team.teamCode,
                     tier,
-                    comment
-                })
+                    comment,
+                }),
             });
 
             const data = await response.json();
@@ -108,17 +145,17 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
         let d = team.downvoteCount || 0;
 
         // Subtract original vote if it existed
-        if (team.myVote?.vote === 'up') u--;
-        if (team.myVote?.vote === 'down') d--;
+        if (team.myVote?.vote === "up") u--;
+        if (team.myVote?.vote === "down") d--;
 
         // Add current local vote
-        if (localVote?.vote === 'up') u++;
-        if (localVote?.vote === 'down') d++;
+        if (localVote?.vote === "up") u++;
+        if (localVote?.vote === "down") d++;
 
         return { displayUpvotes: Math.max(0, u), displayDownvotes: Math.max(0, d) };
     }, [team.upvoteCount, team.downvoteCount, team.myVote, localVote?.vote]);
 
-    const handleVoteSubmit = async (voteType: 'up' | 'down', isCommentUpdate = false) => {
+    const handleVoteSubmit = async (voteType: "up" | "down", isCommentUpdate = false) => {
         // Optimistic Update
         const previousVote = localVote;
         let newVoteState = null;
@@ -131,7 +168,7 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
                 newVoteState = null;
             } else {
                 // Switching or New Vote
-                newVoteState = { vote: voteType, comment: voteComment || '' };
+                newVoteState = { vote: voteType, comment: voteComment || "" };
             }
         }
 
@@ -142,17 +179,17 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
         try {
             const token = await getToken();
             const response = await fetch(API_ENDPOINTS.evaluatorVote, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     teamCode: team.teamCode,
                     vote: voteType,
                     comment: voteComment,
-                    skipToggle: isCommentUpdate
-                })
+                    skipToggle: isCommentUpdate,
+                }),
             });
 
             const data = await response.json();
@@ -171,6 +208,10 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
         }
     };
 
+    const hasEvaluation = !!team.myEvaluation?.tier;
+    const totalEvaluations = team.evaluations?.length || 0;
+    const totalVoteComments = (team.votes || []).filter((v: any) => v.comment).length;
+
     return (
         <div className="flex flex-col gap-6 h-full">
             <UserProfileModal
@@ -181,188 +222,200 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
                 openResumeInNewTab
             />
 
-            <div className="flex items-center gap-4">
-                <Button variant="secondary" onClick={onBack}>
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Back to Dashboard
+            {/* Header bar */}
+            <div className="flex flex-col gap-3">
+                <Button variant="secondary" onClick={onBack} size="sm">
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    Back to console
                 </Button>
-                <div>
-                    <h2 className="text-xl font-bold text-white text-[24px]" style={{ fontFamily: 'var(--font-heading)' }}>{team.teamName}</h2>
+                <div className="flex flex-col gap-1.5">
+                    <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand opacity-80">
+                        {isAssigned ? "// OFFICIAL_REVIEW" : "// COMMUNITY_REVIEW"} &middot; {team.teamCode}
+                    </div>
+                    <h1 className="font-heading text-[28px] sm:text-[32px] font-bold text-ink tracking-tight leading-[1.05]">
+                        {team.teamName}
+                    </h1>
                 </div>
             </div>
 
             {error && <StickyAlert type="error" message={error} onClose={() => setError(null)} />}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Column: Voting / Evaluation */}
                 <div className="lg:col-span-2 flex flex-col gap-6">
-                    {/* Submission Artifacts */}
-                    {/* <FormSection title="Submission Artifacts">
-                        <div className="flex flex-col gap-4">
-                            <div className="flex gap-4 flex-wrap">
-                                {team.videoURL && (
-                                    <a
-                                        href={team.videoURL}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 px-4 py-3 bg-red-600/10 text-red-400 border border-red-600/20 rounded-lg hover:bg-red-600/20 transition-colors"
-                                        style={{ fontFamily: 'var(--font-body)' }}
-                                    >
-                                        <Youtube className="w-5 h-5" />
-                                        Watch Video Pitch
-                                        <ExternalLink className="w-3 h-3 ml-1 opacity-50" />
-                                    </a>
-                                )}
-                                {team.submissionPDF ? (
-                                    <a
-                                        href={team.submissionPDF}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 px-4 py-3 bg-white/5 text-white border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
-                                        style={{ fontFamily: 'var(--font-body)' }}
-                                    >
-                                        <FileText className="w-5 h-5" />
-                                        View Submission PDF
-                                        <ExternalLink className="w-3 h-3 ml-1 opacity-50" />
-                                    </a>
-                                ) : (
-                                    <div className="flex items-center gap-2 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white/40 cursor-not-allowed">
-                                        <FileText className="w-5 h-5 opacity-50" />
-                                        No PDF Submission
-                                    </div>
-                                )}
-                                {team.anyOtherLink && (
-                                    <a
-                                        href={team.anyOtherLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 px-4 py-3 bg-blue-600/10 text-blue-400 border border-blue-600/20 rounded-lg hover:bg-blue-600/20 transition-colors"
-                                        style={{ fontFamily: 'var(--font-body)' }}
-                                    >
-                                        <ExternalLink className="w-5 h-5" />
-                                        Additional Link
-                                    </a>
-                                )}
-                            </div>
-                        </div>
-                    </FormSection> */}
-
-                    {/* Official Evaluation / Community Vote Form*/}
-                    <FormSection title={isAssigned ? "Official Evaluation" : "Community Vote"}>
+                    <FormSection
+                        title={isAssigned ? "Official evaluation" : "Cast community vote"}
+                        eyebrow={isAssigned ? "// VERDICT" : "// SIGNAL"}
+                        status={
+                            isAssigned ? (
+                                <span
+                                    className={[
+                                        "inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.18em] px-2 py-1 rounded-sm border",
+                                        hasEvaluation
+                                            ? "bg-brand-soft border-brand/45 text-brand"
+                                            : "bg-[var(--warning-soft)] border-[var(--warning)]/40 text-[var(--warning)]",
+                                    ].join(" ")}
+                                >
+                                    <Shield className="w-3 h-3" />
+                                    {hasEvaluation ? "logged" : "pending"}
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.18em] px-2 py-1 rounded-sm border bg-surface-2 border-[var(--border-soft)] text-ink-muted">
+                                    <Vote className="w-3 h-3" />
+                                    {localVote ? `voted ${localVote.vote}` : "no vote"}
+                                </span>
+                            )
+                        }
+                    >
                         <div className="flex flex-col gap-6">
                             {isAssigned ? (
                                 <>
-                                    <div className="flex flex-col gap-3">
-                                        <label className="text-sm font-medium text-white/80" style={{ fontFamily: 'var(--font-body)' }}>Decision Tier</label>
-                                        <div className="grid grid-cols-1 gap-2">
-                                            {[
-                                                { value: 'strongly_accepted', label: 'Strongly Accepted', color: 'border-[rgba(0,255,136,0.5)] text-[#00FF88] bg-[rgba(0,255,136,0.1)]' },
-                                                { value: 'accepted', label: 'Accepted', color: 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10' },
-                                                { value: 'borderline', label: 'Borderline', color: 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10' },
-                                                { value: 'rejected', label: 'Rejected', color: 'border-red-500/50 text-red-400 bg-red-500/10' }
-                                            ].map((option) => (
-                                                <button
-                                                    key={option.value}
-                                                    onClick={() => setTier(option.value)}
-                                                    className={`px-4 py-3 rounded-lg border text-left transition-all ${tier === option.value
-                                                        ? option.color + ' ring-1 ring-offset-1 ring-offset-[#1a1a1a]'
-                                                        : 'border-white/10 text-white/50 hover:border-white/30 hover:bg-white/5'
-                                                        }`}
-                                                    style={{ fontFamily: 'var(--font-body)' }}
-                                                >
-                                                    {option.label}
-                                                </button>
-                                            ))}
+                                    <div className="flex flex-col gap-2.5">
+                                        <label className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-brand">
+                                            &gt; decision_tier
+                                        </label>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            {TIER_OPTIONS.map((option) => {
+                                                const isActive = tier === option.value;
+                                                return (
+                                                    <button
+                                                        key={option.value}
+                                                        onClick={() => setTier(option.value)}
+                                                        className={[
+                                                            "px-3 py-3 rounded-md border text-left transition-all flex flex-col gap-0.5",
+                                                            isActive
+                                                                ? `${option.activeCls} shadow-glow-sm`
+                                                                : "border-[var(--border-soft)] text-ink-secondary hover:border-[var(--border-default)] hover:bg-surface-2",
+                                                        ].join(" ")}
+                                                    >
+                                                        <span className="text-[13px] font-medium">{option.label}</span>
+                                                        <span className="font-mono text-[10.5px] opacity-70">
+                                                            &gt; {option.hint}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-sm font-medium text-white/80" style={{ fontFamily: 'var(--font-body)' }}>Comments</label>
+                                        <label className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-brand">
+                                            &gt; reviewer_notes
+                                        </label>
                                         <textarea
                                             value={comment}
                                             onChange={(e) => setComment(e.target.value)}
-                                            placeholder="Add your evaluation notes..."
-                                            className="w-full h-32 bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] rounded-[12px] p-3 text-white placeholder:text-[rgba(255,255,255,0.3)] resize-none focus:outline-none focus:border-[#00FF88] focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200"
-                                            style={{ fontFamily: 'var(--font-body)' }}
+                                            placeholder="Why this tier? Strengths, weaknesses, risk flags..."
+                                            className="w-full h-32 bg-surface-inset border border-[var(--border-soft)] rounded-md p-3 text-ink placeholder:text-ink-disabled resize-none focus:outline-none focus:border-brand focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200 font-mono text-[13px]"
                                         />
+                                        <span className="font-mono text-[10.5px] text-ink-muted">
+                                            &gt; visible only to the review panel
+                                        </span>
                                     </div>
                                     <Button
                                         variant="primary"
                                         onClick={handleEvaluationSubmit}
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || !tier}
                                     >
-                                        {isSubmitting ? <Spinner size="sm" /> : "Submit Evaluation"}
+                                        {isSubmitting ? (
+                                            <>
+                                                <Spinner size="sm" className="mr-2" />
+                                                Logging verdict...
+                                            </>
+                                        ) : hasEvaluation ? (
+                                            "Update verdict"
+                                        ) : (
+                                            "Log verdict"
+                                        )}
                                     </Button>
                                 </>
                             ) : (
                                 <>
-                                    <div className="flex gap-4">
+                                    <div className="flex gap-2 sm:gap-3">
                                         <button
-                                            onClick={() => handleVoteSubmit('up')}
+                                            onClick={() => handleVoteSubmit("up")}
                                             disabled={isSubmitting}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border transition-all ${localVote?.vote === 'up'
-                                                ? 'bg-[rgba(0,255,136,0.2)] border-[#00FF88] text-[#00FF88]'
-                                                : 'bg-white/5 border-white/10 text-white/60 hover:bg-[rgba(0,255,136,0.1)] hover:text-[#00FF88] hover:border-[rgba(0,255,136,0.3)]'
-                                                }`}
-                                            style={{ fontFamily: 'var(--font-body)' }}
+                                            className={[
+                                                "flex-1 flex items-center justify-center gap-2 py-4 rounded-md border transition-all",
+                                                localVote?.vote === "up"
+                                                    ? "bg-brand-soft border-brand text-brand shadow-glow-sm"
+                                                    : "bg-surface-2 border-[var(--border-soft)] text-ink-muted hover:bg-brand-soft hover:text-brand hover:border-brand/40",
+                                            ].join(" ")}
                                         >
-                                            <ThumbsUp className="w-6 h-6" />
-                                            Upvote
+                                            <ThumbsUp className="w-5 h-5" />
+                                            <span className="font-mono text-[12px] uppercase tracking-[0.16em]">
+                                                Upvote
+                                            </span>
                                         </button>
                                         <button
-                                            onClick={() => handleVoteSubmit('down')}
+                                            onClick={() => handleVoteSubmit("down")}
                                             disabled={isSubmitting}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border transition-all ${localVote?.vote === 'down'
-                                                ? 'bg-red-500/20 border-red-500 text-red-400'
-                                                : 'bg-white/5 border-white/10 text-white/60 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30'
-                                                }`}
-                                            style={{ fontFamily: 'var(--font-body)' }}
+                                            className={[
+                                                "flex-1 flex items-center justify-center gap-2 py-4 rounded-md border transition-all",
+                                                localVote?.vote === "down"
+                                                    ? "bg-[var(--danger-soft)] border-[var(--danger)] text-[var(--danger)]"
+                                                    : "bg-surface-2 border-[var(--border-soft)] text-ink-muted hover:bg-[var(--danger-soft)] hover:text-[var(--danger)] hover:border-[var(--danger)]/40",
+                                            ].join(" ")}
                                         >
-                                            <ThumbsDown className="w-6 h-6" />
-                                            Downvote
+                                            <ThumbsDown className="w-5 h-5" />
+                                            <span className="font-mono text-[12px] uppercase tracking-[0.16em]">
+                                                Downvote
+                                            </span>
                                         </button>
                                     </div>
 
-                                    {/* Separate Comment Section */}
-                                    <div className="flex flex-col gap-3 pt-4 border-t border-white/10">
-                                        <label className="text-sm font-medium text-white/80 flex items-center gap-2" style={{ fontFamily: 'var(--font-body)' }}>
-                                            <MessageSquare className="w-4 h-4" />
-                                            Add Comment (Optional)
+                                    {/* Tally */}
+                                    <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-surface-2 border border-[var(--border-soft)]">
+                                        <span className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-ink-muted">
+                                            &gt; live tally
+                                        </span>
+                                        <div className="flex items-center gap-3 select-none">
+                                            <div className="flex items-center gap-1.5 text-[12px] text-brand font-medium font-mono">
+                                                <ThumbsUp className="w-3.5 h-3.5" />
+                                                {displayUpvotes}
+                                            </div>
+                                            <div className="w-px h-3 bg-[var(--border-soft)]" />
+                                            <div className="flex items-center gap-1.5 text-[12px] text-[var(--danger)] font-medium font-mono">
+                                                <ThumbsDown className="w-3.5 h-3.5" />
+                                                {displayDownvotes}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Comment block */}
+                                    <div className="flex flex-col gap-2 pt-3">
+                                        <label className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-brand flex items-center gap-1.5">
+                                            <MessageSquare className="w-3 h-3" />
+                                            &gt; optional_comment
                                         </label>
                                         <div className="relative">
                                             <textarea
                                                 value={voteComment}
                                                 onChange={(e) => setVoteComment(e.target.value)}
-                                                placeholder="Share your thoughts..."
-                                                className="w-full h-24 bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] rounded-[12px] p-3 text-white placeholder:text-[rgba(255,255,255,0.3)] resize-none focus:outline-none focus:border-[#00FF88] focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200 mb-2"
-                                                style={{ fontFamily: 'var(--font-body)' }}
+                                                placeholder="Share what you saw, what worked, what didn't..."
+                                                className="w-full h-24 bg-surface-inset border border-[var(--border-soft)] rounded-md p-3 text-ink placeholder:text-ink-disabled resize-none focus:outline-none focus:border-brand focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200 font-mono text-[13px]"
                                                 disabled={!localVote}
                                             />
                                             {!localVote && (
-                                                <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] rounded-lg flex items-center justify-center border border-white/5">
-                                                    <p className="text-sm text-white/60 flex items-center gap-2">
-                                                        <ThumbsUp className="w-3 h-3" /> Vote to comment
+                                                <div className="absolute inset-0 bg-void/60 backdrop-blur-[1px] rounded-md flex items-center justify-center border border-[var(--border-soft)]">
+                                                    <p className="font-mono text-[11px] text-ink-muted flex items-center gap-2">
+                                                        <ThumbsUp className="w-3 h-3" /> cast a vote to comment
                                                     </p>
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex items-center justify-between mt-2">
-                                            <div className="flex items-center gap-3 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 select-none">
-                                                <div className="flex items-center gap-1.5 text-xs text-[#00FF88] font-medium">
-                                                    <ThumbsUp className="w-3.5 h-3.5" />
-                                                    {displayUpvotes}
-                                                </div>
-                                                <div className="w-[1px] h-3 bg-white/10" />
-                                                <div className="flex items-center gap-1.5 text-xs text-red-400 font-medium">
-                                                    <ThumbsDown className="w-3.5 h-3.5" />
-                                                    {displayDownvotes}
-                                                </div>
-                                            </div>
+                                        <div className="flex items-center justify-end">
                                             <Button
                                                 variant="secondary"
-                                                onClick={() => handleVoteSubmit(localVote?.vote as 'up' | 'down', true)} // true = isCommentUpdate
-                                                disabled={isSubmitting || !localVote || !voteComment.trim() || voteComment === localVote?.comment}
+                                                size="sm"
+                                                onClick={() => handleVoteSubmit(localVote?.vote as "up" | "down", true)}
+                                                disabled={
+                                                    isSubmitting ||
+                                                    !localVote ||
+                                                    !voteComment.trim() ||
+                                                    voteComment === localVote?.comment
+                                                }
                                             >
-                                                {isSubmitting ? <Spinner size="sm" /> : "Post Comment"}
+                                                {isSubmitting ? <Spinner size="sm" /> : "Post comment"}
                                             </Button>
                                         </div>
                                     </div>
@@ -374,145 +427,212 @@ export function TeamDetailView({ team, onBack, onEvaluationSuccess, onVoteSucces
 
                 {/* Right Column: Team Members*/}
                 <div className="flex flex-col h-full min-h-[350px]">
-  <FormSection title="Team Members" className="h-full">
-    {/* 2. Added 'flex-1 justify-stretch' so the inner container forces its children to expand */}
-    <div className="flex flex-col h-full gap-4 flex-1 justify-stretch pb-2">
-      
-      {/* Render Actual Members */}
-      {team.teamMembers?.map((member: any) => (
-        <div
-          key={member.uid}
-          onClick={() => handleMemberClick(member.uid)}
-          // 3. Changed h-[72px] back to flex-1 to distribute height equally
-          className="flex-1 min-h-[72px] w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-white/20 cursor-pointer transition-all duration-200 group"
-        >
-          {/* Left Side: Identity & Institution Data */}
-          <div className="flex items-center gap-4 max-w-[70%]">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center border border-white/10 group-hover:border-white/20 transition-colors flex-shrink-0">
-              <span className="text-sm font-bold text-white/70 group-hover:text-white">
-                {member.name.charAt(0)}
-              </span>
-            </div>
-            <div className="flex flex-col justify-center">
-              <span className="text-sm font-medium text-white group-hover:text-[#00FF88] transition-colors line-clamp-1">
-                {member.name}
-              </span>
-              <span className="text-xs text-white/50 mt-0.5 break-words">
-                {member.organisation}
-              </span>
-            </div>
-          </div>
+                    <FormSection
+                        title="Operators"
+                        eyebrow="// ROSTER"
+                        className="h-full"
+                    >
+                        <div className="flex flex-col h-full gap-3 flex-1 justify-stretch pb-2">
+                            {/* Render Actual Members */}
+                            {team.teamMembers?.map((member: any) => (
+                                <div
+                                    key={member.uid}
+                                    onClick={() => handleMemberClick(member.uid)}
+                                    className="flex-1 min-h-[72px] w-full flex items-center justify-between gap-3 p-3 bg-surface-2 border border-[var(--border-soft)] rounded-md hover:border-brand/40 hover:bg-surface-1 cursor-pointer transition-all duration-200 group"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-9 h-9 rounded-full bg-surface-inset flex items-center justify-center border border-brand/30 group-hover:border-brand/60 transition-colors flex-shrink-0">
+                                            <span className="text-[13px] font-semibold text-brand">
+                                                {member.name.charAt(0).toUpperCase()}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[13px] font-medium text-ink group-hover:text-brand transition-colors line-clamp-1">
+                                                {member.name}
+                                            </span>
+                                            <span className="text-[11.5px] text-ink-muted line-clamp-1">
+                                                {member.organisation || "-"}
+                                            </span>
+                                        </div>
+                                    </div>
 
-          {/* Right Side: Stacked Layout (Badge on top, Actions on bottom right) */}
-          <div className="flex flex-col items-end gap-3 justify-between h-full py-0.5">
-            <span
-              className={`text-[10px] uppercase px-2.5 py-1 rounded-full border ${
-                member.role === 'Team Lead'
-                  ? 'bg-[#00FF88]/10 text-[#00FF88] border-[#00FF88]/20'
-                  : 'bg-white/5 text-white/40 border-white/5'
-              }`}
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              {member.role === 'Team Lead' ? 'Lead' : 'Member'}
-            </span>
-            
-            {/* Action Bar: Clustered links in the bottom right corner */}
-            <div className="flex items-center gap-3 z-10">
-              {member.github_link && (
-                <a
-                  href={member.github_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white opacity-40 hover:opacity-100 transition-opacity"
-                  aria-label="GitHub Profile"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Github className="w-4 h-4" />
-                </a>
-              )}
+                                    <div className="flex flex-col items-end gap-2 shrink-0">
+                                        <div className="flex items-center gap-1.5">
+                                            <span
+                                                className={[
+                                                    "inline-flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm border",
+                                                    member.hasSolvedChallenge
+                                                        ? "bg-brand-soft text-brand border-brand/45"
+                                                        : "bg-white/[0.03] text-ink-muted border-[var(--border-soft)]",
+                                                ].join(" ")}
+                                                title={
+                                                    member.hasSolvedChallenge
+                                                        ? "Captured the warm-up flag"
+                                                        : "Hasn't captured the warm-up flag"
+                                                }
+                                            >
+                                                <Flag className="w-2.5 h-2.5" />
+                                                {member.hasSolvedChallenge ? "warm-up ✓" : "no warm-up"}
+                                            </span>
+                                            <span
+                                                className={[
+                                                    "font-mono text-[9.5px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-sm border",
+                                                    member.role === "Team Lead"
+                                                        ? "bg-brand-soft text-brand border-brand/45"
+                                                        : "bg-surface-1 text-ink-secondary border-[var(--border-soft)]",
+                                                ].join(" ")}
+                                            >
+                                                {member.role === "Team Lead" ? "lead" : "member"}
+                                            </span>
+                                        </div>
 
-              {member.linkedin_link && (
-                <a
-                  href={member.linkedin_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white opacity-40 hover:opacity-100 transition-opacity"
-                  aria-label="LinkedIn Profile"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Linkedin className="w-4 h-4" />
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-      ))}
+                                        <div className="flex items-center gap-2.5 z-10">
+                                            {member.github_link && (
+                                                <a
+                                                    href={member.github_link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-ink-muted hover:text-brand transition-colors"
+                                                    aria-label="GitHub profile"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <Github className="w-3.5 h-3.5" />
+                                                </a>
+                                            )}
 
-      {/* Render Empty Slots */}
-      {Array.from({ length: Math.max(0, 2 - (team.teamMembers?.length || 0)) }).map((_, i) => (
-        <div
-          key={`empty-${i}`}
-          className="flex-1 min-h-[72px] w-full flex items-center justify-between p-4 border border-dashed border-white/10 rounded-xl bg-transparent opacity-50 select-none"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full border border-dashed border-white/20 flex items-center justify-center">
-              <User className="w-4 h-4 text-white/20" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <span className="text-sm font-medium text-white/30" style={{ fontFamily: 'var(--font-body)' }}>
-                Empty Slot
-              </span>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  </FormSection>
-</div>
+                                            {member.linkedin_link && (
+                                                <a
+                                                    href={member.linkedin_link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-ink-muted hover:text-brand transition-colors"
+                                                    aria-label="LinkedIn profile"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <Linkedin className="w-3.5 h-3.5" />
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Render Empty Slots */}
+                            {Array.from({ length: Math.max(0, 2 - (team.teamMembers?.length || 0)) }).map(
+                                (_, i) => (
+                                    <div
+                                        key={`empty-${i}`}
+                                        className="flex-1 min-h-[72px] w-full flex items-center gap-3 p-3 border border-dashed border-[var(--border-soft)] rounded-md bg-surface-1/40 select-none"
+                                    >
+                                        <div className="w-9 h-9 rounded-full border border-dashed border-[var(--border-soft)] flex items-center justify-center shrink-0">
+                                            <User className="w-4 h-4 text-ink-disabled" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[13px] text-ink-subtle">Open slot</span>
+                                            <span className="font-mono text-[10.5px] text-ink-muted">
+                                                &gt; unfilled
+                                            </span>
+                                        </div>
+                                    </div>
+                                ),
+                            )}
+                        </div>
+                    </FormSection>
+                </div>
             </div>
 
             {/* Community Activity Feed */}
-            <FormSection title="Community Feedback">
-                {(!team.evaluations?.length && !team.votes?.length) && (
-                    <p className="text-sm text-white/40 italic" style={{ fontFamily: 'var(--font-body)' }}>No feedback yet.</p>
-                )}
-                <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                    {/* Official Evaluations */}
-                    {team.evaluations?.map((ev: any, i: number) => (
-                        <div key={`ev-${i}`} className="bg-white/5 rounded-lg p-3 border border-white/5">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="font-medium text-white text-sm" style={{ fontFamily: 'var(--font-body)' }}>{ev.name || "Evaluator"}</span>
-                                <span className="text-[10px] uppercase bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20">
-                                    Official
-                                </span>
-                            </div>
-                            <div className="mb-2">
-                                <span className={`text-xs px-2 py-0.5 rounded border ${ev.tier === 'strongly_accepted' ? 'bg-[rgba(0,255,136,0.1)] border-[rgba(0,255,136,0.2)] text-[#00FF88]' :
-                                    ev.tier === 'accepted' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                                        ev.tier === 'borderline' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
-                                            'bg-red-500/10 border-red-500/20 text-red-400'
-                                    }`} style={{ fontFamily: 'var(--font-body)' }}>
-                                    {ev.tier.replace('_', ' ')}
-                                </span>
-                            </div>
-                            {ev.comment && <p className="text-sm text-white/70" style={{ fontFamily: 'var(--font-body)' }}>{ev.comment}</p>}
-                        </div>
-                    ))}
-                    {/* Community Votes */}
-                    {team.votes?.map((v: any, i: number) => v.comment ? (
-                        <div key={`vt-${i}`} className="bg-white/5 rounded-lg p-3 border border-white/5">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="font-medium text-white/60 text-sm" style={{ fontFamily: 'var(--font-body)' }}>{v.name || "Community Member"}</span>
-                                {v.vote === 'up' ? (
-                                    <ThumbsUp className="w-3 h-3 text-[#00FF88]" />
-                                ) : (
-                                    <ThumbsDown className="w-3 h-3 text-red-400" />
+            <FormSection
+                title="Review feed"
+                eyebrow="// COMMUNITY_LOG"
+                status={
+                    <span className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-ink-muted">
+                        {totalEvaluations + totalVoteComments} entries
+                    </span>
+                }
+            >
+                {!team.evaluations?.length && !totalVoteComments ? (
+                    <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+                        <MessageSquare className="w-6 h-6 text-ink-muted" />
+                        <p className="text-[13px] text-ink-secondary">No reviews logged yet</p>
+                        <p className="font-mono text-[10.5px] text-ink-muted">
+                            &gt; be the first to cast a verdict
+                        </p>
+                    </div>
+                ) : (
+                    <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        {/* Official Evaluations */}
+                        {team.evaluations?.map((ev: any, i: number) => (
+                            <div
+                                key={`ev-${i}`}
+                                className="bg-surface-2 rounded-md p-3 border border-[var(--border-soft)]"
+                            >
+                                <div className="flex justify-between items-start gap-2 mb-2">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <Shield className="w-3.5 h-3.5 text-[var(--info)] shrink-0" />
+                                        <span className="font-medium text-ink text-[13px] truncate">
+                                            {ev.name || "Evaluator"}
+                                        </span>
+                                    </div>
+                                    <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm bg-[var(--info-soft)] text-[var(--info)] border border-[var(--info)]/35 shrink-0">
+                                        official
+                                    </span>
+                                </div>
+                                <div className="mb-2">
+                                    <span
+                                        className={[
+                                            "font-mono text-[10px] uppercase tracking-[0.16em] px-2 py-0.5 rounded-sm border",
+                                            ev.tier === "strongly_accepted"
+                                                ? "bg-brand-soft border-brand/45 text-brand"
+                                                : ev.tier === "accepted"
+                                                  ? "bg-emerald-500/10 border-emerald-500/35 text-emerald-300"
+                                                  : ev.tier === "borderline"
+                                                    ? "bg-[var(--warning-soft)] border-[var(--warning)]/40 text-[var(--warning)]"
+                                                    : "bg-[var(--danger-soft)] border-[var(--danger)]/40 text-[var(--danger)]",
+                                        ].join(" ")}
+                                    >
+                                        {ev.tier.replace("_", " ")}
+                                    </span>
+                                </div>
+                                {ev.comment && (
+                                    <p className="text-[12.5px] text-ink-secondary font-mono leading-relaxed">
+                                        {ev.comment}
+                                    </p>
                                 )}
                             </div>
-                            <p className="text-sm text-white/70" style={{ fontFamily: 'var(--font-body)' }}>{v.comment}</p>
-                        </div>
-                    ) : null)}
-                </div>
+                        ))}
+
+                        {/* Community Votes */}
+                        {team.votes?.map((v: any, i: number) =>
+                            v.comment ? (
+                                <div
+                                    key={`vt-${i}`}
+                                    className="bg-surface-2 rounded-md p-3 border border-[var(--border-soft)]"
+                                >
+                                    <div className="flex justify-between items-start gap-2 mb-2">
+                                        <span className="font-medium text-ink-secondary text-[13px] truncate">
+                                            {v.name || "Community member"}
+                                        </span>
+                                        {v.vote === "up" ? (
+                                            <span className="inline-flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm bg-brand-soft text-brand border border-brand/35 shrink-0">
+                                                <ThumbsUp className="w-3 h-3" />
+                                                up
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-sm bg-[var(--danger-soft)] text-[var(--danger)] border border-[var(--danger)]/35 shrink-0">
+                                                <ThumbsDown className="w-3 h-3" />
+                                                down
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-[12.5px] text-ink-secondary font-mono leading-relaxed">
+                                        {v.comment}
+                                    </p>
+                                </div>
+                            ) : null,
+                        )}
+                    </div>
+                )}
             </FormSection>
         </div>
     );

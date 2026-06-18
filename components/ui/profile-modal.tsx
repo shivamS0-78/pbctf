@@ -30,12 +30,14 @@ export default function ProfileModal({
 }: ProfileModalProps) {
   const [isDownloadingResume, setIsDownloadingResume] = useState(false);
 
-  // For admin dashboard: open resume in a new tab instead of forcing download.
-  // We proxy through our API to force `Content-Disposition: inline` and `application/pdf`.
+  // For admin dashboard: open resume in a new tab inside the app chrome
+  // so the navbar stays visible. The wrapper page itself iframes the
+  // proxied `/api/resume/view?url=...` endpoint.
   const handleResumeOpen = (url: string) => {
     try {
       setIsDownloadingResume(true);
-      const viewerUrl = `/api/resume/view?url=${encodeURIComponent(url)}`;
+      const name = (profile as any)?.name || "Operator";
+      const viewerUrl = `/dashboard/resume?url=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
       window.open(viewerUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       console.error("Error opening resume:", error);

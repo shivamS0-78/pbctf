@@ -1,4 +1,5 @@
 import React from "react";
+import { ChevronDown } from "lucide-react";
 
 interface FormSelectProps {
   label: string;
@@ -16,27 +17,38 @@ export function FormSelect({
   onChange,
 }: FormSelectProps) {
   return (
-    <div className="flex flex-col gap-[8px] w-full">
-      <label className="text-[13px] text-white/70 uppercase tracking-[0.08em]" style={{ fontFamily: 'var(--font-body)' }}>
-        {label}{" "}
-        {required && <span className="text-[#00FF88]">*</span>}
+    <div className="flex flex-col gap-2 w-full">
+      <label className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-ink-secondary flex items-center gap-1">
+        <span className="text-brand opacity-50 leading-none">{">"}</span>
+        {label}
+        {required && <span className="text-brand">*</span>}
       </label>
-      <select
-        required={required}
-        value={value}
-        onChange={onChange}
-        className="bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] border-solid rounded-[12px] px-[18px] py-[12px] text-white text-[14px] focus:outline-none focus:border-[#00FF88] focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200 appearance-none cursor-pointer"
-        style={{ fontFamily: 'var(--font-body)' }}
-      >
-        <option value="" className="bg-[#0a0a0a]">
-          Select an option
-        </option>
-        {options.map((option) => (
-          <option key={option} value={option} className="bg-[#0a0a0a]">
-            {option}
+      <div className="relative">
+        <select
+          required={required}
+          value={value}
+          onChange={onChange}
+          className={[
+            "w-full px-4 pr-10 py-3 rounded-md",
+            "bg-surface-inset",
+            "border border-[var(--border-soft)] hover:border-[var(--border-default)]",
+            "text-ink text-[14px] font-body",
+            "focus:outline-none focus:border-brand focus:shadow-[0_0_0_3px_var(--brand-soft)]",
+            "transition-[border-color,box-shadow] duration-150",
+            "appearance-none cursor-pointer",
+          ].join(" ")}
+        >
+          <option value="" className="bg-surface-2 text-ink-muted">
+            Select an option
           </option>
-        ))}
-      </select>
+          {options.map((option) => (
+            <option key={option} value={option} className="bg-surface-2 text-ink">
+              {option}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+      </div>
     </div>
   );
 }

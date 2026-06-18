@@ -9,32 +9,25 @@ import { Button } from "@/components/registration/button";
 import { StickyAlert } from "@/components/registration/sticky-alert";
 import { DotPattern } from "@/components/registration/dot-pattern";
 import { Spinner } from "@/components/ui/spinner";
+import { ArrowRight, LogIn } from "lucide-react";
 
 export default function LoginPage() {
   const { login, isAuthenticated, isLoading } = useAuth();
-  const [loginData, setLoginData] = useState({
-    email: "",
-    password: "",
-  });
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  // Redirect if already authenticated
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.push("/dashboard");
-    }
+    if (!isLoading && isAuthenticated) router.push("/dashboard");
   }, [isAuthenticated, isLoading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
-
     try {
       await login(loginData.email, loginData.password);
-      // Successful login - redirect to dashboard
       router.push("/dashboard");
     } catch (err: any) {
       setError(err?.message || "Login failed. Please try again.");
@@ -43,91 +36,90 @@ export default function LoginPage() {
     }
   };
 
-  // Show loading or nothing while checking auth or redirecting
   if (isLoading || isAuthenticated) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#0a0a0a]">
+      <div className="min-h-screen w-full flex items-center justify-center bg-void">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div
-      className="min-h-screen w-full flex flex-col items-start relative"
-      style={{
-        backgroundImage: "linear-gradient(90deg, rgb(10,10,10) 0%, rgb(10,10,10) 100%)",
-      }}
-    >
-      <div className="bg-[#0a0a0a] w-full relative flex-1">
-        <div
-          className="flex flex-col items-center justify-center w-full min-h-screen pb-[40px] sm:pb-[80px] pt-[40px] sm:pt-[60px] px-[16px] sm:px-[24px] md:px-[40px] relative"
-          style={{
-            backgroundImage:
-              "url('data:image/svg+xml;utf8,<svg viewBox=\\'0 0 1440 652\\' xmlns=\\'http://www.w3.org/2000/svg\\' preserveAspectRatio=\\'none\\'><rect x=\\'0\\' y=\\'0\\' height=\\'100%\\' width=\\'100%\\' fill=\\'url(%23grad)\\' opacity=\\'1\\'/><defs><radialGradient id=\\'grad\\' gradientUnits=\\'userSpaceOnUse\\' cx=\\'0\\' cy=\\'0\\' r=\\'10\\' gradientTransform=\\'matrix(31.68 0 0 22.168 0 174.74)\\'><stop stop-color=\\'rgba(0,255,136,0.28)\\' offset=\\'0.10445\\'/><stop stop-color=\\'rgba(0,255,136,0)\\' offset=\\'1\\'/></radialGradient></defs></svg>')",
-          }}
-        >
-          <div className="max-w-[600px] w-full z-10 flex flex-col gap-[24px] sm:gap-[32px] items-center">
-            {error && <StickyAlert type="error" message={error} onClose={() => setError("")} />}
+    <div className="min-h-screen w-full bg-void relative overflow-hidden">
+      <DotPattern />
 
-            <div className="flex flex-col gap-[12px] items-center text-center">
-              <h1 className="font-['Google_Sans_Flex',sans-serif] text-[32px] sm:text-[40px] md:text-[48px] text-white leading-[36px] sm:leading-[44px] md:leading-[52px] tracking-[-1px] px-4">
-                Login to PBCTF 5.0
-              </h1>
-              <p className="font-['Google_Sans_Flex',sans-serif] text-[14px] sm:text-[15.9px] text-white opacity-90 leading-[20px] sm:leading-[23.8px] px-4">
-                Access your dashboard and manage your CTF journey.
-              </p>
+      <main className="relative z-10 min-h-screen w-full flex flex-col items-center justify-center px-4 sm:px-6 py-10 sm:py-16">
+        <div className="w-full max-w-[460px] flex flex-col gap-6 anim-fade-up">
+          {error && <StickyAlert type="error" message={error} onClose={() => setError("")} />}
+
+          {/* Brand */}
+          <div className="flex flex-col items-center text-center gap-3">
+            <div className="inline-flex items-center gap-2 h-7 px-3 rounded-full border border-brand/35 bg-brand-soft text-brand font-mono text-[10px] uppercase tracking-[0.22em]">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand anim-pulse-soft" />
+              Secure Login
             </div>
-
-            <FormSection title="Login">
-              <form onSubmit={handleLogin} className="flex flex-col gap-[20px] w-full">
-                <FormInput
-                  label="Email Address"
-                  type="email"
-                  placeholder="your.email@example.com"
-                  required
-                  value={loginData.email}
-                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                />
-                <FormInput
-                  label="Password"
-                  type="password"
-                  placeholder="Enter your password"
-                  required
-                  value={loginData.password}
-                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                />
-                <div className="flex justify-end -mt-3">
-                  <button
-                    type="button"
-                    onClick={() => router.push("/forgot-password")}
-                    className="font-['Google_Sans_Flex',sans-serif] text-[12px] sm:text-[13px] text-white opacity-70 hover:opacity-100 hover:underline"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-                <Button type="submit" variant="primary" disabled={isSubmitting} className="w-full">
-                  Login
-                </Button>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-[8px] text-center">
-                  <span className="font-['Google_Sans_Flex',sans-serif] text-[13px] sm:text-[14px] text-white opacity-70">
-                    Don't have an account?
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/register")}
-                    className="font-['Google_Sans_Flex',sans-serif] text-[13px] sm:text-[14px] text-[#00FF88] hover:underline"
-                  >
-                    Register here
-                  </button>
-                </div>
-              </form>
-            </FormSection>
+            <h1 className="font-heading text-balance text-[34px] sm:text-[42px] font-bold text-ink leading-[1.05] tracking-tight">
+              Login to{" "}
+              <span className="font-mono text-brand" style={{ textShadow: "0 0 24px rgba(0,255,136,0.3)" }}>
+                PBCTF&nbsp;5.0
+              </span>
+            </h1>
+            <p className="text-[14px] text-ink-secondary font-body leading-relaxed max-w-[400px]">
+              Access your dashboard and manage your CTF journey.
+            </p>
           </div>
-        </div>
 
-        <DotPattern />
-      </div>
+          <FormSection title="Operator Login" eyebrow="step · 01">
+            <form onSubmit={handleLogin} className="flex flex-col gap-4 w-full">
+              <FormInput
+                label="Email Address"
+                type="email"
+                placeholder="your.email@example.com"
+                required
+                value={loginData.email}
+                onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+              />
+              <FormInput
+                label="Password"
+                type="password"
+                placeholder="Enter your password"
+                required
+                value={loginData.password}
+                onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+              />
+
+              <div className="flex justify-end -mt-1">
+                <button
+                  type="button"
+                  onClick={() => router.push("/forgot-password")}
+                  className="text-[12px] text-ink-muted hover:text-brand transition-colors font-body underline-offset-2 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+
+              <Button type="submit" variant="primary" disabled={isSubmitting} className="w-full">
+                {isSubmitting ? <Spinner size="sm" /> : <LogIn className="w-4 h-4" />}
+                Login
+                <ArrowRight className="w-4 h-4 -mr-1" />
+              </Button>
+
+              <div className="flex items-center justify-center gap-2 text-center pt-1">
+                <span className="text-[13px] text-ink-muted font-body">
+                  Don't have an account?
+                </span>
+                <button
+                  type="button"
+                  onClick={() => router.push("/register")}
+                  className="text-[13px] text-brand font-medium font-body hover:underline underline-offset-2"
+                >
+                  Register here
+                </button>
+              </div>
+            </form>
+          </FormSection>
+        </div>
+      </main>
     </div>
   );
 }

@@ -1,45 +1,74 @@
 import React from "react";
 
+type Variant = "primary" | "secondary" | "danger" | "ghost";
+type Size = "sm" | "md" | "lg";
+
 interface ButtonProps {
   onClick?: () => void;
   children: React.ReactNode;
-  variant?: "primary" | "secondary" | "danger";
+  variant?: Variant;
+  size?: Size;
   disabled?: boolean;
   type?: "button" | "submit";
   className?: string;
 }
 
+const sizeMap: Record<Size, string> = {
+  sm: "h-9  px-3.5 text-[12px] gap-1.5",
+  md: "h-11 px-5   text-[13px] gap-2",
+  lg: "h-12 px-6   text-[14px] gap-2",
+};
+
+const variantMap: Record<Variant, string> = {
+  primary:
+    "bg-brand text-brand-ink font-semibold " +
+    "hover:bg-brand-hover hover:shadow-glow-md " +
+    "active:bg-brand-press active:translate-y-px " +
+    "border border-brand",
+  secondary:
+    "bg-surface-1 text-ink hover:bg-surface-2 " +
+    "border border-[var(--border-default)] hover:border-[var(--border-brand)] " +
+    "hover:text-brand",
+  ghost:
+    "bg-transparent text-ink-secondary hover:text-ink " +
+    "border border-transparent hover:border-[var(--border-soft)] " +
+    "hover:bg-white/[0.03]",
+  danger:
+    "bg-transparent text-[var(--danger)] " +
+    "border border-[var(--danger)]/40 hover:border-[var(--danger)] " +
+    "hover:bg-[var(--danger-soft)]",
+};
+
 export function Button({
   onClick,
   children,
   variant = "primary",
+  size = "md",
   disabled = false,
   type = "button",
   className = "",
 }: ButtonProps) {
-  const getVariantClass = () => {
-    if (disabled)
-      return "bg-[rgba(13,13,13,0.5)] text-[rgba(255,255,255,0.2)] cursor-not-allowed border border-[rgba(255,255,255,0.05)]";
-
-    switch (variant) {
-      case "primary":
-        return "bg-[#00FF88] hover:bg-[#00CC70] text-black font-semibold hover:shadow-[0_0_24px_rgba(0,255,136,0.55)] transition-all duration-200";
-      case "secondary":
-        return "bg-[rgba(13,13,13,0.8)] hover:bg-[rgba(13,13,13,0.95)] text-white border border-[rgba(0,255,136,0.25)] hover:border-[rgba(0,255,136,0.55)] backdrop-blur-[12px] transition-all duration-200";
-      case "danger":
-        return "bg-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.7)] text-white border border-[rgba(0,255,136,0.3)] hover:border-[rgba(0,255,136,0.65)] hover:shadow-[0_0_16px_rgba(0,255,136,0.2)] transition-all duration-200";
-      default:
-        return "";
-    }
-  };
+  const disabledCls = disabled
+    ? "!bg-surface-1 !text-ink-disabled !border-[var(--border-hairline)] !shadow-none cursor-not-allowed pointer-events-none"
+    : "cursor-pointer";
 
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center justify-center gap-[8px] px-[24px] py-[12px] rounded-[10px] text-[14px] ${getVariantClass()} ${className}`}
-      style={{ fontFamily: 'var(--font-body)' }}
+      className={[
+        "inline-flex items-center justify-center",
+        "rounded-md",
+        "font-medium tracking-[0.02em]",
+        "transition-[background,border-color,color,box-shadow,transform] duration-150 ease-out",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+        "whitespace-nowrap select-none",
+        sizeMap[size],
+        variantMap[variant],
+        disabledCls,
+        className,
+      ].join(" ")}
     >
       {children}
     </button>

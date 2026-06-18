@@ -13,21 +13,23 @@ export function SectionTab({ active, onClick, icon: Icon, label }: SectionTabPro
   return (
     <button
       onClick={onClick}
-      className={`backdrop-blur-[2.5px] backdrop-filter ${
-        active 
-          ? 'bg-[rgba(0,255,136,0.3)] border-[#00FF88]' 
-          : 'bg-[rgba(138,138,138,0.2)] border-[rgba(255,255,255,0.38)] hover:bg-[rgba(138,138,138,0.3)]'
-      } flex items-center gap-[10px] justify-center px-[20px] py-[10px] rounded-[15px] border border-solid transition-all relative`}
-      style={{ fontFamily: 'var(--font-body)' }}
+      aria-pressed={active}
+      className={[
+        "relative inline-flex items-center gap-2 px-4 h-10 rounded-md",
+        "border transition-[background,border-color,color,box-shadow] duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+        active
+          ? "bg-brand-soft border-brand/55 text-brand shadow-[inset_0_0_0_1px_var(--brand-soft)]"
+          : "bg-surface-1 border-[var(--border-soft)] text-ink-secondary hover:text-ink hover:border-[var(--border-default)]",
+      ].join(" ")}
     >
       <Icon className="w-4 h-4" />
-      <span className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white">
+      <span className="font-mono text-[11px] uppercase tracking-[0.16em] font-medium">
         {label}
       </span>
       {active && (
-        <div className="absolute inset-0 pointer-events-none shadow-[0px_0px_10px_0px_rgba(0,255,136,0.3)] rounded-[15px]" />
+        <span className="absolute -bottom-px left-3 right-3 h-px bg-gradient-to-r from-transparent via-brand to-transparent" />
       )}
     </button>
   );
 }
-

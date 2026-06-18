@@ -24,10 +24,11 @@ export function FormTextarea({
   error,
 }: FormTextareaProps) {
   return (
-    <div className={`flex flex-col gap-[8px] w-full ${disabled ? "opacity-50" : ""}`}>
-      <label className="text-[13px] text-white/70 uppercase tracking-[0.08em]" style={{ fontFamily: 'var(--font-body)' }}>
-        {label}{" "}
-        {required && <span className="text-[#00FF88]">*</span>}
+    <div className={`flex flex-col gap-2 w-full ${disabled ? "opacity-50" : ""}`}>
+      <label className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-ink-secondary flex items-center gap-1">
+        <span className="text-brand opacity-50 leading-none">{">"}</span>
+        {label}
+        {required && <span className="text-brand">*</span>}
       </label>
       <textarea
         placeholder={placeholder}
@@ -37,13 +38,23 @@ export function FormTextarea({
         onBlur={onBlur}
         rows={rows}
         disabled={disabled}
-        className={`bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border w-full ${
-          error ? "border-[rgba(0,255,136,0.6)]" : "border-[rgba(255,255,255,0.1)]"
-        } border-solid rounded-[12px] px-[18px] py-[12px] text-white text-[14px] placeholder:text-[rgba(255,255,255,0.3)] focus:outline-none focus:border-[#00FF88] focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200 resize-none disabled:cursor-not-allowed`}
-        style={{ fontFamily: 'var(--font-body)' }}
+        className={[
+          "w-full px-4 py-3 rounded-md",
+          "bg-surface-inset",
+          "border",
+          error
+            ? "border-[var(--danger)]/60"
+            : "border-[var(--border-soft)] hover:border-[var(--border-default)]",
+          "text-ink text-[14px] font-body leading-relaxed",
+          "placeholder:text-ink-disabled placeholder:font-light",
+          "focus:outline-none focus:border-brand focus:shadow-[0_0_0_3px_var(--brand-soft)]",
+          "transition-[border-color,box-shadow] duration-150",
+          "resize-none disabled:cursor-not-allowed",
+        ].join(" ")}
       />
       {error && (
-        <span className="text-[12px] text-[#00FF88]" style={{ fontFamily: 'var(--font-body)' }}>
+        <span className="text-[12px] text-[var(--danger)] font-body flex items-center gap-1.5">
+          <span className="inline-block w-1 h-1 rounded-full bg-[var(--danger)]" />
           {error}
         </span>
       )}

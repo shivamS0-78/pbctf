@@ -1,5 +1,5 @@
 import React from "react";
-import { Upload } from "lucide-react";
+import { Upload, FileCheck } from "lucide-react";
 
 interface FormFileUploadProps {
   label: string;
@@ -18,41 +18,68 @@ export function FormFileUpload({
   currentFile,
   maxSizeMB = 1,
 }: FormFileUploadProps) {
-  const truncateFileName = (fileName: string, maxLength: number = 25): string => {
+  const truncateFileName = (fileName: string, maxLength = 28): string => {
     if (fileName.length <= maxLength) return fileName;
-    const lastDotIndex = fileName.lastIndexOf('.');
+    const lastDotIndex = fileName.lastIndexOf(".");
     const hasExtension = lastDotIndex !== -1;
-    const extension = hasExtension ? fileName.substring(lastDotIndex) : '';
+    const extension = hasExtension ? fileName.substring(lastDotIndex) : "";
     const nameWithoutExt = hasExtension ? fileName.substring(0, lastDotIndex) : fileName;
     const ellipsisLength = 3;
     const availableLength = maxLength - extension.length - ellipsisLength;
     if (nameWithoutExt.length <= availableLength) return fileName;
     const frontLength = Math.max(1, Math.floor(availableLength / 2));
     const backLength = Math.max(1, availableLength - frontLength);
-    const frontPart = nameWithoutExt.substring(0, frontLength);
-    const backPart = nameWithoutExt.substring(nameWithoutExt.length - backLength);
-    return frontPart + '...' + backPart + extension;
+    const front = nameWithoutExt.substring(0, frontLength);
+    const back = nameWithoutExt.substring(nameWithoutExt.length - backLength);
+    return front + "..." + back + extension;
   };
 
+  const hasFile = Boolean(currentFile);
+
   return (
-    <div className="flex flex-col gap-[8px] w-full">
-      <label className="text-[13px] text-white/70 uppercase tracking-[0.08em]" style={{ fontFamily: 'var(--font-body)' }}>
-        {label}{" "}
-        {required && <span className="text-[#00FF88]">*</span>}
-        <span className="text-[12px] text-white/40 ml-2 normal-case tracking-normal">(Max {maxSizeMB}MB)</span>
+    <div className="flex flex-col gap-2 w-full">
+      <label className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-ink-secondary flex items-center gap-1">
+        <span className="text-brand opacity-50 leading-none">{">"}</span>
+        {label}
+        {required && <span className="text-brand">*</span>}
+        <span className="text-[10px] text-ink-subtle ml-1 normal-case tracking-normal font-body">
+          (max {maxSizeMB}MB)
+        </span>
       </label>
-      <div className="bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] border-solid rounded-[12px] px-[18px] py-[12px] cursor-pointer hover:border-[rgba(0,255,136,0.4)] hover:shadow-[0_0_16px_rgba(0,255,136,0.15)] transition-all duration-200 relative">
+      <div
+        className={[
+          "relative rounded-md px-4 py-3 cursor-pointer",
+          "bg-surface-inset",
+          "border border-dashed",
+          hasFile
+            ? "border-brand/40 hover:border-brand/70"
+            : "border-[var(--border-soft)] hover:border-[var(--border-brand)]",
+          "transition-[border-color,box-shadow,background] duration-150",
+          "hover:shadow-[0_0_0_3px_var(--brand-soft)]",
+        ].join(" ")}
+      >
         <input
           type="file"
           accept={accept}
           required={required}
           onChange={onChange}
           className="absolute inset-0 opacity-0 cursor-pointer"
+          aria-label={label}
         />
-        <div className="flex items-center gap-[12px] text-[rgba(255,255,255,0.5)]">
-          <Upload className="w-5 h-5 flex-shrink-0" />
-          <span className="text-[14px] truncate" style={{ fontFamily: 'var(--font-body)' }} title={currentFile}>
-            {currentFile ? truncateFileName(currentFile) : "Click to upload or drag and drop"}
+        <div className="flex items-center gap-3 text-ink-muted">
+          {hasFile ? (
+            <FileCheck className="w-4 h-4 flex-shrink-0 text-brand" />
+          ) : (
+            <Upload className="w-4 h-4 flex-shrink-0" />
+          )}
+          <span
+            className={[
+              "text-[13px] truncate font-body",
+              hasFile ? "text-ink" : "text-ink-muted",
+            ].join(" ")}
+            title={currentFile}
+          >
+            {currentFile ? truncateFileName(currentFile) : "Click to upload or drag a file here"}
           </span>
         </div>
       </div>

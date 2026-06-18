@@ -12,7 +12,7 @@ import {
 import { Button } from "./button";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import { Crown, AlertTriangle } from "lucide-react";
+import { Crown, AlertTriangle, Users, ArrowRight } from "lucide-react";
 
 interface TeamMember {
     uid: string;
@@ -39,7 +39,7 @@ export function TransferOwnershipModal({
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const eligibleMembers = members.filter(
-        (member) => member.uid !== currentUserId
+        (member) => member.uid !== currentUserId,
     );
 
     const handleConfirm = async () => {
@@ -60,66 +60,92 @@ export function TransferOwnershipModal({
 
     return (
         <AlertDialog open={isOpen} onOpenChange={handleClose}>
-            <AlertDialogContent className="bg-[rgba(13,13,13,0.97)] border border-[rgba(0,255,136,0.2)] backdrop-blur-[24px] max-h-[80vh] overflow-y-auto shadow-[0_0_60px_rgba(0,255,136,0.08)]">
+            <AlertDialogContent className="bg-surface-1 border border-[var(--border-default)] max-h-[80vh] overflow-y-auto shadow-modal">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-white flex items-center gap-2" style={{ fontFamily: 'var(--font-heading)' }}>
-                        <Crown className="w-5 h-5 text-[#00FF88]" />
-                        Transfer Team Ownership
+                    <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand mb-1.5">
+                        // TRANSFER_OWNERSHIP
+                    </div>
+                    <AlertDialogTitle className="text-ink flex items-center gap-2 font-heading">
+                        <Crown className="w-4 h-4 text-brand" />
+                        Hand off team lead
                     </AlertDialogTitle>
-                    <AlertDialogDescription className="text-white/50" style={{ fontFamily: 'var(--font-body)' }}>
-                        Select a member to transfer ownership to.{" "}
-                        <span className="text-[#8CFF00] flex items-center gap-1 mt-1 text-xs">
-                            <AlertTriangle className="w-3 h-3" />
-                            You will become a regular member after this action.
-                        </span>
+                    <AlertDialogDescription className="text-ink-secondary text-[13px]">
+                        Pick the operator who takes over as lead.
                     </AlertDialogDescription>
+                    <div className="flex items-start gap-2 mt-2 p-2.5 rounded-md bg-[var(--warning-soft)] border border-[var(--warning)]/35">
+                        <AlertTriangle className="w-3.5 h-3.5 text-[var(--warning)] mt-0.5 shrink-0" />
+                        <p className="font-mono text-[11px] text-[var(--warning)] leading-relaxed">
+                            &gt; you become a regular member after confirm. lead-only controls go away.
+                        </p>
+                    </div>
                 </AlertDialogHeader>
 
-                <div className="py-4 flex flex-col gap-2">
+                <div className="py-3 flex flex-col gap-2">
                     {eligibleMembers.length === 0 ? (
-                        <p className="text-sm text-white/30 text-center py-4" style={{ fontFamily: 'var(--font-body)' }}>
-                            No other members to transfer ownership to.
-                        </p>
+                        <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+                            <Users className="w-6 h-6 text-ink-muted" />
+                            <p className="text-[13px] text-ink-secondary">No eligible operators</p>
+                            <p className="font-mono text-[10.5px] text-ink-muted">
+                                &gt; recruit a member before transferring
+                            </p>
+                        </div>
                     ) : (
-                        eligibleMembers.map((member) => (
-                            <div
-                                key={member.uid}
-                                onClick={() => setSelectedMemberId(member.uid)}
-                                className={`
-                  p-3 rounded-[12px] border cursor-pointer transition-all flex items-center justify-between
-                  ${selectedMemberId === member.uid
-                                        ? "bg-[rgba(0,255,136,0.06)] border-[#00FF88] shadow-[0_0_16px_rgba(0,255,136,0.15)]"
-                                        : "bg-[rgba(0,0,0,0.4)] border-[rgba(255,255,255,0.06)] hover:border-[rgba(0,255,136,0.25)]"
-                                    }
-                `}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={`
-                    w-4 h-4 rounded-full border flex items-center justify-center transition-all
-                    ${selectedMemberId === member.uid ? "border-[#00FF88] bg-[rgba(0,255,136,0.15)]" : "border-white/20"}
-                  `}>
-                                        {selectedMemberId === member.uid && (
-                                            <div className="w-2 h-2 rounded-full bg-[#00FF88] shadow-[0_0_6px_rgba(0,255,136,0.8)]" />
-                                        )}
-                                    </div>
-                                    <span className="text-white text-sm font-medium" style={{ fontFamily: 'var(--font-body)' }}>{member.name}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-white/30" style={{ fontFamily: 'var(--font-body)' }}>
-                                    <span>Member</span>
-                                    <span>→</span>
-                                    <span className={selectedMemberId === member.uid ? "text-[#00FF88]" : ""}>Lead</span>
-                                </div>
-                            </div>
-                        ))
+                        <div className="flex flex-col gap-2">
+                            <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-ink-muted mb-1">
+                                &gt; select_new_lead
+                            </p>
+                            {eligibleMembers.map((member) => {
+                                const selected = selectedMemberId === member.uid;
+                                return (
+                                    <button
+                                        key={member.uid}
+                                        type="button"
+                                        onClick={() => setSelectedMemberId(member.uid)}
+                                        aria-pressed={selected}
+                                        className={[
+                                            "p-3 rounded-md border cursor-pointer transition-all flex items-center justify-between gap-3 text-left",
+                                            selected
+                                                ? "bg-brand-soft border-brand/55 shadow-glow-sm"
+                                                : "bg-surface-2 border-[var(--border-soft)] hover:border-[var(--border-default)]",
+                                        ].join(" ")}
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div
+                                                className={[
+                                                    "w-4 h-4 rounded-full border flex items-center justify-center transition-all shrink-0",
+                                                    selected
+                                                        ? "border-brand bg-brand-soft"
+                                                        : "border-[var(--border-default)]",
+                                                ].join(" ")}
+                                            >
+                                                {selected && (
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-brand shadow-glow-sm" />
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="text-ink text-[14px] font-medium truncate">
+                                                    {member.name}
+                                                </span>
+                                                <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-ink-muted flex items-center gap-1">
+                                                    <span>member</span>
+                                                    <ArrowRight className="w-2.5 h-2.5" />
+                                                    <span className={selected ? "text-brand" : "text-ink-secondary"}>lead</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {selected && <Crown className="w-3.5 h-3.5 text-brand shrink-0" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     )}
                 </div>
 
-                <AlertDialogFooter className="sm:justify-between gap-4">
+                <AlertDialogFooter className="sm:justify-between gap-3">
                     <AlertDialogCancel
                         onClick={handleClose}
                         disabled={isSubmitting}
-                        className="m-0 bg-transparent border-[rgba(0,255,136,0.2)] text-white hover:bg-[rgba(0,255,136,0.05)] hover:text-white"
-                        style={{ fontFamily: 'var(--font-body)' }}
+                        className="m-0 bg-transparent border border-[var(--border-soft)] text-ink hover:bg-surface-2 hover:text-ink"
                     >
                         Cancel
                     </AlertDialogCancel>
@@ -135,7 +161,10 @@ export function TransferOwnershipModal({
                                 Transferring...
                             </>
                         ) : (
-                            "Confirm Transfer"
+                            <>
+                                <Crown className="w-3.5 h-3.5" />
+                                Confirm transfer
+                            </>
                         )}
                     </Button>
                 </AlertDialogFooter>

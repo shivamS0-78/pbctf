@@ -2,198 +2,405 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Star field drift animations — each layer moves by exactly one tile so the loop is seamless */
-@keyframes stars-drift-a {
-  from { background-position: 0 0; }
-  to   { background-position: 130px 130px; }
-}
-
-@keyframes stars-drift-b {
-  from { background-position: 45px 45px; }
-  to   { background-position: -45px 135px; }
-}
-
-.stars-layer-a {
-  animation: stars-drift-a 35s linear infinite;
-  will-change: background-position;
-}
-
-.stars-layer-b {
-  animation: stars-drift-b 22s linear infinite;
-  will-change: background-position;
-}
-
-/* Twinkling star layers — each has its own timing so stars appear to blink independently */
-@keyframes star-twinkle {
-  0%, 100% { opacity: 0; }
-  40%, 60%  { opacity: 1; }
-}
-
-.stars-twinkle-1 { animation: star-twinkle 4.0s ease-in-out infinite 0.3s; }
-.stars-twinkle-3 { animation: star-twinkle 3.8s ease-in-out infinite 2.9s; }
-.stars-twinkle-5 { animation: star-twinkle 4.5s ease-in-out infinite 3.5s; }
-
-@media (prefers-reduced-motion: reduce) {
-  .stars-layer-a,
-  .stars-layer-b {
-    animation: none;
-  }
-  .stars-twinkle-1,
-  .stars-twinkle-3,
-  .stars-twinkle-5 {
-    animation: none;
-    opacity: 0.5;
-  }
-}
-
-@keyframes selectSlide {
-  0% {
-    transform: scale(0.98);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.03);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.animate-selectSlide {
-  animation: selectSlide 0.5s ease-in-out;
-}
-
-/* Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@300;400;500;600;700&display=swap');
+/* ============================================================
+   PBCTF 5.0. Terminal HUD Design System
+   Dark cyberpunk / hacker terminal aesthetic.
+   Brand: Point Blank · Capture the Flag
+   ============================================================ */
 
 :root {
-  /* Background Colors */
-  --background: 0 0% 4%; /* #0a0a0a in HSL */
-  --background-gradient: linear-gradient(90deg, rgb(10,10,10) 0%, rgb(10,10,10) 100%);
-  
-  /* Foreground Colors */
-  --foreground: 0 0% 100%; /* #ffffff in HSL */
-  --foreground-muted: rgba(255, 255, 255, 0.8);
-  --foreground-subtle: rgba(255, 255, 255, 0.6);
-  --foreground-disabled: rgba(255, 255, 255, 0.3);
-  
-  /* Primary Colors */
-  --primary: #00FF88;
-  --primary-hover: #8CFF00;
-  --primary-light: rgba(0,255,136, 0.15);
-  --primary-shadow: rgba(0,255,136, 0.4);
-  
-  /* Glassmorphism Colors */
-  --glass-bg: rgba(138, 138, 138, 0.2);
-  --glass-bg-light: rgba(138, 138, 138, 0.15);
-  --glass-bg-hover: rgba(138, 138, 138, 0.3);
-  --glass-bg-active: rgba(138, 138, 138, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.38);
-  --glass-border-light: rgba(255, 255, 255, 0.2);
-  
-  /* Status Colors */
-  --success-bg: rgba(0, 255, 136, 0.08);
-  --success-border: #00FF88;
-  --warning-bg: rgba(234, 179, 8, 0.2);
-  --warning-border: #eab308;
-  --error-bg: rgba(200, 0, 0, 0.2);
-  --error-border: #c80000;
-  --info-bg: rgba(138, 138, 138, 0.2);
-  --info-border: rgba(255, 255, 255, 0.38);
-  
-  /* Button Colors */
-  --button-primary-bg: rgba(255, 255, 255, 0.85);
-  --button-primary-hover: rgba(255, 255, 255, 0.95);
-  --button-primary-text: #000000;
-  --button-secondary-bg: rgba(138, 138, 138, 0.3);
-  --button-secondary-hover: rgba(138, 138, 138, 0.4);
-  --button-secondary-text: #ffffff;
-  --button-danger-bg: rgba(200, 0, 0, 0.5);
-  --button-danger-hover: rgba(200, 0, 0, 0.6);
-  --button-danger-text: #ffffff;
-  --button-disabled-bg: rgba(138, 138, 138, 0.2);
-  --button-disabled-text: rgba(255, 255, 255, 0.3);
-  
-  /* Border Colors */
-  --border-default: rgba(255, 255, 255, 0.38);
-  --border-focus: #00FF88;
-  --border-error: #ff4d4d;
-  
-  /* Shadow Colors */
-  --shadow-focus: 0px 0px 15px 0px rgba(0,255,136, 0.4);
-  --shadow-inset: inset_0px_0px_40px_rgba(0,0,0,0.4);
-  --shadow-inset-button: inset_0px_0px_6px_3px_rgba(0,255,136,0.1);
-  --shadow-badge: 0px_3px_10px_0px_rgba(0,255,136, 0.5);
-  
-  /* Fonts */
-  --font-heading: 'Space Grotesk', 'Google Sans Flex', sans-serif;
-  --font-body: 'Lexend', 'Google Sans Flex', sans-serif;
-  --font-mono: 'Google Sans Flex', monospace;
-  
-  /* Spacing */
-  --radius-sm: 12px;
-  --radius-md: 15px;
-  --radius-lg: 20px;
-  
-  /* Blur */
-  --blur-sm: 2.5px;
-  
-  /* Dot Pattern */
-  --dot-pattern-opacity: 0.8;
-  --dot-pattern-size: 65px;
+  /* Surfaces. layered dark stack (void → elevated) */
+  --surface-void: #050507;
+  --surface-base: #0a0a0c;
+  --surface-1: #0e0e11;
+  --surface-2: #131318;
+  --surface-3: #1a1a21;
+  --surface-inset: #07070a;
+
+  /* Text */
+  --text-primary: #f5f5f7;
+  --text-secondary: rgba(245, 245, 247, 0.72);
+  --text-muted: rgba(245, 245, 247, 0.5);
+  --text-subtle: rgba(245, 245, 247, 0.32);
+  --text-disabled: rgba(245, 245, 247, 0.18);
+
+  /* Brand. neon green stays the identity */
+  --brand-primary: #00ff88;
+  --brand-primary-hover: #4dffae;
+  --brand-primary-press: #00cc6f;
+  --brand-primary-ink: #03110a;
+  --brand-soft: rgba(0, 255, 136, 0.1);
+  --brand-soft-2: rgba(0, 255, 136, 0.18);
+  --brand-glow: rgba(0, 255, 136, 0.32);
+  --brand-glow-strong: rgba(0, 255, 136, 0.55);
+
+  /* Accent. electric cyan, sparingly */
+  --accent-cyan: #38bdf8;
+  --accent-cyan-soft: rgba(56, 189, 248, 0.16);
+
+  /* Status */
+  --success: #00ff88;
+  --success-soft: rgba(0, 255, 136, 0.12);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.12);
+  --danger: #f43f5e;
+  --danger-soft: rgba(244, 63, 94, 0.14);
+  --info: #38bdf8;
+  --info-soft: rgba(56, 189, 248, 0.12);
+
+  /* Borders */
+  --border-hairline: rgba(255, 255, 255, 0.06);
+  --border-soft: rgba(255, 255, 255, 0.1);
+  --border-default: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.24);
+  --border-brand: rgba(0, 255, 136, 0.28);
+  --border-brand-strong: rgba(0, 255, 136, 0.55);
+
+  /* Shadows / glows */
+  --glow-sm: 0 0 12px rgba(0, 255, 136, 0.22);
+  --glow-md: 0 0 24px rgba(0, 255, 136, 0.32);
+  --glow-lg: 0 0 48px rgba(0, 255, 136, 0.4);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 255, 136, 0.12);
+
+  /* Type system */
+  --font-display: "JetBrains Mono", "Space Grotesk", ui-monospace, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+  --font-body: "Inter", "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --font-heading: "Space Grotesk", "Inter", system-ui, sans-serif;
+
+  /* Radii. terminal: tight */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+
+  /* Compatibility shims for legacy shadcn primitives */
+  --background: 240 6% 4%;
+  --foreground: 240 5% 96%;
+  --card: 240 6% 5%;
+  --card-foreground: 240 5% 96%;
+  --popover: 240 6% 7%;
+  --popover-foreground: 240 5% 96%;
+  --primary: 152 100% 50%;
+  --primary-foreground: 152 80% 6%;
+  --secondary: 240 5% 11%;
+  --secondary-foreground: 240 5% 92%;
+  --muted: 240 5% 11%;
+  --muted-foreground: 240 5% 60%;
+  --accent: 240 5% 14%;
+  --accent-foreground: 240 5% 92%;
+  --destructive: 350 89% 60%;
+  --destructive-foreground: 240 5% 96%;
+  --border: 240 5% 16%;
+  --input: 240 5% 13%;
+  --ring: 152 100% 50%;
+  --radius: 6px;
 }
 
 @layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   * {
     @apply border-border;
   }
-  
+
+  html {
+    background: var(--surface-void);
+    color-scheme: dark;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    background: var(--surface-base);
+    color: var(--text-primary);
     font-family: var(--font-body);
-    background: var(--background);
-    color: var(--foreground);
-}
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background: rgba(0, 255, 136, 0.35);
+    color: var(--text-primary);
+  }
+
+  /* Focus ring. accessible, on-brand */
+  :focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 3px;
   }
 }
 
-/* Utility Classes */
-.glass-effect {
-  backdrop-filter: blur(var(--blur-sm));
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+/* ============================================================
+   Background. animated terminal grid + scanlines
+   ============================================================ */
+
+@keyframes grid-drift {
+  from { background-position: 0 0; }
+  to   { background-position: 40px 40px; }
 }
 
-.glass-effect-light {
-  backdrop-filter: blur(var(--blur-sm));
-  background: var(--glass-bg-light);
-  border: 1px solid var(--glass-border-light);
-  }
+@keyframes scanline-drift {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
 
-/* Remove scrollbar styles */
+@keyframes terminal-blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.65; transform: scale(0.92); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.35); }
+  50%      { box-shadow: 0 0 0 4px rgba(0, 255, 136, 0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glitch-x {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-1px); }
+  40%      { transform: translateX(1px); }
+  60%      { transform: translateX(-0.5px); }
+  80%      { transform: translateX(0.5px); }
+}
+
 @layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  .anim-blink {
+    animation: terminal-blink 1.05s steps(2) infinite;
+  }
+  .anim-pulse-soft {
+    animation: pulse-soft 2.2s ease-in-out infinite;
+  }
+  .anim-fade-up {
+    animation: fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .anim-glow-pulse {
+    animation: glow-pulse 2.4s ease-out infinite;
+  }
+  .anim-glitch:hover {
+    animation: glitch-x 0.28s linear 1;
   }
 
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  /* Terminal grid background. subtle */
+  .bg-terminal-grid {
+    background-image:
+      linear-gradient(rgba(0, 255, 136, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 136, 0.045) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: 0 0;
+  }
+
+  .bg-terminal-grid-faint {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Halo glow for hero sections */
+  .bg-halo {
+    background-image: radial-gradient(
+      ellipse 80% 60% at 50% 0%,
+      rgba(0, 255, 136, 0.18) 0%,
+      rgba(0, 255, 136, 0.06) 28%,
+      rgba(0, 255, 136, 0) 65%
+    );
+  }
+
+  .bg-halo-soft {
+    background-image: radial-gradient(
+      ellipse 70% 50% at 50% 30%,
+      rgba(0, 255, 136, 0.1) 0%,
+      rgba(0, 255, 136, 0) 60%
+    );
+  }
+
+  /* Scanline overlay */
+  .scanlines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 2px,
+      rgba(0, 255, 136, 0.025) 3px,
+      transparent 4px
+    );
+    mix-blend-mode: screen;
+    z-index: 1;
+  }
+
+  /* Mono caret blink */
+  .caret::after {
+    content: "▌";
+    margin-left: 0.15em;
+    color: var(--brand-primary);
+    animation: terminal-blink 1.05s steps(2) infinite;
+  }
+
+  /* HUD corner brackets. use as `<div class="hud-corners">` */
+  .hud-corners {
+    position: relative;
+  }
+  .hud-corners::before,
+  .hud-corners::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-color: var(--brand-primary);
+    border-style: solid;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  .hud-corners::before {
+    top: -1px;
+    left: -1px;
+    border-width: 1px 0 0 1px;
+  }
+  .hud-corners::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 1px 1px 0;
+  }
+
+  /* Scrollbar utilities */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .thin-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+  .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 136, 0.3);
+  }
+
+  /* Text utilities */
+  .text-balance { text-wrap: balance; }
+  .text-mono { font-family: var(--font-mono); }
+
+  /* Glass surface. refined, less heavy */
+  .surface-card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.005));
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-card);
+  }
+
+  .surface-elevated {
+    background: var(--surface-2);
+    border: 1px solid var(--border-default);
+  }
+
+  .surface-inset {
+    background: var(--surface-inset);
+    border: 1px solid var(--border-hairline);
+  }
+
+  /* Card surface.
+   * Translucent dark tint so the page's terminal grid reads through the
+   * card. The card is still measurably "darker" than the page so it
+   * registers as elevated, but the grid pattern is preserved as texture.
+   *
+   * Lift cues:
+   *   - 1px inset top highlight (bevel from above)
+   *   - quiet drop shadow
+   *
+   * NO internal gradients or halos — texture comes from the page grid
+   * showing through.
+   */
+  .card-surface {
+    background-color: rgba(16, 16, 21, 0.55);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.5),
+      0 6px 18px -6px rgba(0, 0, 0, 0.55);
   }
 }
 
-/* Chrome, Safari, Edge, Opera */
+/* Reduced motion override */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .caret::after {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+}
+
+/* Strip number input spinners */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+input[type="number"] { -moz-appearance: textfield; }
 
-/* Firefox */
-input[type=number] {
-  -moz-appearance: textfield;
+/* Legacy selectSlide kept for backward compat (used by a dropdown) */
+@keyframes selectSlide {
+  0%   { transform: scale(0.98); opacity: 0.8; }
+  50%  { transform: scale(1.03); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-selectSlide { animation: selectSlide 0.35s ease-out; }
+
+/* Glass utility classes. kept for compatibility but redefined */
+.glass-effect {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-soft);
+}
+
+.glass-effect-light {
+  background: rgba(255, 255, 255, 0.025);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-hairline);
 }

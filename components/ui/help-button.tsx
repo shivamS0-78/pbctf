@@ -2,48 +2,46 @@
 
 import { useState } from "react";
 import { Modal } from "@/components/registration/modal";
-import { MessageCircleQuestion } from "lucide-react";
+import { MessageCircleQuestion, ArrowUpRight } from "lucide-react";
 
 export function HelpButton() {
-    const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-    return (
-        <>
-            <button
-                onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 z-50 flex items-center gap-2 glass-effect hover:bg-white/10 text-white rounded-full px-5 py-3 shadow-[0_0_20px_rgba(0,255,136,0.2)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(0,255,136,0.3)] group"
-            >
-                <MessageCircleQuestion className="w-5 h-5 text-[var(--primary)] group-hover:rotate-12 transition-transform duration-300 text-[#52a447]"  />
-                <span className="font-medium pr-1">Need Help?</span>
-            </button>
+  return (
+    <>
+      <button
+        onClick={() => setIsOpen(true)}
+        aria-label="Open help"
+        className="group fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 h-11 px-4 rounded-md bg-surface-1/95 backdrop-blur-md text-ink border border-brand/30 hover:border-brand/55 hover:bg-surface-2 transition-[background,border-color,transform,box-shadow] duration-200 hover:shadow-glow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+      >
+        <MessageCircleQuestion className="w-4 h-4 text-brand group-hover:rotate-12 transition-transform duration-200" />
+        <span className="text-[12.5px] font-body font-medium">Need help?</span>
+      </button>
 
-            <Modal
-                isOpen={isOpen}
-                onClose={() => setIsOpen(false)}
-                title="Need Assistance?"
-            >
-                <div className="space-y-6">
-                    <div className="space-y-2">
-                        <p className="text-gray-300 text-lg">
-                            Stuck or have a question? We're here to help!
-                        </p>
-                        <p className="text-gray-400">
-                            Join our official Discord server and head over to the <span className="text-[var(--primary)] font-bold">#❓┃doubts</span> channel for support.
-                        </p>
-                    </div>
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Need assistance?" size="md">
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <p className="text-[14.5px] text-ink font-body leading-relaxed">
+              Stuck or have a question? We&apos;re here to help.
+            </p>
+            <p className="text-[13.5px] text-ink-secondary font-body leading-relaxed">
+              Join our official Discord server and head to the{" "}
+              <span className="text-mono text-brand font-medium">#doubts</span>{" "}
+              channel for support.
+            </p>
+          </div>
 
-                    <div className="flex justify-end pt-4">
-                        <a
-                            href="https://discord.gg/Und8vHaw5a"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center bg-[var(--primary)] hover:brightness-110 text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 w-full sm:w-auto shadow-[0_0_15px_rgba(0,255,136,0.4)] hover:shadow-[0_0_20px_rgba(0,255,136,0.6)]"
-                        >
-                            Join Discord Server
-                        </a>
-                    </div>
-                </div>
-            </Modal>
-        </>
-    );
+          <a
+            href="https://discord.gg/Und8vHaw5a"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-md bg-brand text-brand-ink font-semibold text-[13px] hover:bg-brand-hover hover:shadow-glow-md transition-[background,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          >
+            Join Discord Server
+            <ArrowUpRight className="w-4 h-4" />
+          </a>
+        </div>
+      </Modal>
+    </>
+  );
 }

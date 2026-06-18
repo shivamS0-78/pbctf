@@ -3,13 +3,27 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from '@/hooks/use-auth';
 import { API_ENDPOINTS } from "@/lib/api-config";
-import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutGrid, CheckCircle2, Vote, Search, ChevronLeft, ChevronRight, Layers, ThumbsUp, ThumbsDown } from "lucide-react";
-import { FormSection } from "@/components/registration/form-section";
+import {
+    CheckCircle2,
+    Vote,
+    Search,
+    ChevronLeft,
+    ChevronRight,
+    ThumbsUp,
+    ThumbsDown,
+    Inbox,
+    SlidersHorizontal,
+    Terminal,
+    Users,
+    X,
+    ArrowRight,
+    Flag,
+} from "lucide-react";
 import { StickyAlert } from "@/components/registration/sticky-alert";
 import { TeamDetailView } from "./team-detail-view";
 
+import { HudFrame } from "./hud-frame";
 interface Evaluation {
     evaluatorId: string;
     tier: string;
@@ -38,22 +52,47 @@ interface Team {
     upvoteCount?: number;
     downvoteCount?: number;
     isEvaluated: boolean;
+    teamMembers?: Array<{ uid?: string; hasSolvedChallenge?: boolean }>;
 }
 
 type Tab = 'pending' | 'evaluated' | 'all_teams';
 type Tier = 'strongly_accepted' | 'accepted' | 'borderline' | 'rejected';
 
-// Skeleton Component for Team Card
-const TeamCardSkeleton = () => (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-5 flex flex-col gap-3">
-        <div className="flex justify-between items-start gap-4">
-            <Skeleton className="h-6 w-3/4 bg-white/10" />
-            <Skeleton className="h-5 w-16 bg-white/5" />
+const TIER_META: Record<Tier, { label: string; short: string; chip: string; dot: string }> = {
+    strongly_accepted: {
+        label: 'Strongly Accepted',
+        short: 'S.ACCEPT',
+        chip: 'bg-brand-soft border-brand/40 text-brand',
+        dot: 'bg-brand',
+    },
+    accepted: {
+        label: 'Accepted',
+        short: 'ACCEPT',
+        chip: 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400',
+        dot: 'bg-emerald-400',
+    },
+    borderline: {
+        label: 'Borderline',
+        short: 'BORDER',
+        chip: 'bg-yellow-500/10 border-yellow-500/40 text-yellow-400',
+        dot: 'bg-yellow-400',
+    },
+    rejected: {
+        label: 'Rejected',
+        short: 'REJECT',
+        chip: 'bg-red-500/10 border-red-500/40 text-red-400',
+        dot: 'bg-red-400',
+    },
+};
+
+const TeamRowSkeleton = () => (
+    <div className="bg-surface-2 border border-[var(--border-soft)] rounded-md p-4 flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+            <Skeleton className="h-5 w-1/2 bg-white/10" />
+            <Skeleton className="h-4 w-16 bg-white/5" />
         </div>
-        <Skeleton className="h-4 w-full bg-white/5" />
-        <Skeleton className="h-4 w-2/3 bg-white/5" />
-        <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
-            <Skeleton className="h-3 w-24 bg-white/5" />
+        <div className="flex items-center justify-between">
+            <Skeleton className="h-3 w-32 bg-white/5" />
             <Skeleton className="h-5 w-20 bg-white/10" />
         </div>
     </div>
@@ -225,6 +264,36 @@ export function EvaluatorContainer() {
         }
     };
 
+    // Keyboard nav: J/down = next, K/up = previous, Enter = open focused row.
+    // Disabled while a team is selected (the detail view owns the keyboard).
+    const [focusedIndex, setFocusedIndex] = useState(0);
+    useEffect(() => {
+        setFocusedIndex(0);
+    }, [activeTab, searchQuery, page]);
+    useEffect(() => {
+        if (selectedTeam || filteredTeams.length === 0) return;
+        const onKey = (e: KeyboardEvent) => {
+            const target = e.target as HTMLElement | null;
+            // Ignore when typing in inputs / textareas / contenteditables
+            if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+                return;
+            }
+            if (e.key === "j" || e.key === "ArrowDown") {
+                e.preventDefault();
+                setFocusedIndex((i) => Math.min(filteredTeams.length - 1, i + 1));
+            } else if (e.key === "k" || e.key === "ArrowUp") {
+                e.preventDefault();
+                setFocusedIndex((i) => Math.max(0, i - 1));
+            } else if (e.key === "Enter") {
+                e.preventDefault();
+                const t = filteredTeams[focusedIndex];
+                if (t) setSelectedTeam(t);
+            }
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [filteredTeams, focusedIndex, selectedTeam]);
+
     // If a team is selected, show detail view (replaces grid)
     if (selectedTeam) {
         return (
@@ -237,223 +306,446 @@ export function EvaluatorContainer() {
         );
     }
 
+    const total = stats.assigned || (stats.pending + stats.evaluated);
+    const progress = total > 0 ? Math.round((stats.evaluated / total) * 100) : 0;
+    const isCaughtUp = stats.pending === 0 && stats.evaluated > 0 && activeTab === 'pending';
+    const firstName = user?.name?.split(' ')[0] || 'operator';
+
+    const TABS: { id: Tab; label: string; icon: typeof Inbox; count?: number }[] = [
+        { id: 'pending', label: 'Queue', icon: Inbox, count: stats.pending },
+        { id: 'evaluated', label: 'Reviewed', icon: CheckCircle2, count: stats.evaluated },
+        { id: 'all_teams', label: 'All teams', icon: Vote },
+    ];
+
     return (
-        <div className="flex flex-col gap-[24px] w-full">
+        <div className="flex flex-col gap-6 w-full">
             {alert && (
                 <StickyAlert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />
             )}
 
-            {/* Header Section */}
-            <div className="flex flex-col gap-[12px] items-center text-center">
-                <h1 className="text-[48px] text-white leading-[52px] tracking-[-1px]" style={{ fontFamily: 'var(--font-heading)' }}>
-                    Evaluator Dashboard
-                </h1>
-                <p className="text-[15.9px] text-white opacity-90 leading-[23.8px]" style={{ fontFamily: 'var(--font-body)' }}>
-                    Welcome back, {user?.name}. You have <span className="text-[#00FF88] font-bold">{stats.pending}</span> teams pending evaluation.
-                </p>
-            </div>
-
-            {/* Main Content Area in FormSection */}
-            <FormSection title="Evaluation Overview">
-                <div className="flex flex-col gap-6">
-                    {/* Tabs */}
-                    <div className="flex border-b border-white/10 overflow-x-auto">
-                        <button
-                            onClick={() => handleTabChange('pending')}
-                            className={`px-6 py-3 text-[14px] font-medium transition-all relative whitespace-nowrap ${activeTab === 'pending' ? 'text-[#00FF88]' : 'text-white/60 hover:text-white'
-                                }`}
-                            style={{ fontFamily: 'var(--font-body)' }}
-                        >
-                            <div className="flex items-center gap-2">
-                                <LayoutGrid className="w-4 h-4" />
-                                My Pending
-                                {stats.pending > 0 && (
-                                    <span className="bg-[#00FF88] text-white text-[10px] px-2 py-0.5 rounded-full">{stats.pending}</span>
-                                )}
-                            </div>
-                            {activeTab === 'pending' && (
-                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#00FF88]" />
-                            )}
-                        </button>
-                        <button
-                            onClick={() => handleTabChange('evaluated')}
-                            className={`px-6 py-3 text-[14px] font-medium transition-all relative whitespace-nowrap ${activeTab === 'evaluated' ? 'text-[#00FF88]' : 'text-white/60 hover:text-white'
-                                }`}
-                            style={{ fontFamily: 'var(--font-body)' }}
-                        >
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 className="w-4 h-4" />
-                                My Evaluated
-                            </div>
-                            {activeTab === 'evaluated' && (
-                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#00FF88]" />
-                            )}
-                        </button>
-                        <button
-                            onClick={() => handleTabChange('all_teams')}
-                            className={`px-6 py-3 text-[14px] font-medium transition-all relative whitespace-nowrap ${activeTab === 'all_teams' ? 'text-[#00FF88]' : 'text-white/60 hover:text-white'
-                                }`}
-                            style={{ fontFamily: 'var(--font-body)' }}
-                        >
-                            <div className="flex items-center gap-2">
-                                <Vote className="w-4 h-4" />
-                                All Teams
-                            </div>
-                            {activeTab === 'all_teams' && (
-                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#00FF88]" />
-                            )}
-                        </button>
+            {/* Operator console header */}
+            <section className="relative w-full rounded-lg border border-[var(--border-soft)] bg-surface-1/90 shadow-card">
+      <HudFrame cornerSize="md" intensity="strong" />
+<div className="relative z-10 flex flex-col gap-5 p-5 sm:p-6">
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <Terminal className="w-3.5 h-3.5 text-brand shrink-0" />
+                            <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand">
+                                eval.console
+                            </span>
+                            <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-subtle">
+                                &gt; {firstName}
+                            </span>
+                            <span className="font-mono text-[10.5px] text-brand anim-blink">_</span>
+                        </div>
+                        <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-subtle">
+                            {progress}% complete
+                        </div>
                     </div>
 
-                    {/* Search and Filter Toggle */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-end justify-between gap-6 flex-wrap">
+                        <div className="flex flex-col gap-1.5 min-w-0">
+                            <h1 className="font-heading text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.02em] text-ink">
+                                Triage queue
+                            </h1>
+                            <p className="font-mono text-[12px] text-ink-secondary">
+                                <span className="text-brand">{stats.evaluated}</span>
+                                <span className="text-ink-subtle"> / </span>
+                                <span className="text-ink">{total || 0}</span>
+                                <span className="text-ink-subtle"> teams reviewed </span>
+                                <span className="text-ink-subtle">·</span>
+                                <span className="text-ink"> {stats.pending}</span>
+                                <span className="text-ink-subtle"> awaiting your call</span>
+                            </p>
+                        </div>
+
+                        {/* Stat tiles */}
+                        <div className="flex items-center gap-2 font-mono">
+                            <div className="flex flex-col items-end px-3 py-2 rounded-md border border-brand/25 bg-brand-soft min-w-[72px]">
+                                <span className="text-[10.5px] uppercase tracking-[0.22em] text-brand">Pending</span>
+                                <span className="text-[20px] leading-none text-ink mt-1">{stats.pending}</span>
+                            </div>
+                            <div className="flex flex-col items-end px-3 py-2 rounded-md border border-[var(--border-soft)] bg-surface-inset min-w-[72px]">
+                                <span className="text-[10.5px] uppercase tracking-[0.22em] text-ink-subtle">Done</span>
+                                <span className="text-[20px] leading-none text-ink mt-1">{stats.evaluated}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Progress rail */}
+                    <div className="flex flex-col gap-1.5">
+                        <div className="h-1.5 w-full rounded-sm bg-surface-inset border border-[var(--border-hairline)] overflow-hidden">
+                            <div
+                                className="h-full bg-brand transition-all duration-500 shadow-glow-sm"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-subtle">
+                            <span>// progress</span>
+                            <span>{stats.evaluated} of {total || 0}</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Caught-up signal */}
+            {isCaughtUp && (
+                <div className="rounded-md border border-brand/40 bg-brand-soft px-4 py-3 flex items-center gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-brand shrink-0" />
+                    <div className="flex-1 min-w-0">
+                        <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand">// inbox zero</div>
+                        <div className="text-[13px] text-ink mt-0.5">All assigned teams reviewed. Stand by for new assignments.</div>
+                    </div>
+                </div>
+            )}
+
+            {/* Main panel */}
+            <section className="relative w-full rounded-lg border border-[var(--border-soft)] bg-surface-1/90 shadow-card">
+      <HudFrame cornerSize="md" intensity="strong" />
+<div className="relative z-10 flex flex-col gap-5 p-5 sm:p-6">
+                    {/* Tab rail */}
+                    <div className="flex items-center gap-1 p-1 rounded-md bg-surface-inset border border-[var(--border-hairline)] overflow-x-auto">
+                        {TABS.map((tab) => {
+                            const Icon = tab.icon;
+                            const isActive = activeTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => handleTabChange(tab.id)}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-sm font-mono text-[11px] uppercase tracking-[0.15em] transition-all duration-150 whitespace-nowrap min-h-[36px] ${
+                                        isActive
+                                            ? 'bg-brand-soft text-brand border border-brand/40 shadow-glow-sm'
+                                            : 'text-ink-muted hover:text-ink border border-transparent'
+                                    }`}
+                                >
+                                    <Icon className="w-3.5 h-3.5" />
+                                    <span>{tab.label}</span>
+                                    {typeof tab.count === 'number' && tab.count > 0 && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-sm border ${
+                                            isActive
+                                                ? 'border-brand/50 bg-void text-brand'
+                                                : 'border-[var(--border-hairline)] bg-surface-2 text-ink-secondary'
+                                        }`}>
+                                            {tab.count}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Search + filter */}
+                    <div className="flex items-center gap-2">
                         <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle pointer-events-none" />
                             <input
                                 type="text"
-                                placeholder="Search teams..."
+                                placeholder="Search by team name or code..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] rounded-[12px] pl-10 pr-4 py-2.5 text-white placeholder:text-[rgba(255,255,255,0.3)] focus:outline-none focus:border-[#00FF88] focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200"
-                                style={{ fontFamily: 'var(--font-body)' }}
+                                className="w-full bg-surface-inset border border-[var(--border-soft)] rounded-md pl-10 pr-9 py-2.5 text-[13px] text-ink placeholder:text-ink-disabled focus:outline-none focus:border-brand focus:shadow-glow-sm transition-all duration-200 min-h-[44px] font-mono"
                             />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery("")}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-sm text-ink-subtle hover:text-ink hover:bg-surface-2 transition-colors"
+                                    aria-label="Clear search"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
                         </div>
                         <button
                             onClick={() => setShowFilters(prev => !prev)}
-                            className={`p-2.5 rounded-lg border transition-all duration-200 ${showFilters
-                                ? 'bg-[#00FF88]/10 border-[#00FF88]/50 text-[#00FF88]'
-                                : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:border-white/20'}`}
+                            className={`flex items-center gap-2 px-3 py-2.5 rounded-md border transition-all duration-200 min-h-[44px] font-mono text-[11px] uppercase tracking-[0.15em] ${
+                                showFilters || selectedTiers.length > 0
+                                    ? 'bg-brand-soft border-brand/40 text-brand shadow-glow-sm'
+                                    : 'bg-surface-inset border-[var(--border-soft)] text-ink-muted hover:text-ink hover:border-[var(--border-default)]'
+                            }`}
+                            aria-expanded={showFilters}
                         >
-                            <Layers className="w-5 h-5" />
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Filter</span>
+                            {selectedTiers.length > 0 && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-sm border border-brand/50 bg-void text-brand">
+                                    {selectedTiers.length}
+                                </span>
+                            )}
                         </button>
                     </div>
 
-                    {/* Global Filter Tags (Moved Below) */}
+                    {/* Filter chip rail */}
                     {showFilters && (
-                        <div className="flex flex-col gap-6 bg-[#0a0a0a]/50 backdrop-blur-sm border border-white/10 p-5 rounded-xl animate-in fade-in slide-in-from-top-2 duration-200">
-                            {/* Tiers */}
-                            <div className="flex flex-col gap-3">
-                                <span className="text-[10px] text-white/40 uppercase tracking-widest font-semibold" style={{ fontFamily: 'var(--font-body)' }}>
-                                    Selection Status
+                        <div className="flex flex-col gap-3 rounded-md border border-[var(--border-soft)] bg-surface-inset p-4 anim-fade-up">
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand">
+                                    // verdict filter
                                 </span>
-                                <div className="flex flex-wrap gap-2">
-                                    {[
-                                        { id: 'strongly_accepted', label: 'Strongly Accepted', color: 'text-[#00FF88] bg-[rgba(0,255,136,0.1)] border-[rgba(0,255,136,0.2)] hover:border-[rgba(0,255,136,0.4)]', active: 'ring-1 ring-[rgba(0,255,136,0.5)] bg-[rgba(0,255,136,0.2)]' },
-                                        { id: 'accepted', label: 'Accepted', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 hover:border-emerald-500/40', active: 'ring-1 ring-emerald-500/50 bg-emerald-500/20' },
-                                        { id: 'borderline', label: 'Borderline', color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20 hover:border-yellow-500/40', active: 'ring-1 ring-yellow-500/50 bg-yellow-500/20' },
-                                        { id: 'rejected', label: 'Rejected', color: 'text-red-400 bg-red-500/10 border-red-500/20 hover:border-red-500/40', active: 'ring-1 ring-red-500/50 bg-red-500/20' },
-                                    ].map((tier) => {
-                                        const isSelected = selectedTiers.includes(tier.id as Tier);
-                                        return (
-                                            <button
-                                                key={tier.id}
-                                                onClick={() => toggleTier(tier.id as Tier)}
-                                                className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-all duration-200 ${isSelected
-                                                    ? tier.color + ' ' + tier.active
-                                                    : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10 hover:text-white/60'
-                                                    }`}
-                                            >
-                                                {tier.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                {selectedTiers.length > 0 && (
+                                    <button
+                                        onClick={() => setSelectedTiers([])}
+                                        className="font-mono text-[10.5px] uppercase tracking-[0.15em] text-ink-subtle hover:text-ink transition-colors"
+                                    >
+                                        Clear
+                                    </button>
+                                )}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {(Object.keys(TIER_META) as Tier[]).map((tier) => {
+                                    const meta = TIER_META[tier];
+                                    const isSelected = selectedTiers.includes(tier);
+                                    return (
+                                        <button
+                                            key={tier}
+                                            onClick={() => toggleTier(tier)}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-sm text-[12px] font-medium border transition-all duration-150 min-h-[36px] ${
+                                                isSelected
+                                                    ? `${meta.chip} ring-1 ring-current/40`
+                                                    : 'bg-surface-2 text-ink-subtle border-[var(--border-hairline)] hover:text-ink hover:border-[var(--border-default)]'
+                                            }`}
+                                        >
+                                            <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+                                            <span>{meta.label}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
 
-                    {/* Team List or Skeleton */}
+                    {/* Queue list */}
                     {isLoading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {[1, 2, 3, 4, 5, 6].map((i) => (
-                                <TeamCardSkeleton key={i} />
+                        <div className="flex flex-col gap-2">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <TeamRowSkeleton key={i} />
                             ))}
                         </div>
                     ) : filteredTeams.length === 0 ? (
-                        <div className="text-center py-20 border border-dashed border-white/10 rounded-xl bg-white/5">
-                            <p className="text-white/50" style={{ fontFamily: 'var(--font-body)' }}>No teams found on this page.</p>
+                        <div className="flex flex-col items-center justify-center text-center py-16 px-6 rounded-md border border-dashed border-[var(--border-soft)] bg-surface-inset">
+                            {activeTab === 'pending' && stats.evaluated > 0 && !searchQuery && selectedTiers.length === 0 ? (
+                                <>
+                                    <div className="w-12 h-12 rounded-md border border-brand/40 bg-brand-soft flex items-center justify-center mb-4 shadow-glow-sm">
+                                        <CheckCircle2 className="w-5 h-5 text-brand" />
+                                    </div>
+                                    <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand mb-2">
+                                        // inbox zero
+                                    </div>
+                                    <h3 className="font-heading text-[20px] text-ink mb-1.5">All caught up</h3>
+                                    <p className="text-[13px] text-ink-secondary max-w-sm">
+                                        You&apos;ve reviewed every team in your queue. Switch to <span className="text-brand">Reviewed</span> to revisit your calls.
+                                    </p>
+                                </>
+                            ) : searchQuery || selectedTiers.length > 0 ? (
+                                <>
+                                    <div className="w-12 h-12 rounded-md border border-[var(--border-soft)] bg-surface-2 flex items-center justify-center mb-4">
+                                        <Search className="w-5 h-5 text-ink-muted" />
+                                    </div>
+                                    <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-subtle mb-2">
+                                        // no matches
+                                    </div>
+                                    <h3 className="font-heading text-[20px] text-ink mb-1.5">Nothing matched</h3>
+                                    <p className="text-[13px] text-ink-secondary max-w-sm mb-4">
+                                        Try a different query or drop the active filters to see more teams.
+                                    </p>
+                                    <button
+                                        onClick={() => {
+                                            setSearchQuery("");
+                                            setSelectedTiers([]);
+                                        }}
+                                        className="font-mono text-[11px] uppercase tracking-[0.15em] text-brand hover:text-ink transition-colors px-3 py-2 rounded-sm border border-brand/30 hover:border-brand/60"
+                                    >
+                                        Reset filters
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="w-12 h-12 rounded-md border border-[var(--border-soft)] bg-surface-2 flex items-center justify-center mb-4">
+                                        <Inbox className="w-5 h-5 text-ink-muted" />
+                                    </div>
+                                    <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-subtle mb-2">
+                                        // empty queue
+                                    </div>
+                                    <h3 className="font-heading text-[20px] text-ink mb-1.5">No teams here yet</h3>
+                                    <p className="text-[13px] text-ink-secondary max-w-sm">
+                                        {activeTab === 'pending'
+                                            ? 'No assignments yet. Stand by. the admin is still routing teams.'
+                                            : activeTab === 'evaluated'
+                                                ? "You haven't submitted any evaluations yet. Start with your Queue."
+                                                : 'No teams have been registered yet.'}
+                                    </p>
+                                </>
+                            )}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {filteredTeams.map((team) => (
-                                <div
-                                    key={team.teamCode}
-                                    onClick={() => setSelectedTeam(team)}
-                                    className="group relative bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer flex flex-col gap-3"
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <h3 className="text-lg font-medium text-white group-hover:text-[#00FF88] transition-colors line-clamp-1" style={{ fontFamily: 'var(--font-body)' }}>
-                                            {team.teamName}
-                                        </h3>
-                                        <div className="flex items-center gap-2">
-                                            {activeTab === 'all_teams' && (
-                                                <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded border border-white/5">
-                                                    <div className="flex items-center gap-1 text-[10px] text-[#00FF88]">
-                                                        <ThumbsUp className="w-3 h-3" /> {team.upvoteCount || 0}
-                                                    </div>
-                                                    <div className="w-[1px] h-3 bg-white/10" />
-                                                    <div className="flex items-center gap-1 text-[10px] text-red-400">
-                                                        <ThumbsDown className="w-3 h-3" /> {team.downvoteCount || 0}
+                        <div className="flex flex-col gap-2">
+                            {/* Queue header row */}
+                            <div className="flex items-center justify-between px-2 pb-2 gap-3 flex-wrap">
+                                <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-subtle">
+                                    {activeTab === 'all_teams' ? '// all teams' : activeTab === 'evaluated' ? '// reviewed' : '// queue'}
+                                </span>
+                                <div className="flex items-center gap-3">
+                                    <span className="hidden sm:inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted">
+                                        <kbd className="px-1 py-0.5 rounded bg-surface-inset border border-[var(--border-soft)] text-ink">J</kbd>
+                                        <span>/</span>
+                                        <kbd className="px-1 py-0.5 rounded bg-surface-inset border border-[var(--border-soft)] text-ink">K</kbd>
+                                        <span>navigate</span>
+                                        <span className="text-ink-disabled">·</span>
+                                        <kbd className="px-1 py-0.5 rounded bg-surface-inset border border-[var(--border-soft)] text-ink">↵</kbd>
+                                        <span>open</span>
+                                    </span>
+                                    <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-subtle">
+                                        {filteredTeams.length} of {totalTeams || filteredTeams.length}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {filteredTeams.map((team, idx) => {
+                                const tierFromMy = team.myEvaluation?.tier as Tier | undefined;
+                                const uniqueTiers = Array.from(new Set(team.evaluations.map(e => e.tier))) as Tier[];
+                                const isFocused = idx === focusedIndex;
+
+                                return (
+                                    <button
+                                        key={team.teamCode}
+                                        onClick={() => setSelectedTeam(team)}
+                                        onMouseEnter={() => setFocusedIndex(idx)}
+                                        aria-current={isFocused ? "true" : undefined}
+                                        className={[
+                                            "group relative w-full text-left rounded-md p-4 flex flex-col gap-3 border",
+                                            "transition-[background,border-color,box-shadow] duration-150",
+                                            "focus:outline-none focus:border-brand focus:shadow-glow-sm",
+                                            isFocused
+                                                ? "bg-surface-3 border-brand/55 shadow-glow-sm"
+                                                : "bg-surface-2 border-[var(--border-soft)] hover:border-brand/50 hover:bg-surface-3",
+                                        ].join(" ")}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex items-start gap-3 min-w-0">
+                                                <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-subtle pt-1 shrink-0 w-6">
+                                                    {String((page - 1) * limit + idx + 1).padStart(2, '0')}
+                                                </span>
+                                                <div className="min-w-0 flex flex-col gap-1">
+                                                    <h3 className="text-[15px] font-medium text-ink group-hover:text-brand transition-colors line-clamp-1 leading-tight">
+                                                        {team.teamName}
+                                                    </h3>
+                                                    <div className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.15em] text-ink-subtle flex-wrap">
+                                                        <span>{team.teamCode}</span>
+                                                        <span className="text-ink-disabled">·</span>
+                                                        <span className="flex items-center gap-1">
+                                                            <Users className="w-3 h-3" />
+                                                            {team.memberCount}
+                                                        </span>
+                                                        {(() => {
+                                                            const ms = team.teamMembers;
+                                                            if (!ms || ms.length === 0) return null;
+                                                            const solved = ms.filter((m) => m.hasSolvedChallenge).length;
+                                                            const total = ms.length;
+                                                            const allSolved = solved === total;
+                                                            return (
+                                                                <>
+                                                                    <span className="text-ink-disabled">·</span>
+                                                                    <span
+                                                                        className={[
+                                                                            "inline-flex items-center gap-1",
+                                                                            allSolved ? "text-brand" : "text-ink-muted",
+                                                                        ].join(" ")}
+                                                                        title={allSolved
+                                                                            ? "All members captured the warm-up flag"
+                                                                            : `${solved} of ${total} captured the warm-up flag`}
+                                                                    >
+                                                                        <Flag className="w-3 h-3" />
+                                                                        {solved}/{total} warm-up
+                                                                    </span>
+                                                                </>
+                                                            );
+                                                        })()}
                                                     </div>
                                                 </div>
-                                            )}
-                                            {team.isAssigned && (
-                                                <span className="text-[10px] uppercase bg-blue-500/20 text-blue-400 px-2 py-1 rounded border border-blue-500/20">
-                                                    Assigned
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
+                                            </div>
 
-                                    <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between text-xs text-white/40">
-                                        <span style={{ fontFamily: 'var(--font-body)' }}>Team Code: {team.teamCode}</span>
-                                        {activeTab === 'evaluated' && team.myEvaluation && (
-                                            <span className={`px-2 py-0.5 rounded border ${team.myEvaluation.tier === 'strongly_accepted' ? 'bg-[rgba(0,255,136,0.2)] border-[rgba(0,255,136,0.3)] text-[#00FF88]' :
-                                                team.myEvaluation.tier === 'accepted' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' :
-                                                    team.myEvaluation.tier === 'borderline' ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-400' :
-                                                        'bg-red-500/20 border-red-500/30 text-red-400'
-                                                }`} style={{ fontFamily: 'var(--font-body)' }}>
-                                                {team.myEvaluation.tier.replace('_', ' ')}
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                {activeTab === 'all_teams' && (
+                                                    <div className="flex items-center gap-1.5 font-mono text-[10.5px]">
+                                                        <span className="flex items-center gap-1 text-brand">
+                                                            <ThumbsUp className="w-3 h-3" /> {team.upvoteCount || 0}
+                                                        </span>
+                                                        <span className="text-ink-disabled">/</span>
+                                                        <span className="flex items-center gap-1 text-red-400">
+                                                            <ThumbsDown className="w-3 h-3" /> {team.downvoteCount || 0}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {team.isAssigned && activeTab !== 'pending' && (
+                                                    <span className="font-mono text-[10px] uppercase tracking-[0.15em] bg-brand-soft text-brand px-1.5 py-0.5 rounded-sm border border-brand/30">
+                                                        Mine
+                                                    </span>
+                                                )}
+                                                <ArrowRight className="w-4 h-4 text-ink-subtle group-hover:text-brand group-hover:translate-x-0.5 transition-all" />
+                                            </div>
+                                        </div>
+
+                                        {/* Verdict rail */}
+                                        <div className="flex items-center justify-between gap-3 pt-2">
+                                            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                                {tierFromMy && (
+                                                    <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-sm border font-mono text-[10px] uppercase tracking-[0.15em] ${TIER_META[tierFromMy].chip}`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${TIER_META[tierFromMy].dot}`} />
+                                                        Your call: {TIER_META[tierFromMy].short}
+                                                    </span>
+                                                )}
+                                                {!tierFromMy && uniqueTiers.length > 0 && (
+                                                    <>
+                                                        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink-subtle">
+                                                            Panel:
+                                                        </span>
+                                                        {uniqueTiers.map((tier) => (
+                                                            <span
+                                                                key={tier}
+                                                                className={`flex items-center gap-1.5 px-2 py-0.5 rounded-sm border font-mono text-[10px] uppercase tracking-[0.15em] ${TIER_META[tier].chip}`}
+                                                            >
+                                                                <span className={`w-1.5 h-1.5 rounded-full ${TIER_META[tier].dot}`} />
+                                                                {TIER_META[tier].short}
+                                                            </span>
+                                                        ))}
+                                                    </>
+                                                )}
+                                                {!tierFromMy && uniqueTiers.length === 0 && (
+                                                    <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-ink-subtle">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-ink-disabled anim-blink" />
+                                                        Awaiting review
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-brand opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                                Open &gt;
                                             </span>
-                                        )}
-                                        {/* Display Selection Status Tags */}
-                                        {(() => {
-                                            const uniqueTiers = Array.from(new Set(team.evaluations.map(e => e.tier)));
-                                            if (uniqueTiers.length === 0 && team.isEvaluated) return null;
-                                            return uniqueTiers.map(tier => (
-                                                <span key={tier} className={`px-2 py-0.5 rounded border capitalize flex items-center ${tier === 'strongly_accepted' ? 'bg-[rgba(0,255,136,0.1)] border-[rgba(0,255,136,0.2)] text-[#00FF88]' :
-                                                    tier === 'accepted' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                                                        tier === 'borderline' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
-                                                            'bg-red-500/10 border-red-500/20 text-red-400'
-                                                    }`} style={{ fontFamily: 'var(--font-body)' }}>
-                                                    {tier.replace('_', ' ')}
-                                                </span>
-                                            ));
-                                        })()}
-                                    </div>
-                                </div>
-                            ))}
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
                     )}
 
-                    {/* Pagination Controls */}
+                    {/* Pagination */}
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-2">
-                            <div className="text-sm text-white/40" style={{ fontFamily: 'var(--font-body)' }}>
-                                Showing page {page} of {totalPages} ({totalTeams} total)
+                        <div className="flex items-center justify-between gap-3 pt-4 mt-1">
+                            <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-subtle">
+                                Page {page} / {totalPages} · {totalTeams} total
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                                 <button
                                     onClick={() => setPage(p => Math.max(1, p - 1))}
                                     disabled={page === 1}
-                                    className="p-2 rounded-lg border border-white/10 bg-white/5 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
+                                    className="flex items-center justify-center w-10 h-10 rounded-md border border-[var(--border-soft)] bg-surface-inset text-ink-secondary disabled:opacity-30 disabled:cursor-not-allowed hover:text-brand hover:border-brand/40 hover:bg-brand-soft transition-all"
+                                    aria-label="Previous page"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                     disabled={page === totalPages}
-                                    className="p-2 rounded-lg border border-white/10 bg-white/5 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
+                                    className="flex items-center justify-center w-10 h-10 rounded-md border border-[var(--border-soft)] bg-surface-inset text-ink-secondary disabled:opacity-30 disabled:cursor-not-allowed hover:text-brand hover:border-brand/40 hover:bg-brand-soft transition-all"
+                                    aria-label="Next page"
                                 >
                                     <ChevronRight className="w-4 h-4" />
                                 </button>
@@ -461,7 +753,7 @@ export function EvaluatorContainer() {
                         </div>
                     )}
                 </div>
-            </FormSection>
+            </section>
         </div>
     );
 }

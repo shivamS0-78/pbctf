@@ -96,7 +96,7 @@ export function Hero(){
         </div>
         <p className={`${oxan.className} text-xs md:text-xl text-muted-foreground -mt-7 md:-mt-24 max-w-xs sm:max-w-3xl mx-auto`}>
               A Point Blank Capture the Flag competition where teams compete across
-              CTF challenge categories —web, pwn, reverse engineering, crypto, and forensics— in a relentless test of skill, strategy, and endurance!
+              CTF challenge categories.web, pwn, reverse engineering, crypto, and forensics- in a relentless test of skill, strategy, and endurance!
         </p>
         <div className="pt-96">
           {/* <EventTimer targetDate={new Date("2025-04-27T00:00:00").toISOString()} /> */}

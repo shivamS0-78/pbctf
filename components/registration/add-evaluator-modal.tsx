@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Modal } from "./modal";
 import { Button } from "./button";
-import { FormInput } from "./form-input";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { API_ENDPOINTS } from "@/lib/api-config";
-import { Search, UserPlus, Check } from "lucide-react";
+import { Search, UserPlus, Check, ShieldCheck } from "lucide-react";
 import { StickyAlert } from "./sticky-alert";
 import { ConfirmationDialog } from "./confirmation-dialog";
 
@@ -127,57 +126,97 @@ export function AddEvaluatorModal({
         }
     };
 
+    const queryReady = search.trim().length >= 2;
+
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Add New Evaluator"
+            title="Recruit judge"
+            size="md"
         >
-            <div className="flex flex-col gap-[16px] min-h-[300px]">
+            <div className="flex flex-col gap-4 min-h-[320px]">
                 {alert && (
                     <StickyAlert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />
                 )}
 
+                {/* Eyebrow context */}
+                <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-muted flex items-center gap-2">
+                    <ShieldCheck className="w-3.5 h-3.5 text-brand" />
+                    <span>
+                        <span className="text-ink-subtle">role:</span>{" "}
+                        <span className="text-brand">evaluator</span>
+                    </span>
+                    <span className="text-ink-subtle">·</span>
+                    <span>grants access to the evaluator console</span>
+                </div>
+
+                {/* Search */}
                 <div className="relative">
-                    <FormInput
-                        label="Search User"
-                        placeholder="Search by name or email..."
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle pointer-events-none" />
+                    <input
+                        type="text"
+                        placeholder="grep operators / min 2 chars…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
+                        autoFocus
+                        className="w-full bg-surface-inset border border-[var(--border-soft)] rounded-md pl-9 pr-9 py-2.5 text-ink text-[13px] font-mono placeholder:text-ink-subtle focus:outline-none focus:border-brand focus:shadow-[0_0_16px_rgba(0,255,136,0.25)] transition-all duration-200"
                     />
                     {isLoading && (
-                        <div className="absolute right-3 top-[38px]">
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
                             <Spinner size="sm" />
                         </div>
                     )}
                 </div>
 
-                <div className="flex-1 flex flex-col gap-[8px]">
-                    {users.length === 0 && search.length >= 2 && !isLoading && (
-                        <div className="text-center py-6 text-white/50 text-sm">
-                            No users found matching "{search}"
+                {/* Results */}
+                <div className="flex-1 flex flex-col gap-2">
+                    {!queryReady && (
+                        <div className="flex flex-col items-center justify-center text-center py-8 px-6 rounded-md border border-dashed border-[var(--border-soft)] bg-surface-inset/50">
+                            <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand mb-1">
+                                awaiting_query
+                            </div>
+                            <p className="text-[12.5px] text-ink-muted max-w-xs">
+                                Type a name or email to search the operator directory.
+                            </p>
+                        </div>
+                    )}
+
+                    {queryReady && users.length === 0 && !isLoading && (
+                        <div className="flex flex-col items-center justify-center text-center py-8 px-6 rounded-md border border-dashed border-[var(--border-soft)] bg-surface-inset/50">
+                            <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand mb-1">
+                                no_match
+                            </div>
+                            <p className="text-[12.5px] text-ink-muted max-w-xs">
+                                Nothing matches “{search}”. Try a different query.
+                            </p>
                         </div>
                     )}
 
                     {users.map((user) => (
                         <div
                             key={user.uid}
-                            className="flex items-center justify-between p-3 rounded-[12px] bg-[rgba(13,13,13,0.4)] border border-[rgba(255,255,255,0.06)]"
+                            className="flex items-center justify-between gap-3 p-3 rounded-md bg-surface-inset border border-[var(--border-soft)] hover:border-brand/25 transition-colors"
                         >
-                            <div className="flex flex-col overflow-hidden mr-3">
-                                <span className="text-white text-[14px] font-medium truncate">{user.name}</span>
-                                <span className="text-white/60 text-[12px] truncate">{user.email}</span>
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-9 h-9 rounded-md bg-brand-soft border border-brand/20 flex items-center justify-center shrink-0 font-mono text-[12px] text-brand uppercase">
+                                    {user.name?.[0] ?? "?"}
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="text-ink text-[13.5px] font-medium truncate">{user.name}</div>
+                                    <div className="font-mono text-[11.5px] text-ink-muted truncate">{user.email}</div>
+                                </div>
                             </div>
 
                             {user.isEvaluator ? (
-                                <div className="flex items-center gap-1 text-[#00FF88] text-[12px] px-3 py-1.5 bg-[rgba(0,255,136,0.1)] rounded-full border border-[rgba(0,255,136,0.3)]">
+                                <span className="inline-flex items-center gap-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-brand px-2 py-1 bg-brand-soft rounded-md border border-brand/40 shrink-0">
                                     <Check className="w-3 h-3" />
-                                    <span>Evaluator</span>
-                                </div>
+                                    Judge
+                                </span>
                             ) : (
                                 <Button
-                                    variant="secondary"
-                                    className="shrink-0 h-8"
+                                    variant="primary"
+                                    size="sm"
                                     onClick={() => setConfirmation({ isOpen: true, userId: user.uid })}
                                     disabled={!!promotingId}
                                 >
@@ -185,8 +224,8 @@ export function AddEvaluatorModal({
                                         <Spinner size="sm" />
                                     ) : (
                                         <>
-                                            <UserPlus className="w-3 h-3 mr-1" />
-                                            Add
+                                            <UserPlus className="w-3.5 h-3.5" />
+                                            Promote
                                         </>
                                     )}
                                 </Button>
@@ -203,8 +242,8 @@ export function AddEvaluatorModal({
                     handlePromote(confirmation.userId);
                     setConfirmation({ ...confirmation, isOpen: false });
                 }}
-                title="Promote User"
-                message="Are you sure you want to promote this user to an Evaluator? They will gain access to the evaluator dashboard."
+                title="Promote to judge"
+                message="Promote this operator to evaluator? They will gain access to the evaluator console."
             />
         </Modal>
     );

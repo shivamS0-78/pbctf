@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { AlertCircle, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, AlertTriangle, Info, X } from "lucide-react";
+
+type AlertType = "success" | "error" | "warning" | "info";
 
 interface StickyAlertProps {
-  type?: "success" | "error" | "warning" | "info";
+  type?: AlertType;
   message: string;
   onClose: () => void;
   duration?: number;
 }
+
+const variants: Record<AlertType, { wrap: string; icon: string; Icon: typeof AlertCircle }> = {
+  success: { wrap: "border-brand/45 bg-brand-soft",                    icon: "text-brand",          Icon: CheckCircle2 },
+  error:   { wrap: "border-[var(--danger)]/55 bg-[var(--danger-soft)]", icon: "text-[var(--danger)]", Icon: AlertCircle },
+  warning: { wrap: "border-[var(--warning)]/45 bg-[var(--warning-soft)]", icon: "text-[var(--warning)]", Icon: AlertTriangle },
+  info:    { wrap: "border-[var(--info)]/40 bg-[var(--info-soft)]",    icon: "text-[var(--info)]",   Icon: Info },
+};
 
 export function StickyAlert({
   type = "info",
@@ -15,86 +24,55 @@ export function StickyAlert({
   duration = 5000,
 }: StickyAlertProps) {
   const [isVisible, setIsVisible] = useState(true);
-  const [isAtTop, setIsAtTop] = useState(true);
 
   useEffect(() => {
-    // Auto-hide after duration - errors stay longer so users can read them
-    const effectiveDuration = type === 'error' ? Math.max(duration, 10000) : duration; // Errors stay at least 10 seconds
+    const effectiveDuration = type === "error" ? Math.max(duration, 10000) : duration;
     if (effectiveDuration > 0) {
       const timer = setTimeout(() => {
         setIsVisible(false);
-        setTimeout(onClose, 300); // Wait for animation to finish
+        setTimeout(onClose, 280);
       }, effectiveDuration);
-
       return () => clearTimeout(timer);
     }
   }, [duration, onClose, type]);
 
-  useEffect(() => {
-    // Check scroll position
-    const handleScroll = () => {
-      setIsAtTop(window.scrollY < 100);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const getTypeClass = () => {
-    switch (type) {
-      case "success":
-        return "bg-[rgba(0,255,136,0.3)] border-[#00FF88]";
-      case "error":
-        return "bg-black/60 border-[#00FF88]";
-      case "warning":
-        return "bg-[rgba(0,255,136,0.2)] border-[#8CFF00]";
-      default:
-        return "bg-white/10 border-white/38";
-    }
-  };
-
-  const getIconColor = () => {
-    switch (type) {
-      case "success":
-        return "text-white";
-      case "error":
-        return "text-[#00FF88]";
-      case "warning":
-        return "text-white";
-      default:
-        return "text-white";
-    }
-  };
-
   if (!isVisible) return null;
+
+  const v = variants[type];
+  const Icon = v.Icon;
 
   return (
     <div
-      className={`fixed top-[90px] left-1/2 transform -translate-x-1/2 z-[100] w-[90%] max-w-[600px] transition-all duration-300 ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
-      }`}
+      role={type === "error" ? "alert" : "status"}
+      aria-live={type === "error" ? "assertive" : "polite"}
+      className={[
+        "w-full",
+        "transition-all duration-300",
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2",
+      ].join(" ")}
     >
       <div
-        className={`backdrop-blur-[8px] backdrop-filter rounded-[15px] p-[16px] border ${getTypeClass()} flex items-center gap-[12px] shadow-[0px_8px_32px_0px_rgba(0,0,0,0.4)] relative`}
+        className={[
+          "rounded-md p-3.5 md:p-4 relative",
+          "border bg-surface-2",
+          v.wrap,
+          "shadow-card",
+          "flex items-center gap-3",
+        ].join(" ")}
       >
-        <AlertCircle className={`w-5 h-5 flex-shrink-0 ${getIconColor()}`} />
-        <span
-          className="font-['Google_Sans_Flex',sans-serif] text-[14px] text-white flex-1"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
-          {message}
-        </span>
+        <Icon className={`w-4 h-4 flex-shrink-0 ${v.icon}`} />
+        <span className="text-[13.5px] text-ink flex-1 font-body leading-snug">{message}</span>
         <button
           onClick={() => {
             setIsVisible(false);
-            setTimeout(onClose, 300);
+            setTimeout(onClose, 280);
           }}
-          className="text-white hover:text-gray-300 transition-colors flex-shrink-0"
+          aria-label="Dismiss"
+          className="text-ink-muted hover:text-ink transition-colors flex-shrink-0 w-7 h-7 inline-flex items-center justify-center rounded hover:bg-white/[0.05]"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
       </div>
     </div>
   );
 }
-

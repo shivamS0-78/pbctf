@@ -5,23 +5,22 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { API_ENDPOINTS } from "@/lib/api-config";
 import {
-  Home,
-  UserCircle,
   Users,
-  CheckCircle,
-  Clock,
-  AlertCircle,
   X,
   Check,
   Search,
+  ChevronDown,
+  Flag,
+  ShieldAlert,
+  Inbox,
+  Terminal,
   ArrowRight,
-  MapPin,
-  ExternalLink,
+  Sparkles,
+  UserPlus,
 } from "lucide-react";
 import { FormSection } from "./form-section";
 import { FormInput } from "./form-input";
 import { Button } from "./button";
-import { StatusBadge } from "./status-badge";
 import { AlertBanner } from "./alert-banner";
 import { TeamOverviewCard } from "./team-overview-card";
 import { TeamMembersCard } from "./team-members-card";
@@ -40,6 +39,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";
+import { TEAM_SIZE } from "@/lib/constants";
+import { HudFrame } from "./hud-frame";
 
 interface Team {
   teamCode: string;
@@ -84,16 +85,181 @@ interface Team {
   createdAt?: Date;
 }
 
+// Operator status strip: tells the user EXACTLY what state they're in and what to do next.
+function StatusStrip({
+  status,
+  teamName,
+  pendingCount,
+  onPrimary,
+  primaryLabel,
+  primaryIcon: PrimaryIcon,
+  userName,
+  profileCompleteness,
+  onOpenProfile,
+}: {
+  status: "none" | "active" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined";
+  teamName?: string;
+  pendingCount: number;
+  onPrimary?: () => void;
+  primaryLabel?: string;
+  primaryIcon?: typeof ArrowRight;
+  userName: string;
+  profileCompleteness?: number;
+  onOpenProfile?: () => void;
+}) {
+  const meta: Record<
+    string,
+    { label: string; tone: "danger" | "warning" | "info" | "brand"; sub: string }
+  > = {
+    none: {
+      label: "NO TEAM",
+      tone: "warning",
+      sub: "Create a team to register. You can run solo or add one teammate.",
+    },
+    active: {
+      label: "DRAFT",
+      tone: "info",
+      sub: `${teamName ?? "Team"} is in draft. Complete registration to submit.`,
+    },
+    submitted: {
+      label: "SUBMITTED",
+      tone: "info",
+      sub: `${teamName ?? "Team"} is awaiting evaluation.`,
+    },
+    "under-review": {
+      label: "UNDER REVIEW",
+      tone: "info",
+      sub: `${teamName ?? "Team"} is being evaluated.`,
+    },
+    shortlisted: {
+      label: "SHORTLISTED",
+      tone: "brand",
+      sub: `${teamName ?? "Team"} cleared eval. Lock in your RSVP.`,
+    },
+    confirmed: {
+      label: "RSVP CONFIRMED",
+      tone: "brand",
+      sub: `${teamName ?? "Team"} is locked in. See you on-site.`,
+    },
+    declined: {
+      label: "RSVP DECLINED",
+      tone: "danger",
+      sub: `${teamName ?? "Team"} declined the slot.`,
+    },
+  };
+
+  const m = meta[status];
+  const toneRing =
+    m.tone === "danger"
+      ? "border-[var(--danger)]/40 bg-[var(--danger-soft)]"
+      : m.tone === "warning"
+      ? "border-[var(--warning)]/40 bg-[var(--warning-soft)]"
+      : m.tone === "brand"
+      ? "border-brand/40 bg-brand/10"
+      : "border-[var(--info)]/40 bg-[var(--info-soft)]";
+  const dotColor =
+    m.tone === "danger"
+      ? "bg-[var(--danger)]"
+      : m.tone === "warning"
+      ? "bg-[var(--warning)]"
+      : m.tone === "brand"
+      ? "bg-brand"
+      : "bg-[var(--info)]";
+  const labelColor =
+    m.tone === "danger"
+      ? "text-[var(--danger)]"
+      : m.tone === "warning"
+      ? "text-[var(--warning)]"
+      : m.tone === "brand"
+      ? "text-brand"
+      : "text-[var(--info)]";
+
+  return (
+    <div className="relative w-full rounded-lg border border-[var(--border-soft)] card-surface">
+      <HudFrame cornerSize="md" intensity="strong" />
+      <div className="relative z-10 flex flex-col gap-5 p-5 sm:p-6">
+        {/* top row: prompt line + profile meter */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand">
+            <Terminal className="w-3 h-3" />
+            <span className="opacity-80">operator/{userName.split(" ")[0]?.toLowerCase()}</span>
+            <span className="text-ink-disabled">$</span>
+            <span className="text-ink-secondary normal-case tracking-normal font-body text-[12px]">
+              session.status
+            </span>
+            <span className="anim-blink text-brand">_</span>
+          </div>
+
+          {typeof profileCompleteness === "number" && profileCompleteness < 100 && onOpenProfile && (
+            <button
+              type="button"
+              onClick={onOpenProfile}
+              className="ml-auto group inline-flex items-center gap-2 px-2 h-6 rounded border border-[var(--border-soft)] bg-surface-inset hover:border-brand/45 hover:bg-surface-2 transition-colors"
+              title="Open profile"
+            >
+              <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-ink-muted group-hover:text-ink">
+                profile
+              </span>
+              <span className="relative w-14 h-1 rounded-full bg-white/[0.05] overflow-hidden">
+                <span
+                  className="absolute inset-y-0 left-0 bg-brand"
+                  style={{ width: `${profileCompleteness}%` }}
+                />
+              </span>
+              <span className="font-mono text-[10px] tabular-nums text-brand">
+                {profileCompleteness}%
+              </span>
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div className="flex flex-col gap-2 min-w-0">
+            <div
+              className={[
+                "inline-flex items-center gap-2 self-start px-2.5 h-7 rounded-md border",
+                toneRing,
+              ].join(" ")}
+            >
+              <span className={["w-1.5 h-1.5 rounded-full", dotColor, "animate-pulse"].join(" ")} />
+              <span className={["font-mono text-[10.5px] uppercase tracking-[0.22em]", labelColor].join(" ")}>
+                {m.label}
+              </span>
+              {pendingCount > 0 && (
+                <>
+                  <span className="text-ink-disabled font-mono text-[10px]">·</span>
+                  <span className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-brand">
+                    {pendingCount} ping{pendingCount === 1 ? "" : "s"}
+                  </span>
+                </>
+              )}
+            </div>
+            <h1 className="font-heading text-[26px] sm:text-[32px] md:text-[36px] font-bold text-ink leading-[1.05] tracking-tight">
+              {m.sub}
+            </h1>
+          </div>
+          {onPrimary && primaryLabel && (
+            <div className="shrink-0">
+              <Button onClick={onPrimary} variant="primary" size="md">
+                {PrimaryIcon ? <PrimaryIcon className="w-4 h-4" /> : null}
+                {primaryLabel}
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function DashboardContainer() {
-  const { user, isAuthenticated, getToken } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, getToken } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [team, setTeam] = useState<Team | null>(null);
   const [profileCompleteness, setProfileCompleteness] = useState(0);
   const [missingFields, setMissingFields] = useState<string[]>([]);
-  const [rsvpStatus, setRsvpStatus] = useState<
-    "pending" | "confirmed" | "declined"
-  >("pending");
+  const [rsvpStatus, setRsvpStatus] = useState<"pending" | "confirmed" | "declined">("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [alert, setAlert] = useState<{
@@ -105,14 +271,8 @@ export function DashboardContainer() {
   const [invites, setInvites] = useState<any[]>([]);
   const [teamRequests, setTeamRequests] = useState<any[]>([]);
   const [removeMemberDialogOpen, setRemoveMemberDialogOpen] = useState(false);
-  const [memberToRemove, setMemberToRemove] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [transferOwnershipDialogOpen, setTransferOwnershipDialogOpen] =
-    useState(false);
-  const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
-  const [showVenueBanner, setShowVenueBanner] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
+  const [transferOwnershipDialogOpen, setTransferOwnershipDialogOpen] = useState(false);
   const [hasSolvedChallenge, setHasSolvedChallenge] = useState(false);
   const [isChallengeCardOpen, setIsChallengeCardOpen] = useState(false);
   const [dynamicFlag, setDynamicFlag] = useState("");
@@ -120,294 +280,235 @@ export function DashboardContainer() {
   const [isSubmittingFlag, setIsSubmittingFlag] = useState(false);
   const [flagError, setFlagError] = useState("");
 
-  const handleRespondToInvite = async (
-    requestId: string,
-    action: "accept" | "decline",
-  ) => {
+  // Tracks which join-request is currently being responded to, so we can show
+  // a pending state on the right button (accept or decline) for that row.
+  const [respondingTo, setRespondingTo] = useState<
+    { id: string; action: "accept" | "decline" } | null
+  >(null);
+
+  const handleRespondToInvite = async (requestId: string, action: "accept" | "decline") => {
+    if (respondingTo) return; // already in flight
+    setRespondingTo({ id: requestId, action });
     try {
       const token = await getToken();
       if (!token) return;
-
-      const response = await fetch(
-        API_ENDPOINTS.respondToJoinRequest(requestId),
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ action }),
-        },
-      );
-
+      const response = await fetch(API_ENDPOINTS.respondToJoinRequest(requestId), {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || `Failed to ${action} invitation`);
-      }
-
+      if (!response.ok) throw new Error(data.message || `Failed to ${action} invitation`);
       toast({
-        title:
-          action === "accept" ? "Invitation Accepted" : "Invitation Declined",
+        title: action === "accept" ? "Invitation Accepted" : "Invitation Declined",
         description: data.message,
       });
-
-      // Refresh data
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       console.error("Error responding to invitation:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to respond",
+        description: error instanceof Error ? error.message : "Failed to respond",
       });
+    } finally {
+      setRespondingTo(null);
     }
   };
 
   useEffect(() => {
-    // Check if welcome banner has been dismissed
-    const welcomeBannerDismissed = localStorage.getItem(
-      "zenith_welcome_banner_dismissed",
-    );
-    if (!welcomeBannerDismissed) {
-      setShowWelcomeBanner(true);
-    }
-    if (user && user.role === "user") {
-      setShowVenueBanner(true);
-    }
-
+    // Wait for the auth provider to finish initialising before deciding
+    // whether to redirect or kick off the data fetch.
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push("/login");
       return;
     }
 
-    // Fetch real data from API
     const fetchData = async () => {
       try {
         setIsLoading(true);
-
-        // Get Firebase auth token (automatically refreshed by Firebase SDK)
         const token = await getToken();
         if (!token) {
           router.push("/login");
           return;
         }
 
-        // Fetch flag challenge status
-        try {
-          const flagResponse = await fetch("/api/user/flag", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          });
-          const flagData = await flagResponse.json();
-          if (flagData.success && flagData.flag) {
-            setDynamicFlag(flagData.flag);
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        };
+
+        // Phase 1: kick off all independent calls in parallel. None of these
+        // need data from another, so they don't have to be sequential.
+        const [flagSettled, profileSettled, rsvpSettled, invitesSettled] =
+          await Promise.allSettled([
+            fetch("/api/user/flag", { headers }),
+            fetch(API_ENDPOINTS.userProfile, { headers }),
+            fetch("/api/user/rsvp-status", { headers }),
+            fetch(`${API_ENDPOINTS.joinRequest}?type=user`, { headers }),
+          ]);
+
+        // Process flag (best-effort, ignore failures)
+        if (flagSettled.status === "fulfilled") {
+          try {
+            const flagData = await flagSettled.value.json();
+            if (flagData.success && flagData.flag) setDynamicFlag(flagData.flag);
+          } catch (error) {
+            console.error("Error parsing flag challenge:", error);
           }
-        } catch (error) {
-          console.error("Error fetching flag challenge:", error);
+        } else {
+          console.error("Error fetching flag challenge:", flagSettled.reason);
         }
 
-        // Fetch user profile from authenticated endpoint
-        const userResponse = await fetch(API_ENDPOINTS.userProfile, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+        // Process profile -- gates everything downstream
+        if (profileSettled.status !== "fulfilled" || !profileSettled.value.ok) {
+          if (profileSettled.status === "rejected") {
+            console.error("Error fetching profile:", profileSettled.reason);
+          }
+          return;
+        }
+
+        const userData = await profileSettled.value.json();
+        const profileData = userData.success ? userData.data : userData;
+        if (!profileData) return;
+
+        setHasSolvedChallenge(profileData.hasSolvedChallenge || false);
+        const profileFields = [
+          { key: "name", label: "Name" },
+          { key: "email", label: "Email" },
+          { key: "phone", label: "Phone" },
+          { key: "discord_username", label: "Discord" },
+          { key: "age", label: "Age" },
+          { key: "organisation", label: "Organisation" },
+          { key: "bio", label: "Bio" },
+          { key: "profile_picture", label: "Profile Picture" },
+          { key: "resume_link", label: "Resume" },
+          { key: "github_link", label: "GitHub" },
+          { key: "linkedin_link", label: "LinkedIn" },
+          { key: "portfolio_link", label: "Portfolio" },
+          { key: "ctf_profile", label: "CTF Profile" },
+        ];
+        let completed = 0;
+        const missing: string[] = [];
+        profileFields.forEach((field) => {
+          const value = profileData[field.key];
+          if (value && value !== null && value !== "") completed++;
+          else missing.push(field.label);
         });
+        setProfileCompleteness(Math.round((completed / profileFields.length) * 100));
+        setMissingFields(missing);
 
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          // Profile API returns data directly (not wrapped in success/data)
-          const profileData = userData.success ? userData.data : userData;
+        // Process invites (best-effort, gated on profile success to match prior behavior)
+        if (invitesSettled.status === "fulfilled" && invitesSettled.value.ok) {
+          try {
+            const invitesData = await invitesSettled.value.json();
+            if (invitesData.success && invitesData.data && invitesData.data.requests) {
+              setInvites(
+                invitesData.data.requests.filter(
+                  (r: any) => r.type === "invite" && r.status === "pending",
+                ),
+              );
+            }
+          } catch (error) {
+            console.error("Error parsing invites:", error);
+          }
+        } else if (invitesSettled.status === "rejected") {
+          console.error("Error fetching invites:", invitesSettled.reason);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load team invitations.",
+          });
+        }
 
-          if (profileData) {
-            setHasSolvedChallenge(profileData.hasSolvedChallenge || false);
-            // Calculate profile completeness based on ALL profile fields (excluding system fields)
-            // Define all profile fields with their human-readable labels
-            const profileFields = [
-              { key: "name", label: "Name" },
-              { key: "email", label: "Email" },
-              { key: "phone", label: "Phone" },
-              { key: "discord_username", label: "Discord" },
-              { key: "age", label: "Age" },
-              { key: "organisation", label: "Organisation" },
-              { key: "bio", label: "Bio" },
-              { key: "profile_picture", label: "Profile Picture" },
-              { key: "resume_link", label: "Resume" },
-              { key: "github_link", label: "GitHub" },
-              { key: "linkedin_link", label: "LinkedIn" },
-              { key: "portfolio_link", label: "Portfolio" },
-              { key: "ctf_profile", label: "CTF Profile" },
-            ];
+        // No team -> reset and bail out before the team-dependent calls
+        if (!profileData.teamCode) {
+          setTeam(null);
+          setRsvpStatus("pending");
+          return;
+        }
 
-            let completed = 0;
-            const missing: string[] = [];
-
-            profileFields.forEach((field) => {
-              const value = profileData[field.key];
-              // Check if field exists and is not null/empty
-              if (value && value !== null && value !== "") {
-                completed++;
-              } else {
-                missing.push(field.label);
-              }
-            });
-
-            const percentage = Math.round(
-              (completed / profileFields.length) * 100,
-            );
-            setProfileCompleteness(percentage);
-            setMissingFields(missing);
-
-            // Fetch team data if user has a teamCode
-            if (profileData.teamCode) {
-              try {
-                // Fetch team data from the team endpoint
-                const teamResponse = await fetch(
-                  API_ENDPOINTS.getTeam(profileData.teamCode),
-                  {
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                      "Content-Type": "application/json",
-                    },
-                  },
-                );
-
-                if (teamResponse.ok) {
-                  const teamData = await teamResponse.json();
-                  if (teamData.success && teamData.data) {
-                    setTeam(teamData.data);
-                    try {
-                      const rsvpResponse = await fetch(
-                        "/api/user/rsvp-status",
-                        {
-                          headers: {
-                            Authorization: `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                          },
-                        },
-                      );
-                      if (rsvpResponse.ok) {
-                        const rsvpData = await rsvpResponse.json();
-                        if (rsvpData.success && rsvpData.data) {
-                          if (rsvpData.data.userRSVP) {
-                            setRsvpStatus(
-                              rsvpData.data.userRSVP.rsvpStatus as
-                                | "confirmed"
-                                | "declined",
-                            );
-                          } else {
-                            setRsvpStatus("pending");
-                          }
-                        }
-                      }
-                    } catch (error) {
-                      console.error("Error fetching RSVP status:", error);
-                    }
-
-                    // Fetch team requests if lead
-                    const teamInfo = teamData.data;
-                    const teamCode = teamInfo.teamCode;
-                    if (
-                      teamInfo.teamLead === user.uid ||
-                      (typeof teamInfo.teamLead === "object" &&
-                        teamInfo.teamLead.id === user.uid)
-                    ) {
-                      try {
-                        const requestsResponse = await fetch(
-                          `${API_ENDPOINTS.joinRequest}?teamCode=${teamCode}&type=team`,
-                          {
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                              "Content-Type": "application/json",
-                            },
-                          },
-                        );
-                        if (requestsResponse.ok) {
-                          const requestsData = await requestsResponse.json();
-                          if (
-                            requestsData.success &&
-                            requestsData.data &&
-                            requestsData.data.requests
-                          ) {
-                            setTeamRequests(
-                              requestsData.data.requests.filter(
-                                (r: any) =>
-                                  r.type === "request" &&
-                                  r.status === "pending",
-                              ),
-                            );
-                          }
-                        }
-                      } catch (error) {
-                        console.error("Error fetching team requests:", error);
-                        toast({
-                          variant: "destructive",
-                          title: "Error",
-                          description: "Failed to load team join requests.",
-                        });
-                      }
-                    }
-                  } else {
-                    setTeam(null);
-                    setRsvpStatus("pending");
-                  }
-                } else {
-                  setTeam(null);
-                  setRsvpStatus("pending");
-                }
-              } catch (error) {
-                console.error("Error fetching team data:", error);
-                toast({
-                  variant: "destructive",
-                  title: "Error",
-                  description: "Failed to load team details.",
-                });
-                setTeam(null);
-                setRsvpStatus("pending");
-              }
+        // Phase 2: fetch team (depends on profile.teamCode)
+        let teamInfo: any = null;
+        try {
+          const teamResponse = await fetch(API_ENDPOINTS.getTeam(profileData.teamCode), {
+            headers,
+          });
+          if (teamResponse.ok) {
+            const teamData = await teamResponse.json();
+            if (teamData.success && teamData.data) {
+              teamInfo = teamData.data;
+              setTeam(teamInfo);
             } else {
               setTeam(null);
               setRsvpStatus("pending");
+              return;
             }
+          } else {
+            setTeam(null);
+            setRsvpStatus("pending");
+            return;
+          }
+        } catch (error) {
+          console.error("Error fetching team data:", error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load team details.",
+          });
+          setTeam(null);
+          setRsvpStatus("pending");
+          return;
+        }
 
-            // Always fetch invites (Team -> User) regardless of team status
-            try {
-              const invitesResponse = await fetch(
-                `${API_ENDPOINTS.joinRequest}?type=user`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                  },
-                },
-              );
-
-              if (invitesResponse.ok) {
-                const invitesData = await invitesResponse.json();
-                if (
-                  invitesData.success &&
-                  invitesData.data &&
-                  invitesData.data.requests
-                ) {
-                  setInvites(
-                    invitesData.data.requests.filter(
-                      (r: any) => r.type === "invite" && r.status === "pending",
-                    ),
-                  );
-                }
+        // Process RSVP from Phase 1 (semantics preserved: only when user has a team)
+        if (rsvpSettled.status === "fulfilled" && rsvpSettled.value.ok) {
+          try {
+            const rsvpData = await rsvpSettled.value.json();
+            if (rsvpData.success && rsvpData.data) {
+              if (rsvpData.data.userRSVP) {
+                setRsvpStatus(
+                  rsvpData.data.userRSVP.rsvpStatus as "confirmed" | "declined",
+                );
+              } else {
+                setRsvpStatus("pending");
               }
-            } catch (error) {
-              console.error("Error fetching invites:", error);
-              toast({
-                variant: "destructive",
-                title: "Error",
-                description: "Failed to load team invitations.",
-              });
             }
+          } catch (error) {
+            console.error("Error parsing RSVP status:", error);
+          }
+        } else if (rsvpSettled.status === "rejected") {
+          console.error("Error fetching RSVP status:", rsvpSettled.reason);
+        }
+
+        // Phase 3: team-requests, only if the user is the team lead
+        const isLead =
+          teamInfo.teamLead === user.uid ||
+          (typeof teamInfo.teamLead === "object" && teamInfo.teamLead.id === user.uid);
+        if (isLead) {
+          try {
+            const requestsResponse = await fetch(
+              `${API_ENDPOINTS.joinRequest}?teamCode=${teamInfo.teamCode}&type=team`,
+              { headers },
+            );
+            if (requestsResponse.ok) {
+              const requestsData = await requestsResponse.json();
+              if (requestsData.success && requestsData.data && requestsData.data.requests) {
+                setTeamRequests(
+                  requestsData.data.requests.filter(
+                    (r: any) => r.type === "request" && r.status === "pending",
+                  ),
+                );
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching team requests:", error);
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Failed to load team join requests.",
+            });
           }
         }
       } catch (error) {
@@ -415,8 +516,7 @@ export function DashboardContainer() {
         toast({
           variant: "destructive",
           title: "Error",
-          description:
-            "Failed to load dashboard data. Please refresh the page.",
+          description: "Failed to load dashboard data. Please refresh the page.",
         });
       } finally {
         setIsLoading(false);
@@ -424,7 +524,7 @@ export function DashboardContainer() {
     };
 
     fetchData();
-  }, [user, isAuthenticated, router, refreshTrigger]);
+  }, [user, isAuthenticated, authLoading, router, refreshTrigger]);
 
   const getTeamStatus = ():
     | "none"
@@ -437,24 +537,10 @@ export function DashboardContainer() {
     if (!team || !team.teamStatus) return "none";
     const hasAcceptedEvaluation = team.evaluations?.some(
       (evaluation: any) =>
-        evaluation.tier === "accepted" ||
-        evaluation.tier === "strongly_accepted",
+        evaluation.tier === "accepted" || evaluation.tier === "strongly_accepted",
     );
-    if (hasAcceptedEvaluation && team.teamStatus === "submitted") {
-      return "shortlisted";
-    }
-
-    // Map teamStatus from API to component status
-    const statusMap: Record<
-      string,
-      | "none"
-      | "active"
-      | "submitted"
-      | "under-review"
-      | "shortlisted"
-      | "confirmed"
-      | "declined"
-    > = {
+    if (hasAcceptedEvaluation && team.teamStatus === "submitted") return "shortlisted";
+    const statusMap: Record<string, any> = {
       pending: "active",
       submitted: "submitted",
       withdrawn: "none",
@@ -467,16 +553,12 @@ export function DashboardContainer() {
 
   const isTeamLead = (): boolean => {
     if (!team || !user) return false;
-    // Check if user is the team lead by checking teamMembers array
-    const userMember = team.teamMembers?.find(
-      (member: any) => member.uid === user.uid,
-    );
+    const userMember = team.teamMembers?.find((member: any) => member.uid === user.uid);
     return userMember?.role === "Team Lead" || false;
   };
 
   const handleRSVP = async (status: "confirmed" | "declined") => {
     if (!user) return;
-
     try {
       const token = await getToken();
       if (!token) {
@@ -487,22 +569,13 @@ export function DashboardContainer() {
         });
         return;
       }
-
       const response = await fetch("/api/user/rsvp", {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ rsvpStatus: status }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to submit RSVP");
-      }
-
+      if (!response.ok) throw new Error(data.message || "Failed to submit RSVP");
       setRsvpStatus(status);
       toast({
         title: status === "confirmed" ? "RSVP Confirmed" : "RSVP Declined",
@@ -510,15 +583,13 @@ export function DashboardContainer() {
           data.message ||
           `You have ${status === "confirmed" ? "confirmed" : "declined"} your attendance.`,
       });
-
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       console.error("Error submitting RSVP:", error);
       toast({
         variant: "destructive",
         title: "Failed to submit RSVP",
-        description:
-          error instanceof Error ? error.message : "Failed to submit RSVP",
+        description: error instanceof Error ? error.message : "Failed to submit RSVP",
       });
     }
   };
@@ -526,31 +597,23 @@ export function DashboardContainer() {
   const handleSubmitFlag = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!flagInput.trim()) return;
-
     setIsSubmittingFlag(true);
     setFlagError("");
-
     try {
       const token = await getToken();
       if (!token) return;
       const response = await fetch("/api/user/flag", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ flag: flagInput.trim() }),
       });
-
       const data = await response.json();
-
       if (response.ok && data.success) {
         setHasSolvedChallenge(true);
         setIsChallengeCardOpen(false);
         toast({
           title: "Challenge Solved!",
-          description:
-            "Congratulations! You solved the challenge and removed your noob tag.",
+          description: "Congratulations! You captured the warm-up flag.",
         });
       } else {
         setFlagError(data.message || "Incorrect flag. Try again!");
@@ -563,13 +626,8 @@ export function DashboardContainer() {
     }
   };
 
-  /* 
-    Triggered by the "Delete Team" button in QuickActions.
-    Checks eligibility before opening confirmation dialog.
-  */
   const checkDeleteTeamEligibility = () => {
     if (!team) return;
-
     if (team.teamMembers.length > 1) {
       toast({
         variant: "destructive",
@@ -579,61 +637,34 @@ export function DashboardContainer() {
       });
       return;
     }
-
     setDeleteTeamDialogOpen(true);
   };
 
-  /* 
-    Executed after confirmation in the dialog.
-  */
   const executeDeleteTeam = async () => {
     if (!team || !user) return;
-
     try {
       const token = await getToken();
       if (!token) {
-        setAlert({
-          type: "error",
-          message: "Authentication required",
-        });
+        setAlert({ type: "error", message: "Authentication required" });
         return;
       }
-
       const response = await fetch(API_ENDPOINTS.deleteTeam, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          teamCode: team.teamCode,
-        }),
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ teamCode: team.teamCode }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to delete team");
-      }
-
-      toast({
-        title: "Team deleted",
-        description: "Team has been deleted successfully.",
-      });
+      if (!response.ok) throw new Error(data.message || "Failed to delete team");
+      toast({ title: "Team deleted", description: "Team has been deleted successfully." });
       setDeleteTeamDialogOpen(false);
-
-      // Clear team state and refresh profile
       setTeam(null);
-      setTimeout(() => {
-        window.location.reload(); // Refresh to update UI
-      }, 1000);
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       console.error("Error deleting team:", error);
       toast({
         variant: "destructive",
         title: "Failed to delete team",
-        description:
-          error instanceof Error ? error.message : "Failed to delete team",
+        description: error instanceof Error ? error.message : "Failed to delete team",
       });
       setDeleteTeamDialogOpen(false);
     }
@@ -641,7 +672,6 @@ export function DashboardContainer() {
 
   const handleLeaveTeam = async () => {
     if (!team || !user) return;
-
     try {
       const token = await getToken();
       if (!token) {
@@ -652,42 +682,23 @@ export function DashboardContainer() {
         });
         return;
       }
-
       const response = await fetch(API_ENDPOINTS.leaveTeam, {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          teamCode: team.teamCode,
-        }),
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ teamCode: team.teamCode }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to leave team");
-      }
-
-      toast({
-        title: "Left team",
-        description: "You have successfully left the team",
-      });
+      if (!response.ok) throw new Error(data.message || "Failed to leave team");
+      toast({ title: "Left team", description: "You have successfully left the team" });
       setLeaveTeamDialogOpen(false);
-
-      // Clear team state and refresh
       setTeam(null);
-
-      // Trigger refresh to reload data
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       console.error("Error leaving team:", error);
       toast({
         variant: "destructive",
         title: "Failed to leave team",
-        description:
-          error instanceof Error ? error.message : "Failed to leave team",
+        description: error instanceof Error ? error.message : "Failed to leave team",
       });
       setLeaveTeamDialogOpen(false);
     }
@@ -700,51 +711,33 @@ export function DashboardContainer() {
 
   const executeRemoveMember = async () => {
     if (!team || !user || !memberToRemove) return;
-
     try {
       const token = await getToken();
       if (!token) return;
-
       const response = await fetch(API_ENDPOINTS.removeMember, {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           teamCode: team.teamCode,
           memberId: memberToRemove.id,
           setTheirLookingStatus: true,
         }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to remove member");
-      }
-
-      // Refresh team data
+      if (!response.ok) throw new Error(data.message || "Failed to remove member");
       const teamResponse = await fetch(API_ENDPOINTS.getTeam(team.teamCode), {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
-
       if (teamResponse.ok) {
         const teamData = await teamResponse.json();
-        if (teamData.success && teamData.data) {
-          setTeam(teamData.data);
-        }
+        if (teamData.success && teamData.data) setTeam(teamData.data);
       }
       setRemoveMemberDialogOpen(false);
     } catch (error) {
       console.error("Error removing member:", error);
       setAlert({
         type: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to remove member",
+        message: error instanceof Error ? error.message : "Failed to remove member",
       });
       setTimeout(() => setAlert(null), 3000);
       setRemoveMemberDialogOpen(false);
@@ -753,40 +746,23 @@ export function DashboardContainer() {
 
   const handleTransferOwnership = async (newLeadId: string) => {
     if (!team || !user) return;
-
     try {
       const token = await getToken();
       if (!token) {
-        setAlert({
-          type: "error",
-          message: "Authentication required",
-        });
+        setAlert({ type: "error", message: "Authentication required" });
         return;
       }
-
       const response = await fetch("/api/team/transfer-ownership", {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          teamCode: team.teamCode,
-          newLeadId,
-        }),
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ teamCode: team.teamCode, newLeadId }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to transfer ownership");
-      }
-
+      if (!response.ok) throw new Error(data.message || "Failed to transfer ownership");
       toast({
         title: "Ownership Transferred",
         description: "You have successfully transferred team ownership.",
       });
-
       setTransferOwnershipDialogOpen(false);
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
@@ -794,183 +770,116 @@ export function DashboardContainer() {
       toast({
         variant: "destructive",
         title: "Failed to transfer",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to transfer ownership",
+        description: error instanceof Error ? error.message : "Failed to transfer ownership",
       });
       setTransferOwnershipDialogOpen(false);
     }
   };
 
-  const isAdmin = () => {
-    return user?.role === "admin";
-  };
-
-  const handleDismissWelcomeBanner = () => {
-    setShowWelcomeBanner(false);
-    localStorage.setItem("zenith_welcome_banner_dismissed", "true");
-  };
-
-  if (isLoading) {
+  if (authLoading || isLoading || !user) {
     return (
-      <div className="flex flex-col items-center justify-center gap-[16px] min-h-[400px]">
-        <div className="relative w-[48px] h-[48px]">
-          <div className="absolute inset-0 rounded-full border-2 border-[rgba(0,255,136,0.1)]" />
-          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#00FF88] animate-spin" />
+      <div className="flex flex-col gap-6 w-full">
+        {/* Status strip skeleton */}
+        <div className="relative w-full rounded-lg overflow-hidden border border-[var(--border-soft)] bg-surface-1/90 p-5 sm:p-6">
+          <div className="flex flex-col gap-4">
+            <div className="h-3 w-48 rounded bg-surface-3 animate-pulse" />
+            <div className="h-7 w-28 rounded-md bg-surface-3 animate-pulse" />
+            <div className="h-8 w-3/4 rounded bg-surface-3 animate-pulse" />
+          </div>
         </div>
-        <span
-          className="text-[11px] uppercase tracking-[0.3em] text-[rgba(0,255,136,0.5)]"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
-          Initializing...
-        </span>
+        {/* Timer + grid skeletons */}
+        <div className="h-24 rounded-lg border border-[var(--border-soft)] bg-surface-1/90 animate-pulse" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
+          <div className="lg:col-span-2 flex flex-col gap-5">
+            <div className="h-40 rounded-lg border border-[var(--border-soft)] bg-surface-1/90 animate-pulse" />
+            <div className="h-56 rounded-lg border border-[var(--border-soft)] bg-surface-1/90 animate-pulse" />
+          </div>
+          <div className="flex flex-col gap-5">
+            <div className="h-48 rounded-lg border border-[var(--border-soft)] bg-surface-1/90 animate-pulse" />
+            <div className="h-32 rounded-lg border border-[var(--border-soft)] bg-surface-1/90 animate-pulse" />
+          </div>
+        </div>
+        <div className="flex items-center justify-center gap-3 py-2">
+          <Spinner size="sm" />
+          <span className="font-mono text-[10.5px] uppercase tracking-[0.3em] text-brand opacity-70">
+            Booting operator terminal...
+          </span>
+        </div>
       </div>
     );
   }
 
-  if (!user) return null;
-
   const teamStatus = getTeamStatus();
+  const pendingCount = invites.length + teamRequests.length;
+  const lead = isTeamLead();
+
+  // Pick the single most useful primary action for the status strip.
+  let stripPrimaryLabel: string | undefined;
+  let stripPrimaryOnClick: (() => void) | undefined;
+  let stripPrimaryIcon: typeof ArrowRight | undefined;
+  if (teamStatus === "none") {
+    stripPrimaryLabel = "Initialize Team";
+    stripPrimaryOnClick = () => router.push("/dashboard/team");
+    stripPrimaryIcon = ArrowRight;
+  } else if (teamStatus === "active" && lead) {
+    stripPrimaryLabel = "Open Team Console";
+    stripPrimaryOnClick = () => router.push("/dashboard/team");
+    stripPrimaryIcon = ArrowRight;
+  } else if (teamStatus === "shortlisted" && rsvpStatus === "pending") {
+    stripPrimaryLabel = "Confirm RSVP";
+    stripPrimaryOnClick = () => handleRSVP("confirmed");
+    stripPrimaryIcon = Check;
+  }
 
   return (
-    <div className="flex flex-col gap-[24px] max-w-[1100px] w-full">
+    <div className="flex flex-col gap-6 w-full">
       {alert && <AlertBanner type={alert.type} message={alert.message} />}
 
-      {/* Challenge Alert Banner */}
+      {/* Challenge banner. compact, dismissible chip-style */}
       {!hasSolvedChallenge ? (
-        <div
-          onClick={() => setIsChallengeCardOpen(!isChallengeCardOpen)}
-          className="cursor-pointer transition-all duration-300 hover:scale-[1.01]"
+        <button
+          onClick={() => setIsChallengeCardOpen((v) => !v)}
+          className="group text-left rounded-md border border-[var(--danger)]/35 bg-[var(--danger-soft)] hover:border-[var(--danger)]/60 transition-all p-3 md:p-3.5 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)] min-h-[44px]"
         >
-          <AlertBanner
-            type="error"
-            className="border border-red-500/30 hover:border-red-500/50 bg-red-950/20"
-            message="⚠️ Finish this challenge to remove your noob tag (Click here to expand/collapse)"
-          />
-        </div>
-      ) : (
-        <AlertBanner
-          type="success"
-          message="Congratulations, you solved the challenge."
-        />
-      )}
-
-      {/* Welcome Banner - Registration Success */}
-      {/* {showWelcomeBanner && (
-        <div className="relative backdrop-blur-[2.5px] backdrop-filter bg-[rgba(0,255,136,0.15)] rounded-[15px] p-[20px] border border-[#00FF88]">
-          <button
-            onClick={handleDismissWelcomeBanner}
-            className="absolute top-4 right-4 text-white opacity-70 hover:opacity-100 transition-opacity"
-            aria-label="Close banner"
-          >
-            <X className="w-5 h-5" />
-          </button>
-          
-          <div className="flex flex-col gap-[16px] pr-8">
-            <div className="flex items-center gap-[12px]">
-              <CheckCircle className="w-6 h-6 text-[#00FF88] flex-shrink-0" />
-              <h3 className="text-[20px] text-white font-semibold" style={{ fontFamily: 'var(--font-heading)' }}>
-                Registration Successful!
-              </h3>
-            </div>
-            
-            <div className="space-y-[12px] text-white" style={{ fontFamily: 'var(--font-body)' }}>
-              <p className="text-[15px] leading-[22px]">
-                You're registered!
-              </p>
-              <p className="text-[14px] opacity-90 leading-[20px]">
-                All CTF communication happens on Discord — announcements, networking and doubts.
-              </p>
-              
-              <div className="flex items-start gap-[8px] pt-[4px]">
-                <ArrowRight className="w-5 h-5 text-[#00FF88] flex-shrink-0 mt-0.5" />
-                <div className="flex-1 space-y-[8px]">
-                  <p className="text-[14px] opacity-90 leading-[20px]">
-                    <span className="font-semibold">After joining the Discord server:</span>
-                  </p>
-                  <ul className="list-disc list-inside space-y-[4px] text-[13px] opacity-85 ml-2">
-                    <li>Go to <span className="text-[#00FF88] font-semibold">#welcome-rules</span></li>
-                    <li>Click the green tick (✅) to accept the rules</li>
-                    <li>This will unlock all channels for you</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            
-            <div className="pt-[4px]">
-              <a
-                href="https://discord.gg/Und8vHaw5a"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center bg-[#00FF88] hover:bg-[#8CFF00] text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-[0_0_15px_rgba(0,255,136,0.4)] hover:shadow-[0_0_20px_rgba(0,255,136,0.6)]"
-                style={{ fontFamily: 'var(--font-body)' }}
-              >
-                Join Discord
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
- */}
-
-      {/* Hero Header */}
-      <div className="flex flex-col gap-[12px] items-center text-center">
-        <div
-          className="text-[11px] uppercase tracking-[0.35em] text-[#00FF88] font-medium opacity-70"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
-          PBCTF 5.0 // OPERATOR TERMINAL
-        </div>
-        <h1
-          className="text-[48px] sm:text-[60px] text-white leading-[1.05] font-bold tracking-[-2px]"
-          style={{
-            fontFamily: "var(--font-heading)",
-            textShadow: "0 0 40px rgba(0,255,136,0.15)",
-          }}
-        >
-          Welcome,{" "}
-          <span className="text-white">
-            {user.name}
+          <span className="shrink-0 inline-flex w-7 h-7 items-center justify-center rounded-md bg-[var(--danger)]/15 border border-[var(--danger)]/40">
+            <ShieldAlert className="w-3.5 h-3.5 text-[var(--danger)]" />
           </span>
-        </h1>
-        <p
-          className="text-[14px] text-white/50 leading-[22px] max-w-[440px]"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
-          Manage your profile and team from your control panel.
-        </p>
-      </div>
+          <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-[var(--danger)]">
+              WARM-UP · 001
+            </span>
+            <span className="text-[13px] md:text-[13.5px] text-ink font-body truncate">
+              You haven&apos;t captured the warm-up flag yet. Tap to solve it.
+            </span>
+          </div>
+          <span className="hidden sm:inline font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--danger)]/80">
+            {isChallengeCardOpen ? "collapse" : "expand"}
+          </span>
+          <ChevronDown
+            className={[
+              "w-4 h-4 text-[var(--danger)] transition-transform shrink-0",
+              isChallengeCardOpen ? "rotate-180" : "",
+            ].join(" ")}
+          />
+        </button>
+      ) : (
+        <AlertBanner type="success" message="Warm-up flag captured." />
+      )}
 
-      {/* Navigation */}
-      <div className="flex flex-wrap items-center gap-[10px] justify-center">
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[#00FF88] hover:bg-[#00CC70] text-black text-[13px] font-semibold transition-all duration-200 shadow-[0_0_16px_rgba(0,255,136,0.35)] hover:shadow-[0_0_24px_rgba(0,255,136,0.55)]"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
-          <Home className="w-3.5 h-3.5" />
-          Dashboard
-        </button>
-        <button
-          onClick={() => router.push("/dashboard/profile")}
-          className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[rgba(13,13,13,0.8)] hover:bg-[rgba(13,13,13,0.95)] text-white/60 hover:text-white border border-[rgba(0,255,136,0.25)] hover:border-[rgba(0,255,136,0.55)] text-[13px] backdrop-blur-[12px] transition-all duration-200"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
-          <UserCircle className="w-3.5 h-3.5" />
-          Profile
-        </button>
-        <button
-          onClick={() => router.push("/dashboard/team")}
-          className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[rgba(13,13,13,0.8)] hover:bg-[rgba(13,13,13,0.95)] text-white/60 hover:text-white border border-[rgba(0,255,136,0.25)] hover:border-[rgba(0,255,136,0.55)] text-[13px] backdrop-blur-[12px] transition-all duration-200"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
-          <Users className="w-3.5 h-3.5" />
-          Team
-        </button>
-      </div>
+      {/* Status strip. replaces the old hero. THE primary above-the-fold moment. */}
+      <StatusStrip
+        status={teamStatus}
+        teamName={team?.teamName}
+        pendingCount={pendingCount}
+        onPrimary={stripPrimaryOnClick}
+        primaryLabel={stripPrimaryLabel}
+        primaryIcon={stripPrimaryIcon}
+        userName={user.name}
+        profileCompleteness={profileCompleteness}
+        onOpenProfile={() => router.push("/dashboard/profile")}
+      />
 
-      {/* Registration Deadline Timer */}
+      {/* Timer */}
       <DeadlineTimer
         teamStatus={team?.teamStatus}
         hasSubmitted={!!team}
@@ -979,123 +888,128 @@ export function DashboardContainer() {
         onRSVP={handleRSVP}
       />
 
-      {/* Two-Column Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-[24px]">
-        {/* Left Column - 2/3 width */}
-        <div className="lg:col-span-2 flex flex-col gap-[24px]">
-          {/* Security Challenge Card */}
+      {/* Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
+        {/* Left column */}
+        <div className="lg:col-span-2 flex flex-col gap-5 md:gap-6">
           {!hasSolvedChallenge && isChallengeCardOpen && (
-            <FormSection title="Challenge: Don't be a Noob">
-              <div className="flex flex-col gap-[16px]">
-                <div className="p-[16px] rounded-[12px] bg-[rgba(0,0,0,0.4)] border border-[rgba(0,255,136,0.12)] space-y-[12px]">
-                  <p
-                    className="text-[14.5px] leading-[22px] text-white/90"
-                    style={{ fontFamily: "var(--font-body)" }}
-                  >
-                    Intelligence reports suggest that a sensitive artifact is
-                    being disclosed somewhere within the application. The leak
-                    appears to affect only the currently authenticated user.
-                    Find the exposed artifact .
+            <FormSection title="Acquire the Flag" eyebrow="// CTF · 001. DON'T BE A NOOB">
+              <div className="flex flex-col gap-4">
+                <div className="p-4 rounded-md bg-surface-inset border border-[var(--border-soft)] space-y-3">
+                  <div className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand">
+                    <span className="text-ink-disabled">&gt;</span>
+                    <span>intel.briefing</span>
+                  </div>
+                  <p className="text-[13.5px] leading-relaxed text-ink font-body">
+                    A sensitive artifact is being disclosed somewhere within the application. The
+                    leak affects only the currently authenticated user. Find the exposed artifact.
                   </p>
-                  <p
-                    className="text-[14px] leading-[20px] text-[#00FF88] font-medium"
-                    style={{ fontFamily: "var(--font-body)" }}
-                  >
-                    💡 <span className="underline">CTF Hint</span>: The browser receives more information than the interface chooses to present. Trace the flow of data.
+                  <p className="text-[13px] leading-relaxed text-brand font-body">
+                    <span className="underline underline-offset-2">hint</span>. The browser
+                    receives more than the interface chooses to render. Trace the flow of data.
                   </p>
-                  <p
-                    className="text-[13px] text-white/60 leading-[18px]"
-                    style={{ fontFamily: "var(--font-body)" }}
-                  >
-                    Flag Format: <code>pbctf{`{...}`}</code>
+                  <p className="font-mono text-[11px] text-ink-muted uppercase tracking-[0.18em]">
+                    Format · pbctf{"{...}"}
                   </p>
                 </div>
-                <form
-                  onSubmit={handleSubmitFlag}
-                  className="flex gap-[12px] items-end"
-                >
+
+                <form onSubmit={handleSubmitFlag} className="flex flex-col sm:flex-row gap-3 sm:items-end">
                   <div className="flex-1">
                     <FormInput
-                      label="Verify Flag"
+                      label="Submit flag"
                       placeholder="pbctf{...}"
                       value={flagInput}
                       onChange={(e) => setFlagInput(e.target.value)}
                       required
                     />
                   </div>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    disabled={isSubmittingFlag}
-                  >
-                    {isSubmittingFlag ? (
-                      <Spinner size="sm" className="mr-2" />
-                    ) : null}
-                    Submit
+                  <Button type="submit" variant="primary" disabled={isSubmittingFlag}>
+                    {isSubmittingFlag ? <Spinner size="sm" className="mr-2" /> : <Flag className="w-4 h-4" />}
+                    Acquire Flag
                   </Button>
                 </form>
+
                 {flagError && (
-                  <p
-                    className="text-[13px] text-red-400 font-semibold"
-                    style={{ fontFamily: "var(--font-body)" }}
-                  >
-                    ❌ {flagError}
+                  <p className="text-[13px] text-[var(--danger)] font-body flex items-center gap-2">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--danger)] animate-pulse" />
+                    {flagError}
                   </p>
                 )}
               </div>
             </FormSection>
           )}
 
-          {/* Team Status for Users Without a Team */}
           {teamStatus === "none" && (
-            <FormSection title="Team Status">
-              <div className="flex flex-col gap-[16px]">
-                <AlertBanner
-                  type="warning"
-                  message="Important: Even if you want to participate alone, you still need to create a team to take part in the CTF."
-                />
-                <p
-                  className="text-[14px] text-white opacity-80"
-                  style={{ fontFamily: "var(--font-body)" }}
-                >
-                  You're not part of a team yet. Create or join a team to
-                  participate in the CTF.
-                </p>
-                <div className="flex gap-[12px]">
-                  <Button
+            <FormSection title="No team detected" eyebrow="// 01 · NEXT STEP. INITIALIZE">
+              <div className="flex flex-col gap-5">
+                <div className="p-4 rounded-md bg-surface-inset border border-[var(--border-soft)] flex flex-col gap-2">
+                  <div className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand">
+                    <Sparkles className="w-3 h-3" />
+                    <span>operator.note</span>
+                  </div>
+                  <p className="text-[13.5px] leading-relaxed text-ink font-body">
+                    Registering solo is fine. Just create a team of one. You can add a second
+                    teammate later if you want. Teams cap at two members.
+                  </p>
+                </div>
+
+                {/* Two clear paths, primary emphasized */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
                     onClick={() => router.push("/dashboard/team")}
-                    variant="primary"
+                    className="group text-left p-4 rounded-md bg-brand/8 border border-brand/40 hover:border-brand hover:bg-brand/12 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand min-h-[44px]"
                   >
-                    <Users className="w-4 h-4" />
-                    Create / Join Team
-                  </Button>
-                  <Button
+                    <div className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand mb-2">
+                      <Users className="w-3 h-3" />
+                      <span>recommended</span>
+                    </div>
+                    <div className="text-[15px] text-ink font-heading font-semibold mb-1">
+                      Create a team
+                    </div>
+                    <p className="text-[12.5px] text-ink-secondary font-body">
+                      Solo is fine. Add a teammate later, or stay a team of one.
+                    </p>
+                    <div className="mt-3 inline-flex items-center gap-1.5 text-brand text-[12px] font-mono uppercase tracking-[0.18em] group-hover:gap-2.5 transition-all">
+                      initialize <ArrowRight className="w-3.5 h-3.5" />
+                    </div>
+                  </button>
+
+                  <button
                     onClick={() => router.push("/dashboard/discover")}
-                    variant="secondary"
+                    className="group text-left p-4 rounded-md bg-surface-inset border border-[var(--border-soft)] hover:border-[var(--border-strong)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand min-h-[44px]"
                   >
-                    <Search className="w-4 h-4" />
-                    Discover Teams
-                  </Button>
+                    <div className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-muted mb-2">
+                      <Search className="w-3 h-3" />
+                      <span>alternative</span>
+                    </div>
+                    <div className="text-[15px] text-ink font-heading font-semibold mb-1">
+                      Discover teams
+                    </div>
+                    <p className="text-[12.5px] text-ink-secondary font-body">
+                      Browse teams looking for a second member.
+                    </p>
+                    <div className="mt-3 inline-flex items-center gap-1.5 text-ink-secondary text-[12px] font-mono uppercase tracking-[0.18em] group-hover:gap-2.5 group-hover:text-ink transition-all">
+                      browse <ArrowRight className="w-3.5 h-3.5" />
+                    </div>
+                  </button>
                 </div>
               </div>
             </FormSection>
           )}
 
-          {/* Team Overview Card */}
           {team && teamStatus !== "none" && (
             <TeamOverviewCard
               team={{
                 teamName: team.teamName,
                 teamCode: team.teamCode,
                 memberCount: team.memberCount,
-                maxMembers: 2,
+                maxMembers: TEAM_SIZE,
               }}
               isLead={isTeamLead()}
               status={teamStatus}
             />
           )}
 
-          {/* Team Members Card */}
           {team && team.teamMembers && team.teamMembers.length > 0 && (
             <TeamMembersCard
               members={team.teamMembers}
@@ -1108,156 +1022,205 @@ export function DashboardContainer() {
           )}
         </div>
 
-        {/* Right Column - 1/3 width */}
-        <div className="flex flex-col gap-[24px]">
-          {/* Quick Actions Card */}
+        {/* Right column */}
+        <div className="flex flex-col gap-5 md:gap-6">
           {team && teamStatus !== "none" && (
             <QuickActionsCard
               isLead={isTeamLead()}
               teamStatus={teamStatus}
               memberCount={team.memberCount}
-              maxMembers={2}
+              maxMembers={TEAM_SIZE}
               onNavigate={(path) => router.push(path)}
               onDeleteTeam={checkDeleteTeamEligibility}
               onLeaveTeam={() => setLeaveTeamDialogOpen(true)}
             />
           )}
 
-          {/* Pending Join Requests (for Team Leads) */}
-          {teamRequests.length > 0 && (
-            <FormSection title="Pending Join Requests">
-              <div className="flex flex-col gap-[12px]">
-                {teamRequests.map((request) => (
-                  <div
-                    key={request.requestId}
-                    className="flex flex-col gap-[8px] p-[14px] bg-[rgba(0,0,0,0.3)] rounded-[12px] border border-[rgba(0,255,136,0.1)] min-w-0 items-center text-center hover:border-[rgba(0,255,136,0.25)] transition-all"
-                  >
-                    <span
-                      className="text-[14px] text-white break-words"
-                      style={{ fontFamily: "var(--font-body)" }}
-                    >
-                      <span className="font-semibold">{request.userName}</span>{" "}
-                      wants to join your team
-                    </span>
-                    <span
-                      className="text-[12px] text-white opacity-50 break-all"
-                      style={{ fontFamily: "var(--font-body)" }}
-                    >
-                      Email: {request.userEmail}
-                    </span>
-                    <div className="flex flex-wrap gap-[8px] w-full">
-                      <Button
-                        onClick={() =>
-                          handleRespondToInvite(request.requestId, "accept")
-                        }
-                        variant="primary"
-                        className="flex-1 min-w-[100px]"
-                      >
-                        <Check className="w-4 h-4 mr-2" /> Accept
-                      </Button>
-                      <Button
-                        onClick={() =>
-                          handleRespondToInvite(request.requestId, "decline")
-                        }
-                        variant="danger"
-                        className="flex-1 min-w-[100px]"
-                      >
-                        <X className="w-4 h-4 mr-2" /> Decline
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+          {/* Inbox. unified incoming pings (requests + invites) */}
+          <FormSection
+            title="Inbox"
+            eyebrow={
+              pendingCount > 0
+                ? `// ${pendingCount} INCOMING PING${pendingCount === 1 ? "" : "S"}`
+                : "// INCOMING"
+            }
+          >
+            {pendingCount === 0 ? (
+              <div className="flex flex-col items-center text-center gap-3 py-6">
+                <div className="w-10 h-10 rounded-md bg-surface-inset border border-[var(--border-soft)] flex items-center justify-center">
+                  <Inbox className="w-4 h-4 text-ink-muted" />
+                </div>
+                <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-muted">
+                  no signal · all quiet
+                </div>
+                <p className="text-[12.5px] text-ink-subtle font-body max-w-[220px]">
+                  Invites and join requests will appear here in real time.
+                </p>
               </div>
-            </FormSection>
-          )}
-
-          {/* Team Invitations (for Users) */}
-          {invites.length > 0 && (
-            <FormSection title="Team Invitations">
-              <div className="flex flex-col gap-[12px]">
-                {invites.map((invite) => (
-                  <div
-                    key={invite.requestId}
-                    className="flex flex-col gap-[8px] p-[14px] bg-[rgba(0,0,0,0.3)] rounded-[12px] border border-[rgba(0,255,136,0.1)] min-w-0 items-center text-center hover:border-[rgba(0,255,136,0.25)] transition-all"
-                  >
-                    <span
-                      className="text-[14px] text-white break-words"
-                      style={{ fontFamily: "var(--font-body)" }}
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {teamRequests.map((request) => {
+                  const responding = respondingTo?.id === request.requestId;
+                  const busyAccept = responding && respondingTo?.action === "accept";
+                  const busyDecline = responding && respondingTo?.action === "decline";
+                  return (
+                    <div
+                      key={request.requestId}
+                      className="p-3.5 rounded-md bg-surface-inset border border-[var(--border-soft)] hover:border-brand/30 transition-colors flex flex-col gap-3"
                     >
-                      Invited to join{" "}
-                      <span className="font-semibold">
-                        {invite.teamName || invite.teamCode}
-                      </span>
-                    </span>
-                    <span
-                      className="text-[12px] text-white opacity-50 break-all"
-                      style={{ fontFamily: "var(--font-body)" }}
-                    >
-                      Code: <span className="font-mono">{invite.teamCode}</span>
-                    </span>
-                    <div className="flex flex-wrap gap-[8px] w-full">
-                      <Button
-                        onClick={() =>
-                          handleRespondToInvite(invite.requestId, "accept")
-                        }
-                        variant="primary"
-                        className="flex-1 min-w-[100px]"
-                      >
-                        <Check className="w-4 h-4 mr-2" /> Accept
-                      </Button>
-                      <Button
-                        onClick={() =>
-                          handleRespondToInvite(invite.requestId, "decline")
-                        }
-                        variant="danger"
-                        className="flex-1 min-w-[100px]"
-                      >
-                        <X className="w-4 h-4 mr-2" /> Decline
-                      </Button>
+                      <div className="min-w-0 flex items-start gap-2.5">
+                        <span className="shrink-0 mt-0.5 inline-flex w-6 h-6 items-center justify-center rounded-md bg-brand/10 border border-brand/30">
+                          <UserPlus className="w-3 h-3 text-brand" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-brand mb-0.5">
+                            join request
+                          </div>
+                          <p className="text-[13.5px] text-ink font-body">
+                            <span className="font-semibold">{request.userName}</span> wants to join
+                          </p>
+                          <p className="text-[11.5px] text-ink-muted font-mono break-all mt-0.5">
+                            {request.userEmail}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 w-full">
+                        <Button
+                          onClick={() => handleRespondToInvite(request.requestId, "accept")}
+                          variant="primary"
+                          size="sm"
+                          disabled={!!respondingTo}
+                          className="w-full"
+                        >
+                          {busyAccept ? (
+                            <>
+                              <Spinner size="sm" />
+                              Accepting…
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              Accept
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={() => handleRespondToInvite(request.requestId, "decline")}
+                          variant="danger"
+                          size="sm"
+                          disabled={!!respondingTo}
+                          className="w-full"
+                        >
+                          {busyDecline ? (
+                            <>
+                              <Spinner size="sm" />
+                              Declining…
+                            </>
+                          ) : (
+                            <>
+                              <X className="w-3.5 h-3.5" />
+                              Decline
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+                {invites.map((invite) => {
+                  const responding = respondingTo?.id === invite.requestId;
+                  const busyAccept = responding && respondingTo?.action === "accept";
+                  const busyDecline = responding && respondingTo?.action === "decline";
+                  return (
+                    <div
+                      key={invite.requestId}
+                      className="p-3.5 rounded-md bg-surface-inset border border-[var(--border-soft)] hover:border-brand/30 transition-colors flex flex-col gap-3"
+                    >
+                      <div className="min-w-0 flex items-start gap-2.5">
+                        <span className="shrink-0 mt-0.5 inline-flex w-6 h-6 items-center justify-center rounded-md bg-[var(--info)]/10 border border-[var(--info)]/30">
+                          <Users className="w-3 h-3 text-[var(--info)]" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--info)] mb-0.5">
+                            team invite
+                          </div>
+                          <p className="text-[13.5px] text-ink font-body">
+                            Invited to{" "}
+                            <span className="font-semibold">
+                              {invite.teamName || invite.teamCode}
+                            </span>
+                          </p>
+                          <p className="text-[11.5px] text-ink-muted font-mono mt-0.5">
+                            code · <span className="text-brand">{invite.teamCode}</span>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 w-full">
+                        <Button
+                          onClick={() => handleRespondToInvite(invite.requestId, "accept")}
+                          variant="primary"
+                          size="sm"
+                          disabled={!!respondingTo}
+                          className="w-full"
+                        >
+                          {busyAccept ? (
+                            <>
+                              <Spinner size="sm" />
+                              Accepting…
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              Accept
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={() => handleRespondToInvite(invite.requestId, "decline")}
+                          variant="danger"
+                          size="sm"
+                          disabled={!!respondingTo}
+                          className="w-full"
+                        >
+                          {busyDecline ? (
+                            <>
+                              <Spinner size="sm" />
+                              Declining…
+                            </>
+                          ) : (
+                            <>
+                              <X className="w-3.5 h-3.5" />
+                              Decline
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </FormSection>
-          )}
+            )}
+          </FormSection>
         </div>
       </div>
 
-      {/* Commented out Quick Actions - now using QuickActionsCard */}
-
-      {/* Delete Team Confirmation Dialog */}
-      <AlertDialog
-        open={deleteTeamDialogOpen}
-        onOpenChange={setDeleteTeamDialogOpen}
-      >
-        <AlertDialogContent className="bg-[rgba(13,13,13,0.97)] backdrop-blur-[24px] border-[rgba(0,255,136,0.2)] shadow-[0_0_60px_rgba(0,255,136,0.08)]">
+      {/* Dialogs */}
+      <AlertDialog open={deleteTeamDialogOpen} onOpenChange={setDeleteTeamDialogOpen}>
+        <AlertDialogContent className="bg-surface-2 border-[var(--border-default)]">
           <AlertDialogHeader>
-            <AlertDialogTitle
-              className="text-white"
-              style={{ fontFamily: "var(--font-heading)" }}
-            >
-              Delete Team
-            </AlertDialogTitle>
-            <AlertDialogDescription
-              className="text-white/80"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              Are you sure you want to delete the team "{team?.teamName}"? This
-              action cannot be undone and all team data including members will
-              be permanently removed.
+            <AlertDialogTitle className="font-heading text-ink">Delete Team</AlertDialogTitle>
+            <AlertDialogDescription className="text-ink-secondary font-body">
+              Are you sure you want to delete the team "{team?.teamName}"? This action cannot be
+              undone and all team data including members will be permanently removed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              className="text-white"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
+            <AlertDialogCancel className="bg-surface-1 border-[var(--border-soft)] text-ink hover:bg-surface-3 hover:text-ink">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={executeDeleteTeam}
-              className="bg-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.7)] text-white border border-[rgba(0,255,136,0.4)] hover:border-[#00FF88]"
-              style={{ fontFamily: "var(--font-body)" }}
+              className="bg-[var(--danger)] hover:bg-[var(--danger)]/85 text-white border border-[var(--danger)]/60"
             >
               Delete Team
             </AlertDialogAction>
@@ -1265,38 +1228,21 @@ export function DashboardContainer() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Remove Member Confirmation Dialog */}
-      <AlertDialog
-        open={removeMemberDialogOpen}
-        onOpenChange={setRemoveMemberDialogOpen}
-      >
-        <AlertDialogContent className="bg-[rgba(13,13,13,0.97)] backdrop-blur-[24px] border-[rgba(0,255,136,0.2)] shadow-[0_0_60px_rgba(0,255,136,0.08)]">
+      <AlertDialog open={removeMemberDialogOpen} onOpenChange={setRemoveMemberDialogOpen}>
+        <AlertDialogContent className="bg-surface-2 border-[var(--border-default)]">
           <AlertDialogHeader>
-            <AlertDialogTitle
-              className="text-white"
-              style={{ fontFamily: "var(--font-heading)" }}
-            >
-              Remove Member
-            </AlertDialogTitle>
-            <AlertDialogDescription
-              className="text-white/80"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              Are you sure you want to remove {memberToRemove?.name} from the
-              team?
+            <AlertDialogTitle className="font-heading text-ink">Remove Member</AlertDialogTitle>
+            <AlertDialogDescription className="text-ink-secondary font-body">
+              Are you sure you want to remove {memberToRemove?.name} from the team?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              className="text-white"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
+            <AlertDialogCancel className="bg-surface-1 border-[var(--border-soft)] text-ink hover:bg-surface-3 hover:text-ink">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={executeRemoveMember}
-              className="bg-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.7)] text-white border border-[rgba(0,255,136,0.4)] hover:border-[#00FF88]"
-              style={{ fontFamily: "var(--font-body)" }}
+              className="bg-[var(--danger)] hover:bg-[var(--danger)]/85 text-white border border-[var(--danger)]/60"
             >
               Remove Member
             </AlertDialogAction>
@@ -1304,38 +1250,21 @@ export function DashboardContainer() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Leave Team Confirmation Dialog */}
-      <AlertDialog
-        open={leaveTeamDialogOpen}
-        onOpenChange={setLeaveTeamDialogOpen}
-      >
-        <AlertDialogContent className="bg-[rgba(13,13,13,0.97)] backdrop-blur-[24px] border-[rgba(0,255,136,0.2)] shadow-[0_0_60px_rgba(0,255,136,0.08)]">
+      <AlertDialog open={leaveTeamDialogOpen} onOpenChange={setLeaveTeamDialogOpen}>
+        <AlertDialogContent className="bg-surface-2 border-[var(--border-default)]">
           <AlertDialogHeader>
-            <AlertDialogTitle
-              className="text-white"
-              style={{ fontFamily: "var(--font-heading)" }}
-            >
-              Leave Team
-            </AlertDialogTitle>
-            <AlertDialogDescription
-              className="text-white/80"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              Are you sure you want to leave the team "{team?.teamName}"? This
-              action cannot be undone.
+            <AlertDialogTitle className="font-heading text-ink">Leave Team</AlertDialogTitle>
+            <AlertDialogDescription className="text-ink-secondary font-body">
+              Are you sure you want to leave the team "{team?.teamName}"? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              className="text-white"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
+            <AlertDialogCancel className="bg-surface-1 border-[var(--border-soft)] text-ink hover:bg-surface-3 hover:text-ink">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleLeaveTeam}
-              className="bg-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.7)] text-white border border-[rgba(0,255,136,0.4)] hover:border-[#00FF88]"
-              style={{ fontFamily: "var(--font-body)" }}
+              className="bg-[var(--danger)] hover:bg-[var(--danger)]/85 text-white border border-[var(--danger)]/60"
             >
               Leave Team
             </AlertDialogAction>
@@ -1343,7 +1272,6 @@ export function DashboardContainer() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Transfer Ownership Modal */}
       {team && (
         <TransferOwnershipModal
           isOpen={transferOwnershipDialogOpen}
@@ -1354,11 +1282,9 @@ export function DashboardContainer() {
         />
       )}
 
-      {/* Hidden Flag Container in DOM */}
       <div data-howdy={dynamicFlag} />
-      {/* Faint hint at the bottom for inspect challenge */}
       {!hasSolvedChallenge && dynamicFlag && (
-        <div className="text-[10px] text-white/5 select-all hover:text-white/20 transition-colors text-center mt-12 mb-6"></div>
+        <div className="text-[10px] text-white/5 select-all hover:text-white/20 transition-colors text-center mt-12 mb-6" />
       )}
     </div>
   );

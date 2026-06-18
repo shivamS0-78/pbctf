@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Users, Copy, Check, Award } from "lucide-react";
 import { FormSection } from "./form-section";
 import { StatusBadge } from "./status-badge";
+import { TEAM_SIZE } from "@/lib/constants";
 
 interface TeamOverviewCardProps {
   team: {
@@ -14,7 +15,14 @@ interface TeamOverviewCardProps {
     problemStatement?: string;
   };
   isLead: boolean;
-  status: "none" | "active" | "submitted" | "under-review" | "shortlisted" | "confirmed" | "declined";
+  status:
+    | "none"
+    | "active"
+    | "submitted"
+    | "under-review"
+    | "shortlisted"
+    | "confirmed"
+    | "declined";
 }
 
 export function TeamOverviewCard({ team, isLead, status }: TeamOverviewCardProps) {
@@ -30,11 +38,13 @@ export function TeamOverviewCard({ team, isLead, status }: TeamOverviewCardProps
     }
   };
 
-  const maxMembers = team.maxMembers || 2;
+  const maxMembers = team.maxMembers || TEAM_SIZE;
+  const pct = Math.min(100, Math.round((team.memberCount / maxMembers) * 100));
 
   return (
     <FormSection
       title="Team Overview"
+      eyebrow="01 · Team"
       status={
         status !== "active" && status !== "none" ? (
           <StatusBadge
@@ -44,107 +54,78 @@ export function TeamOverviewCard({ team, isLead, status }: TeamOverviewCardProps
         ) : undefined
       }
     >
-      <div className="flex flex-col gap-[20px]">
-        {/* Team Name */}
-        <div className="flex flex-col gap-[4px]">
-          <span
-            className="text-[11px] text-white/40 uppercase tracking-[0.2em]"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
+      <div className="flex flex-col gap-5">
+        {/* Team name */}
+        <div className="flex flex-col gap-1">
+          <span className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-ink-muted">
             Team Name
           </span>
-          <span
-            className="text-[26px] text-white font-semibold tracking-[-0.5px]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
+          <span className="font-heading text-[24px] sm:text-[28px] font-semibold text-ink leading-tight tracking-tight">
             {team.teamName}
           </span>
         </div>
 
-        {/* Team Details Grid */}
-        <div className="grid grid-cols-2 gap-[16px]">
-          {/* Team Code with Copy */}
-          <div className="flex flex-col gap-[8px]">
-            <span
-              className="text-[11px] text-white/40 uppercase tracking-[0.2em]"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
+        {/* Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+          {/* Team Code */}
+          <div className="flex flex-col gap-2">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-ink-muted">
               Team Code
             </span>
-            <div className="flex items-center gap-[8px]">
-              <span
-                className="text-[15px] text-[#00FF88] font-mono bg-[rgba(0,255,136,0.06)] border border-[rgba(0,255,136,0.2)] px-[12px] py-[6px] rounded-[8px] tracking-widest"
-              >
+            <div className="flex items-center gap-2">
+              <span className="text-mono text-[14px] font-semibold text-brand bg-brand-soft border border-brand/30 px-3 py-1.5 rounded-md tracking-[0.18em]">
                 {team.teamCode}
               </span>
               <button
                 onClick={handleCopyCode}
-                className="p-[8px] rounded-[8px] bg-[rgba(0,255,136,0.06)] hover:bg-[rgba(0,255,136,0.14)] border border-[rgba(0,255,136,0.2)] transition-all duration-200 text-[#00FF88]"
-                title={copied ? "Copied!" : "Copy team code"}
+                className="inline-flex w-9 h-9 items-center justify-center rounded-md bg-surface-inset border border-[var(--border-soft)] hover:border-brand/40 hover:text-brand text-ink-secondary transition-colors"
+                aria-label={copied ? "Copied" : "Copy team code"}
+                title={copied ? "Copied" : "Copy team code"}
               >
-                {copied ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
+                {copied ? <Check className="w-4 h-4 text-brand" /> : <Copy className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
           {/* Members */}
-          <div className="flex flex-col gap-[8px]">
-            <span
-              className="text-[11px] text-white/40 uppercase tracking-[0.2em]"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
+          <div className="flex flex-col gap-2">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-ink-muted">
               Members
             </span>
-            <div className="flex items-center gap-[10px]">
-              <span
-                className="text-[16px] text-white"
-                style={{ fontFamily: 'var(--font-body)' }}
-              >
-                {team.memberCount}{" "}
-                <span className="text-white/30">/ {maxMembers}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-mono text-[16px] text-ink">
+                <span className="text-brand font-semibold">{team.memberCount}</span>
+                <span className="text-ink-muted"> / {maxMembers}</span>
               </span>
-              <div className="flex-1 max-w-[60px] bg-[rgba(255,255,255,0.06)] rounded-full h-[5px] overflow-hidden">
+              <div className="flex-1 max-w-[110px] h-1.5 rounded-full bg-white/[0.05] overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-[#00FF88] to-[#8CFF00] h-full transition-all duration-500 shadow-[0_0_6px_rgba(0,255,136,0.6)]"
-                  style={{ width: `${(team.memberCount / maxMembers) * 100}%` }}
+                  className="h-full bg-gradient-to-r from-brand to-brand-hover transition-all duration-500"
+                  style={{ width: `${pct}%`, boxShadow: "0 0 8px rgba(0,255,136,0.5)" }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Problem Statement */}
           {team.problemStatement && (
-            <div className="flex flex-col gap-[6px] col-span-2">
-              <span
-                className="text-[11px] text-white/40 uppercase tracking-[0.2em]"
-                style={{ fontFamily: 'var(--font-body)' }}
-              >
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-ink-muted">
                 Problem Statement
               </span>
-              <span
-                className="text-[14px] text-white/80"
-                style={{ fontFamily: 'var(--font-body)' }}
-              >
+              <span className="text-[13.5px] text-ink-secondary font-body">
                 {team.problemStatement}
               </span>
             </div>
           )}
 
-          {/* Your Role */}
-          <div className="flex flex-col gap-[6px]">
-            <span
-              className="text-[11px] text-white/40 uppercase tracking-[0.2em]"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
+          <div className="flex flex-col gap-1.5">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-ink-muted">
               Your Role
             </span>
             <span
-              className={`text-[14px] font-semibold ${isLead ? 'text-[#00FF88]' : 'text-white/70'}`}
-              style={{ fontFamily: 'var(--font-body)' }}
+              className={[
+                "text-[13.5px] font-semibold font-body",
+                isLead ? "text-brand" : "text-ink-secondary",
+              ].join(" ")}
             >
               {isLead ? "Team Lead" : "Member"}
             </span>

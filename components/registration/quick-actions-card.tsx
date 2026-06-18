@@ -3,6 +3,7 @@
 import { Search, Trash2, LogOut } from "lucide-react";
 import { FormSection } from "./form-section";
 import { Button } from "./button";
+import { TEAM_SIZE } from "@/lib/constants";
 
 interface QuickActionsCardProps {
   isLead: boolean;
@@ -18,55 +19,39 @@ export function QuickActionsCard({
   isLead,
   teamStatus,
   memberCount,
-  maxMembers = 2,
+  maxMembers = TEAM_SIZE,
   onNavigate,
   onDeleteTeam,
   onLeaveTeam,
 }: QuickActionsCardProps) {
   const canDiscover = isLead && memberCount < maxMembers;
-  const canDelete =
-    isLead && teamStatus !== "shortlisted" && teamStatus !== "confirmed";
-  const canLeave =
-    !isLead && teamStatus !== "shortlisted" && teamStatus !== "confirmed";
+  const canDelete = isLead && teamStatus !== "shortlisted" && teamStatus !== "confirmed";
+  const canLeave = !isLead && teamStatus !== "shortlisted" && teamStatus !== "confirmed";
 
   const hasActions = canDiscover || canDelete || canLeave;
-
-  if (!hasActions) {
-    return null;
-  }
+  if (!hasActions) return null;
 
   return (
-    <FormSection title="Quick Actions">
-      <div className="flex flex-col gap-[12px]">
-        {/* Secondary Actions */}
-        <div className="flex flex-col gap-[8px]">
-          {canDiscover && (
-            <Button onClick={() => onNavigate("/dashboard/discover")} variant="secondary">
-              <Search className="w-4 h-4" />
-              Discover Members
-            </Button>
-          )}
-        </div>
+    <FormSection title="Quick Actions" eyebrow="03 · Controls">
+      <div className="flex flex-col gap-2.5">
+        {canDiscover && (
+          <Button onClick={() => onNavigate("/dashboard/discover")} variant="secondary" className="w-full">
+            <Search className="w-4 h-4" />
+            Discover Members
+          </Button>
+        )}
 
-        {/* Destructive Actions */}
-        {(canDelete || canLeave) && (
-          <>
-            <div className="h-[1px] bg-[rgba(0,255,136,0.1)] my-[4px]" />
-
-            {canDelete && (
-              <Button onClick={onDeleteTeam} variant="danger">
-                <Trash2 className="w-4 h-4" />
-                Delete Team
-              </Button>
-            )}
-
-            {canLeave && (
-              <Button onClick={onLeaveTeam} variant="danger">
-                <LogOut className="w-4 h-4" />
-                Leave Team
-              </Button>
-            )}
-          </>
+        {canDelete && (
+          <Button onClick={onDeleteTeam} variant="danger" className="w-full">
+            <Trash2 className="w-4 h-4" />
+            Delete Team
+          </Button>
+        )}
+        {canLeave && (
+          <Button onClick={onLeaveTeam} variant="danger" className="w-full">
+            <LogOut className="w-4 h-4" />
+            Leave Team
+          </Button>
         )}
       </div>
     </FormSection>

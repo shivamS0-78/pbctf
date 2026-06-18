@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       }
 
     } else {
-      // All Teams view — show every team, optionally filtered by evaluation tier
+      // All Teams view. show every team, optionally filtered by evaluation tier
       if (tiers.length > 0) {
         pipeline.push({ $match: { 'evaluations.tier': { $in: tiers } } });
       }

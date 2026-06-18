@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Modal } from "./modal";
 import { Button } from "./button";
-import { FormInput } from "./form-input";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { API_ENDPOINTS } from "@/lib/api-config";
-import { Search, CheckCircle, Circle, Users } from "lucide-react";
+import { Search, CheckSquare, Square, Users, AlertTriangle, Target, X } from "lucide-react";
 import { StickyAlert } from "./sticky-alert";
 import { ConfirmationDialog } from "./confirmation-dialog";
 
@@ -175,94 +174,186 @@ export function AssignTeamsModal({
 
     // Filter teams based on search
     const filteredTeams = teams;
+    const reassignCount = filteredTeams.filter(
+        (t) => selectedTeams.has(t.teamCode) && t.isAssigned
+    ).length;
+
+    // Pull selected team names for the deliberate preview strip
+    const selectedTeamObjects = filteredTeams.filter((t) => selectedTeams.has(t.teamCode));
+    const previewNames = selectedTeamObjects.slice(0, 6).map((t) => t.teamName);
+    const previewExtra = Math.max(selectedTeamObjects.length - previewNames.length, 0);
 
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={`Assign Teams to ${evaluatorName}`}
+            title={`Assign crews · ${evaluatorName}`}
+            size="2xl"
         >
-            <div className="flex flex-col gap-[16px] max-h-[70vh]">
+            <div className="flex flex-col gap-4 max-h-[70vh]">
                 {alert && (
                     <StickyAlert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />
                 )}
 
+                {/* Context strip. who, how many, what */}
+                <div className="rounded-md border border-brand/20 bg-brand-soft/40 p-3 flex items-center gap-3">
+                    <Target className="w-4 h-4 text-brand shrink-0" />
+                    <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-secondary flex-1 min-w-0">
+                        <span className="text-ink-muted">target:</span>{" "}
+                        <span className="text-brand">{evaluatorName}</span>{" "}
+                        <span className="text-ink-muted">·</span>{" "}
+                        <span className="text-ink">{selectedTeams.size}</span>{" "}
+                        <span className="text-ink-muted">crew{selectedTeams.size !== 1 ? "s" : ""} queued</span>
+                    </div>
+                </div>
+
+                {/* Search */}
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle pointer-events-none" />
                     <input
                         type="text"
-                        placeholder="Search teams by name or code..."
+                        placeholder="grep crews / name or code…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.1)] rounded-[12px] pl-9 pr-4 py-2 text-white text-[14px] placeholder:text-[rgba(255,255,255,0.3)] focus:outline-none focus:border-[#00FF88] focus:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200"
+                        className="w-full bg-surface-inset border border-[var(--border-soft)] rounded-md pl-9 pr-3 py-2.5 text-ink text-[13px] font-mono placeholder:text-ink-subtle focus:outline-none focus:border-brand focus:shadow-[0_0_16px_rgba(0,255,136,0.25)] transition-all duration-200"
                     />
                 </div>
 
-                <div className="flex-1 overflow-y-auto min-h-[200px] flex flex-col gap-[8px] pr-1">
+                {/* Selection preview strip */}
+                {selectedTeams.size > 0 && (
+                    <div className="rounded-md border border-[var(--border-soft)] bg-surface-inset p-3">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-brand">
+                                pending batch · preview
+                            </span>
+                            <button
+                                onClick={() => setSelectedTeams(new Set())}
+                                className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-ink-muted hover:text-ink transition-colors flex items-center gap-1"
+                                type="button"
+                            >
+                                <X className="w-3 h-3" />
+                                clear
+                            </button>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                            {previewNames.map((name, i) => (
+                                <span
+                                    key={`${name}-${i}`}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-1 border border-brand/25 font-mono text-[11px] text-brand/90 truncate max-w-[180px]"
+                                >
+                                    <span className="truncate">{name}</span>
+                                </span>
+                            ))}
+                            {previewExtra > 0 && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-1 border border-[var(--border-soft)] font-mono text-[11px] text-ink-muted">
+                                    +{previewExtra} more
+                                </span>
+                            )}
+                        </div>
+                        {reassignCount > 0 && (
+                            <div className="mt-2 flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-[var(--warning)]">
+                                <AlertTriangle className="w-3 h-3" />
+                                {reassignCount} crew{reassignCount !== 1 ? "s" : ""} already assigned to another judge. will reassign
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Selectable list */}
+                <div className="flex-1 overflow-y-auto min-h-[200px] flex flex-col gap-1.5 pr-1 -mr-1">
                     {isLoading ? (
-                        <div className="flex justify-center py-8">
+                        <div className="flex flex-col items-center justify-center py-12 gap-2">
                             <Spinner size="lg" />
+                            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+                                fetching crews…
+                            </span>
                         </div>
                     ) : filteredTeams.length === 0 ? (
-                        <div className="text-center py-8 text-white/50">
-                            No teams found.
+                        <div className="flex flex-col items-center justify-center text-center py-12 px-6 rounded-md border border-dashed border-[var(--border-soft)] bg-surface-inset/50">
+                            <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-brand mb-1">
+                                no_crews.match
+                            </div>
+                            <p className="text-[12.5px] text-ink-muted max-w-xs">
+                                Adjust your query or load more.
+                            </p>
                         </div>
                     ) : (
-                        filteredTeams.map((team) => (
-                            <div
-                                key={team.teamCode}
-                                onClick={() => handleToggleTeam(team.teamCode)}
-                                className={`flex items-center justify-between p-3 rounded-[12px] border cursor-pointer transition-all duration-200 ${selectedTeams.has(team.teamCode)
-                                    ? "bg-[rgba(0,255,136,0.08)] border-[#00FF88]"
-                                    : "bg-[rgba(13,13,13,0.4)] border-[rgba(255,255,255,0.06)] hover:border-[rgba(0,255,136,0.25)] hover:bg-[rgba(0,255,136,0.04)]"
+                        filteredTeams.map((team) => {
+                            const isSelected = selectedTeams.has(team.teamCode);
+                            return (
+                                <button
+                                    type="button"
+                                    key={team.teamCode}
+                                    onClick={() => handleToggleTeam(team.teamCode)}
+                                    className={`flex items-center justify-between gap-3 p-3 rounded-md border text-left transition-all duration-150 ${
+                                        isSelected
+                                            ? "bg-brand-soft border-brand/55 shadow-[0_0_16px_rgba(0,255,136,0.15)]"
+                                            : "bg-surface-inset border-[var(--border-soft)] hover:border-brand/30 hover:bg-surface-1"
                                     }`}
-                            >
-                                <div className="flex flex-col">
-                                    <span className="text-white text-[14px] font-medium">{team.teamName}</span>
-                                    <span className="text-white/60 text-[12px]">{team.problemStatement}</span>
-                                    {team.isAssigned && (
-                                        <span className="text-amber-400 text-[11px] mt-1 flex items-center gap-1">
-                                            <Users className="w-3 h-3" />
-                                            Already assigned
-                                        </span>
-                                    )}
-                                </div>
-                                <div>
-                                    {selectedTeams.has(team.teamCode) ? (
-                                        <CheckCircle className="w-5 h-5 text-[#00FF88]" />
-                                    ) : (
-                                        <Circle className="w-5 h-5 text-white/20" />
-                                    )}
-                                </div>
-                            </div>
-                        ))
+                                >
+                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                        <div className="shrink-0">
+                                            {isSelected ? (
+                                                <CheckSquare className="w-5 h-5 text-brand" />
+                                            ) : (
+                                                <Square className="w-5 h-5 text-ink-disabled" />
+                                            )}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-ink text-[13.5px] font-medium truncate">
+                                                    {team.teamName}
+                                                </span>
+                                                <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-subtle">
+                                                    {team.teamCode}
+                                                </span>
+                                            </div>
+                                            <div className="font-mono text-[11px] text-ink-muted truncate mt-0.5">
+                                                {team.problemStatement}
+                                            </div>
+                                            {team.isAssigned && (
+                                                <div className="mt-1 inline-flex items-center gap-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-[var(--warning)]">
+                                                    <Users className="w-3 h-3" />
+                                                    already assigned
+                                                    {team.assignedToName ? ` → ${team.assignedToName}` : ""}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </button>
+                            );
+                        })
                     )}
                     {hasMore && !isLoading && filteredTeams.length > 0 && (
                         <Button
                             variant="secondary"
+                            size="sm"
                             onClick={handleLoadMore}
                             className="w-full mt-2"
                         >
-                            Load More
+                            Load more crews
                         </Button>
                     )}
                 </div>
 
-                <div className="flex justify-between items-center pt-4 border-t border-[rgba(255,255,255,0.1)]">
-                    <span className="text-white/60 text-[13px]">
-                        {selectedTeams.size} team{selectedTeams.size !== 1 ? 's' : ''} selected
-                    </span>
-                    <div className="flex gap-[12px]">
-                        <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+                {/* Action bar */}
+                <div className="flex items-center justify-between gap-3 pt-3">
+                    <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-muted">
+                        <span className="text-ink-subtle">queued:</span>{" "}
+                        <span className="text-brand tabular-nums">{selectedTeams.size}</span>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
                             Cancel
                         </Button>
                         <Button
                             variant="primary"
+                            size="sm"
                             onClick={() => setConfirmation({ isOpen: true, teamCode: "" })}
                             disabled={isSubmitting || selectedTeams.size === 0}
                         >
                             {isSubmitting && <Spinner size="sm" className="mr-2" />}
-                            Assign Selected
+                            Commit assignment
                         </Button>
                     </div>
                 </div>
@@ -275,8 +366,12 @@ export function AssignTeamsModal({
                     handleAssign();
                     setConfirmation({ ...confirmation, isOpen: false });
                 }}
-                title="Assign Team"
-                message={`Are you sure you want to assign this team to ${evaluatorName}?`}
+                title="Commit assignment"
+                message={`Assign ${selectedTeams.size} crew${selectedTeams.size !== 1 ? "s" : ""} to ${evaluatorName}?${
+                    reassignCount > 0
+                        ? ` ${reassignCount} will be reassigned from another judge.`
+                        : ""
+                }`}
             />
         </Modal>
     );

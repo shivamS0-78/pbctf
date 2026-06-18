@@ -26,14 +26,22 @@ export function FormPhoneInput({
   disabled = false,
 }: FormPhoneInputProps) {
   return (
-    <div className={`flex flex-col gap-[8px] w-full ${disabled ? "opacity-50" : ""}`}>
-      <label className="text-[13px] text-white/70 uppercase tracking-[0.08em]" style={{ fontFamily: 'var(--font-body)' }}>
-        {label}{" "}
-        {required && <span className="text-[#00FF88]">*</span>}
+    <div className={`flex flex-col gap-2 w-full ${disabled ? "opacity-50" : ""}`}>
+      <label className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-ink-secondary flex items-center gap-1">
+        <span className="text-brand opacity-50 leading-none">{">"}</span>
+        {label}
+        {required && <span className="text-brand">*</span>}
       </label>
-      <div className={`bg-[rgba(13,13,13,0.7)] backdrop-blur-[12px] border ${
-        error ? "border-[rgba(0,255,136,0.6)]" : "border-[rgba(255,255,255,0.1)]"
-      } border-solid rounded-[12px] overflow-hidden focus-within:border-[#00FF88] focus-within:shadow-[0_0_16px_rgba(0,255,136,0.35)] transition-all duration-200`}>
+      <div
+        className={[
+          "rounded-md overflow-hidden",
+          "bg-surface-inset",
+          "border",
+          error ? "border-[var(--danger)]/60" : "border-[var(--border-soft)]",
+          "focus-within:border-brand focus-within:shadow-[0_0_0_3px_var(--brand-soft)]",
+          "transition-[border-color,box-shadow] duration-150",
+        ].join(" ")}
+      >
         <PhoneInput
           international
           defaultCountry="IN"
@@ -45,7 +53,8 @@ export function FormPhoneInput({
         />
       </div>
       {error && (
-        <span className="text-[12px] text-[#00FF88]" style={{ fontFamily: 'var(--font-body)' }}>
+        <span className="text-[12px] text-[var(--danger)] font-body flex items-center gap-1.5">
+          <span className="inline-block w-1 h-1 rounded-full bg-[var(--danger)]" />
           {error}
         </span>
       )}
@@ -54,39 +63,34 @@ export function FormPhoneInput({
           display: flex;
           align-items: center;
         }
-
         .PhoneInputInput {
           background: transparent !important;
           border: none !important;
           outline: none !important;
-          color: white !important;
+          color: var(--text-primary) !important;
           font-size: 14px !important;
-          padding: 12px 18px !important;
+          padding: 12px 16px !important;
           font-family: var(--font-body) !important;
           flex: 1;
           width: 100%;
         }
-
         .PhoneInputInput::placeholder {
-          color: rgba(255, 255, 255, 0.3) !important;
+          color: var(--text-disabled) !important;
         }
-
         .PhoneInputCountry {
           padding: 0 12px;
-          border-right: 1px solid rgba(255, 255, 255, 0.1);
+          border-right: 1px solid var(--border-soft);
           margin-right: 0;
         }
-
         .PhoneInputCountryIcon {
-          width: 1.5em;
-          height: 1.2em;
+          width: 1.4em;
+          height: 1em;
           box-shadow: none;
           border: none;
         }
-
         .PhoneInputCountrySelect {
           background: transparent !important;
-          color: white !important;
+          color: var(--text-primary) !important;
           border: none !important;
           outline: none !important;
           padding: 12px 8px !important;
@@ -97,20 +101,17 @@ export function FormPhoneInput({
           -webkit-appearance: none !important;
           -moz-appearance: none !important;
         }
-
         .PhoneInputCountrySelect:hover {
-          background: rgba(0, 255, 136, 0.05) !important;
+          background: var(--brand-soft) !important;
         }
-
         .PhoneInputCountrySelectArrow {
-          opacity: 0.4;
+          opacity: 0.5;
           margin-left: 4px;
-          color: white !important;
+          color: var(--text-secondary) !important;
         }
-
         .PhoneInputCountrySelect option {
-          background: #0a0a0a !important;
-          color: white !important;
+          background: var(--surface-2) !important;
+          color: var(--text-primary) !important;
           padding: 8px;
         }
       `}</style>

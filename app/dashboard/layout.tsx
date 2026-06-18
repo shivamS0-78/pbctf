@@ -1,13 +1,45 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { NavBar } from "@/components/registration/navbar";
 import { DotPattern } from "@/components/registration/dot-pattern";
 import { StickyAlert } from "@/components/registration/sticky-alert";
-import { useState } from "react";
-import { Spinner } from "@/components/ui/spinner";
+
+// Single source of truth for which roles can access which dashboard segment.
+// Longest matching prefix wins. Anything not matched is treated as open to all
+// signed-in users (e.g. /dashboard root, which has its own role-based redirect
+// below).
+type Role = "admin" | "evaluator" | "user" | "frai";
+
+const ROUTE_POLICY: Array<{ prefix: string; roles: Role[] }> = [
+  // Participant-only routes
+  { prefix: "/dashboard/profile",   roles: ["user", "frai"] },
+  { prefix: "/dashboard/team",      roles: ["user", "frai"] },
+  { prefix: "/dashboard/discover",  roles: ["user", "frai"] },
+  // Role-scoped workspaces
+  { prefix: "/dashboard/admin",     roles: ["admin"] },
+  { prefix: "/dashboard/evaluator", roles: ["evaluator"] },
+  { prefix: "/dashboard/frai",      roles: ["frai"] },
+  // Shared utility pages
+  { prefix: "/dashboard/resume",    roles: ["user", "frai", "admin", "evaluator"] },
+];
+
+const ROLE_LANDING: Record<Role, string> = {
+  admin: "/dashboard/admin",
+  evaluator: "/dashboard/evaluator",
+  frai: "/dashboard/frai",
+  user: "/dashboard",
+};
+
+function policyFor(pathname: string) {
+  // Pick the longest-matching prefix (so /dashboard/team/x matches /dashboard/team).
+  const match = ROUTE_POLICY
+    .filter((p) => pathname === p.prefix || pathname.startsWith(p.prefix + "/"))
+    .sort((a, b) => b.prefix.length - a.prefix.length)[0];
+  return match;
+}
 
 export default function DashboardLayout({
   children,
@@ -22,12 +54,11 @@ export default function DashboardLayout({
     message: string;
   } | null>(null);
   const [hasRefreshed, setHasRefreshed] = useState(false);
+
   useEffect(() => {
     if (!isLoading && isAuthenticated && user && !hasRefreshed) {
       refreshUser()
-        .then(() => {
-          setHasRefreshed(true);
-        })
+        .then(() => setHasRefreshed(true))
         .catch((error) => {
           console.error("Error refreshing user:", error);
           setHasRefreshed(true);
@@ -35,57 +66,51 @@ export default function DashboardLayout({
     }
   }, [isLoading, isAuthenticated, user, hasRefreshed, refreshUser]);
 
+  // Compute whether the current route is forbidden for this user. Used to
+  // suppress the content render while the redirect below is in flight so we
+  // don't leak even one frame of the disallowed page (the screenshot bug).
+  const policy = useMemo(() => policyFor(pathname || ""), [pathname]);
+  const role = (user?.role as Role | undefined) ?? undefined;
+  const forbidden =
+    !!user && !!role && !!policy && !policy.roles.includes(role);
+
   useEffect(() => {
     if (isLoading) return;
-
     if (!isAuthenticated || !user) {
       router.push("/login");
       return;
     }
 
-    // Redirect based on role only if on base dashboard route
+    // /dashboard root: redirect privileged roles to their own workspace.
     if (pathname === "/dashboard" || pathname === "/dashboard/") {
-      if (user.role === "admin") {
-        router.push("/dashboard/admin");
-      } else if (user.role === "evaluator") {
-        router.push("/dashboard/evaluator");
-      } else if (user.role === "frai") {
-        router.push("/dashboard/frai");
+      if (role && role !== "user") {
+        router.replace(ROLE_LANDING[role]);
+        return;
       }
     }
-  }, [isAuthenticated, user, isLoading, router, pathname]);
+
+    // Forbidden-by-policy: redirect to that role's landing page.
+    if (forbidden && role) {
+      router.replace(ROLE_LANDING[role]);
+    }
+  }, [isAuthenticated, user, isLoading, router, pathname, role, forbidden]);
 
   const handleLogout = async () => {
     await logout();
-    // router.push("/login"); // logout() already handles redirect, but keeping this as backup is fine if we await
-    setAlert({
-      type: "info",
-      message: "Logged out successfully",
-    });
+    setAlert({ type: "info", message: "Logged out successfully" });
     setTimeout(() => setAlert(null), 3000);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#0a0a0a]">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !user) {
+  // Once auth has resolved and confirmed no user, the useEffect above redirects to /login.
+  // Render nothing in that brief gap to avoid flashing the dashboard shell.
+  if (!isLoading && (!isAuthenticated || !user)) {
     return null;
   }
 
   return (
-    <div
-      className="min-h-screen w-full flex flex-col items-start relative"
-      style={{
-        backgroundImage:
-          "linear-gradient(90deg, rgb(10,10,10) 0%, rgb(10,10,10) 100%)",
-      }}
-    >
+    <div className="min-h-screen w-full flex flex-col bg-void relative">
       <NavBar
+        isAuthLoading={isLoading}
         user={
           user && user.name
             ? {
@@ -98,13 +123,10 @@ export default function DashboardLayout({
         }
         onLogout={handleLogout}
         onNavigate={(view) => {
-          if (view === "login") {
-            router.push("/login");
-          } else if (view === "register") {
-            router.push("/register");
-          } else if (view === "landing") {
-            router.push("/");
-          } else if (view.startsWith("team?joinCode=")) {
+          if (view === "login") router.push("/login");
+          else if (view === "register") router.push("/register");
+          else if (view === "landing") router.push("/");
+          else if (view.startsWith("team?joinCode=")) {
             const joinCode = view.split("joinCode=")[1];
             router.push(`/dashboard/team?joinCode=${joinCode}`);
           } else {
@@ -113,15 +135,11 @@ export default function DashboardLayout({
         }}
       />
 
-      <div className="bg-[#0a0a0a] w-full relative flex-1">
-        <div
-          className="flex flex-col items-center justify-center w-full min-h-screen pb-10 pt-10 px-4 md:pb-[80px] md:pt-[60px] md:px-[40px] relative"
-          style={{
-            backgroundImage:
-              "url('data:image/svg+xml;utf8,<svg viewBox=\\'0 0 1440 652\\' xmlns=\\'http://www.w3.org/2000/svg\\' preserveAspectRatio=\\'none\\'><rect x=\\'0\\' y=\\'0\\' height=\\'100%\\' width=\\'100%\\' fill=\\'url(%23grad)\\' opacity=\\'1\\'/><defs><radialGradient id=\\'grad\\' gradientUnits=\\'userSpaceOnUse\\' cx=\\'0\\' cy=\\'0\\' r=\\'10\\' gradientTransform=\\'matrix(36 0 0 50 0 326)\\'><stop stop-color=\\'rgba(0,255,136,0.22)\\' offset=\\'0\\'/><stop stop-color=\\'rgba(0,255,136,0.08)\\' offset=\\'0.45\\'/><stop stop-color=\\'rgba(0,255,136,0)\\' offset=\\'1\\'/></radialGradient></defs></svg>')",
-          }}
-        >
-          <div className="max-w-[1000px] w-full z-10 flex flex-col gap-[32px] items-center">
+      <main className="relative flex-1 w-full">
+        <DotPattern />
+
+        <div className="relative z-10 mx-auto w-full max-w-[1100px] px-4 sm:px-6 md:px-8 py-8 sm:py-10 md:py-12">
+          <div className="flex flex-col gap-6 md:gap-8">
             {alert && (
               <StickyAlert
                 type={alert.type}
@@ -130,12 +148,13 @@ export default function DashboardLayout({
               />
             )}
 
-            {children}
+            {/* If the route is policy-forbidden for this user, suppress the
+                page content while the layout redirect is in flight. Prevents
+                the data fetch + content render of a page they shouldn't see. */}
+            {forbidden ? null : children}
           </div>
         </div>
-
-        <DotPattern />
-      </div>
+      </main>
     </div>
   );
 }

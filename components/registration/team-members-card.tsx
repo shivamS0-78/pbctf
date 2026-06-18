@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Crown, Trash2, UserMinus } from "lucide-react";
 import { FormSection } from "./form-section";
 import { Button } from "./button";
 
@@ -33,103 +33,83 @@ export function TeamMembersCard({
     teamStatus !== "shortlisted" &&
     teamStatus !== "confirmed";
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
+  const getInitials = (name: string) =>
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
       .map((n) => n[0])
       .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+      .toUpperCase();
 
-  const getAvatarColor = (name: string) => {
-    const colors = [
-      "from-[#00FF88] to-[#0ea47a]",
-      "from-[#8CFF00] to-[#5caa00]",
-      "from-[#00d4ff] to-[#0060ff]",
-      "from-[#a855f7] to-[#6d28d9]",
-      "from-[#f97316] to-[#b45309]",
-    ];
-    const index = name.charCodeAt(0) % colors.length;
-    return colors[index];
-  };
-
-  if (!members || members.length === 0) {
-    return null;
-  }
+  if (!members || members.length === 0) return null;
 
   return (
     <FormSection
       title="Team Members"
+      eyebrow="02 · Roster"
       status={
         isActionable && members.length > 1 && onTransferOwnership ? (
-          <Button
-            onClick={() => onTransferOwnership()}
-            variant="secondary"
-            className="h-8 px-3 text-xs"
-          >
+          <Button onClick={() => onTransferOwnership()} variant="secondary" size="sm">
+            <Crown className="w-3.5 h-3.5" />
             Transfer Lead
           </Button>
         ) : undefined
       }
     >
-      <div className="flex flex-col gap-[10px]">
-        {members.map((member) => (
-          <div
-            key={member.uid}
-            className="flex items-center justify-between p-[14px] bg-[rgba(0,0,0,0.3)] rounded-[12px] border border-[rgba(0,255,136,0.08)] hover:border-[rgba(0,255,136,0.2)] transition-all duration-200"
-          >
-            <div className="flex items-center gap-[12px]">
-              {/* Avatar */}
-              <div
-                className={`w-[40px] h-[40px] rounded-full bg-gradient-to-br ${getAvatarColor(member.name)} flex items-center justify-center shadow-[0_0_12px_rgba(0,255,136,0.2)]`}
+      <ul className="flex flex-col gap-2">
+        {members.map((member) => {
+          const isMemberLead = member.role === "Team Lead";
+          return (
+            <li
+              key={member.uid}
+              className="flex items-center gap-3 p-3 sm:p-3.5 bg-surface-inset border border-[var(--border-soft)] rounded-md hover:border-brand/25 transition-colors"
+            >
+              <span
+                className={[
+                  "w-10 h-10 shrink-0 rounded-md inline-flex items-center justify-center font-mono text-[12px] font-bold",
+                  isMemberLead
+                    ? "bg-brand text-brand-ink"
+                    : "bg-surface-2 text-ink border border-[var(--border-default)]",
+                ].join(" ")}
               >
-                <span className="text-[14px] text-black font-bold">
-                  {getInitials(member.name)}
-                </span>
-              </div>
+                {getInitials(member.name)}
+              </span>
 
-              {/* Name and Email */}
-              <div className="flex flex-col gap-[2px]">
-                <div className="flex items-center gap-[8px]">
-                  <span
-                    className="text-[14px] text-white font-medium"
-                    style={{ fontFamily: 'var(--font-body)' }}
-                  >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[13.5px] text-ink font-medium font-body truncate">
                     {member.name}
                   </span>
-                  {member.role === "Team Lead" && (
-                    <span className="text-[10px] text-[#00FF88] bg-[rgba(0,255,136,0.1)] border border-[rgba(0,255,136,0.3)] px-[8px] py-[2px] rounded-full font-semibold tracking-wide uppercase">
+                  {isMemberLead && (
+                    <span className="inline-flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.2em] text-brand bg-brand-soft border border-brand/35 px-1.5 py-0.5 rounded">
+                      <Crown className="w-2.5 h-2.5" />
                       Lead
                     </span>
                   )}
                 </div>
                 {member.email && (
-                  <span
-                    className="text-[12px] text-white/40"
-                    style={{ fontFamily: 'var(--font-body)' }}
-                  >
+                  <span className="block text-[11.5px] text-ink-muted font-mono truncate mt-0.5">
                     {member.email}
                   </span>
                 )}
               </div>
-            </div>
 
-            {/* Actions */}
-            {isActionable && member.uid !== currentUserId && (
-              <div className="flex gap-2">
-                <Button
+              {isActionable && member.uid !== currentUserId && (
+                <button
+                  type="button"
                   onClick={() => onRemoveMember(member.uid, member.name)}
-                  variant="danger"
-                  className="h-8 px-3"
+                  className="shrink-0 inline-flex w-9 h-9 items-center justify-center rounded-md border border-[var(--border-soft)] hover:border-[var(--danger)]/55 hover:bg-[var(--danger-soft)] text-ink-muted hover:text-[var(--danger)] transition-colors"
+                  aria-label={`Remove ${member.name}`}
+                  title={`Remove ${member.name}`}
                 >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+                  <UserMinus className="w-4 h-4" />
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </FormSection>
   );
 }
