@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { LogOut, LogIn, Shield, ShieldCheck } from "lucide-react";
+import { LogOut, LogIn, Shield, ShieldCheck, Menu, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface User {
   uid: string;
@@ -130,6 +132,7 @@ function NavLink({
 
 export function NavBar({ user, onLogout, onNavigate, isAuthLoading }: NavBarProps) {
   const pathname = usePathname() || "";
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const initials =
     (user?.name || "")
@@ -169,10 +172,10 @@ export function NavBar({ user, onLogout, onNavigate, isAuthLoading }: NavBarProp
   return (
     <header
       className={[
-        "sticky top-0 z-50 w-full",
-        "bg-[rgba(5,5,5,0.78)] backdrop-blur-[20px]",
-        "border-b border-[rgba(0,255,136,0.15)]",
-        "shadow-[0_10px_40px_rgba(0,0,0,0.5)]",
+        "sticky top-0 w-full transition-all duration-300",
+        menuOpen
+          ? "z-[101] bg-transparent border-transparent shadow-none"
+          : "z-50 bg-[rgba(5,5,5,0.78)] backdrop-blur-[20px] border-b border-[rgba(0,255,136,0.15)] shadow-[0_10px_40px_rgba(0,0,0,0.5)]",
       ].join(" ")}
     >
       <div className="w-full px-[clamp(1.25rem,4vw,2.5rem)]">
@@ -191,11 +194,11 @@ export function NavBar({ user, onLogout, onNavigate, isAuthLoading }: NavBarProp
 
           {/* Right cluster — nav + auth flush right, mirroring the landing header */}
           <div className="ml-auto flex items-center gap-4 md:gap-6 min-w-0">
-            {/* Nav. scroll horizontally on small screens */}
+            {/* Desktop Nav */}
             {user && nav.length > 0 && (
               <nav
                 aria-label="Primary"
-                className="min-w-0 overflow-x-auto no-scrollbar"
+                className="hidden md:block min-w-0"
               >
                 <div className="flex items-center gap-1 md:gap-2 px-1">
                   {nav.map((item) => (
@@ -210,24 +213,21 @@ export function NavBar({ user, onLogout, onNavigate, isAuthLoading }: NavBarProp
               </nav>
             )}
 
-          {/* Auth zone */}
+          {/* Desktop Auth zone */}
           {isAuthLoading ? (
-            <div className="flex shrink-0 items-center gap-2 md:gap-3" aria-label="Loading user">
-              <div className={`hidden sm:flex items-center gap-2.5 pl-1 pr-3 h-9 rounded-md ${control}`}>
+            <div className="hidden md:flex shrink-0 items-center gap-2 md:gap-3" aria-label="Loading user">
+              <div className={`flex items-center gap-2.5 pl-1 pr-3 h-9 rounded-md ${control}`}>
                 <span className="inline-flex w-7 h-7 rounded-sm bg-surface-2 animate-pulse" />
                 <span className="inline-flex w-14 h-3 rounded bg-surface-2 animate-pulse" />
               </div>
-              <span className={`sm:hidden inline-flex w-9 h-9 rounded-md animate-pulse ${control}`} />
             </div>
           ) : user ? (
-            <div className="flex shrink-0 items-center gap-2 md:gap-3">
+            <div className="hidden md:flex shrink-0 items-center gap-2 md:gap-3">
               {user.role && <RoleChip role={user.role} />}
 
               {isPrivilegedRole ? (
-                // Admin / evaluator: profile page doesn't apply, so the
-                // avatar tile is non-interactive and just displays identity.
                 <div
-                  className={`hidden sm:flex items-center gap-2.5 pl-1 pr-3 h-9 rounded-md ${control}`}
+                  className={`flex items-center gap-2.5 pl-1 pr-3 h-9 rounded-md ${control}`}
                   aria-label="Current operator"
                 >
                   <Avatar src={user.profilePicture} initials={initials} alt={user.name} />
@@ -242,7 +242,7 @@ export function NavBar({ user, onLogout, onNavigate, isAuthLoading }: NavBarProp
                   aria-label="Open profile"
                   aria-current={isActive("/dashboard/profile") ? "page" : undefined}
                   className={[
-                    "hidden sm:flex items-center gap-2.5 pl-1 pr-3 h-9 rounded-md",
+                    "flex items-center gap-2.5 pl-1 pr-3 h-9 rounded-md",
                     control,
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                     isActive("/dashboard/profile")
@@ -269,41 +269,15 @@ export function NavBar({ user, onLogout, onNavigate, isAuthLoading }: NavBarProp
                 aria-label="Log out"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="hidden lg:inline font-body text-[11px] font-semibold uppercase tracking-[0.05em]">Logout</span>
+                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.05em]">Logout</span>
               </button>
-
-              {isPrivilegedRole ? (
-                <div
-                  className={`sm:hidden inline-flex w-9 h-9 items-center justify-center rounded-md ${control}`}
-                  aria-label="Current operator"
-                >
-                  <Avatar src={user.profilePicture} initials={initials} alt={user.name} />
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleNav("/dashboard/profile")}
-                  aria-label="Open profile"
-                  aria-current={isActive("/dashboard/profile") ? "page" : undefined}
-                  className={[
-                    "sm:hidden inline-flex w-9 h-9 items-center justify-center rounded-md",
-                    control,
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
-                    isActive("/dashboard/profile")
-                      ? "border-brand/45 bg-brand-soft text-brand"
-                      : "text-ink-secondary hover:border-brand/40 hover:text-brand",
-                  ].join(" ")}
-                >
-                  <Avatar src={user.profilePicture} initials={initials} alt={user.name} />
-                </button>
-              )}
             </div>
           ) : (
             <button
               type="button"
               onClick={() => onNavigate && onNavigate("login")}
               className={[
-                "inline-flex items-center gap-2 h-9 px-4 rounded-md",
+                "hidden md:inline-flex items-center gap-2 h-9 px-4 rounded-md",
                 "bg-brand text-brand-ink font-body text-[11px] font-bold uppercase tracking-[0.05em]",
                 "shadow-[0_0_15px_rgba(0,255,136,0.15)] hover:shadow-[0_0_25px_rgba(0,255,136,0.35)] hover:-translate-y-px",
                 "transition-[transform,box-shadow] duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
@@ -314,9 +288,103 @@ export function NavBar({ user, onLogout, onNavigate, isAuthLoading }: NavBarProp
               Login
             </button>
           )}
+
+            {/* Mobile Hamburger */}
+            <button
+              className="md:hidden flex flex-col justify-center items-end gap-[5px] w-[44px] h-[44px] cursor-pointer relative z-[100] bg-white/[0.03] border border-white/[0.05] rounded-[var(--radius-sm)] transition-all duration-300 px-[10px] hover:bg-[rgba(0,255,136,0.08)] hover:border-[rgba(0,255,136,0.4)] hover:shadow-[0_0_15px_rgba(0,255,136,0.15)] group"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+            >
+              <span className={`block h-[2px] rounded-[1px] transition-all duration-300 ease-out ${menuOpen ? 'w-[24px] translate-y-[7px] -rotate-45 bg-brand' : 'w-[24px] bg-ink group-hover:w-[24px] group-hover:bg-brand'}`} />
+              <span className={`block h-[2px] rounded-[1px] transition-all duration-300 ease-out ${menuOpen ? 'w-0 opacity-0' : 'w-[14px] bg-ink group-hover:w-[24px] group-hover:bg-brand'}`} />
+              <span className={`block h-[2px] rounded-[1px] transition-all duration-300 ease-out ${menuOpen ? 'w-[24px] -translate-y-[7px] rotate-45 bg-brand' : 'w-[20px] bg-ink group-hover:w-[24px] group-hover:bg-brand'}`} />
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.nav
+            className="fixed inset-0 bg-[rgba(5,5,5,0.95)] z-[99] flex items-center justify-center overflow-hidden"
+            aria-label="Mobile navigation"
+            initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+            animate={{ opacity: 1, backdropFilter: 'blur(32px)' }}
+            exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,255,136,0.05),transparent_60%)] pointer-events-none" />
+            <div className="relative flex flex-col gap-6 w-full max-w-[400px] p-8">
+              {nav.map((item, i) => (
+                <motion.button
+                  key={item.view}
+                  className="font-heading text-[clamp(1.5rem,5vw,2rem)] font-bold text-muted hover:text-ink flex items-center gap-4 transition-all duration-300 group"
+                  onClick={() => {
+                    handleNav(item.view);
+                    setMenuOpen(false);
+                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <span className="font-mono text-[var(--text-xs)] text-brand opacity-50 font-medium group-hover:opacity-100 transition-opacity duration-300">
+                    0{i + 1}
+                  </span>
+                  <span className="group-hover:pl-2 transition-all duration-300">{item.label}</span>
+                </motion.button>
+              ))}
+
+              {!isPrivilegedRole && user && (
+                <motion.button
+                  className="font-heading text-[clamp(1.5rem,5vw,2rem)] font-bold text-muted hover:text-ink flex items-center gap-4 transition-all duration-300 group"
+                  onClick={() => {
+                    handleNav("/dashboard/profile");
+                    setMenuOpen(false);
+                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + nav.length * 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <span className="font-mono text-[var(--text-xs)] text-brand opacity-50 font-medium group-hover:opacity-100 transition-opacity duration-300">
+                    0{nav.length + 1}
+                  </span>
+                  <span className="group-hover:pl-2 transition-all duration-300">Profile</span>
+                </motion.button>
+              )}
+
+              {user ? (
+                <motion.button
+                  type="button"
+                  className="mt-6 self-start bg-transparent border-none cursor-pointer font-mono font-semibold text-[var(--text-sm)] uppercase tracking-[0.05em] text-muted hover:text-brand transition-colors duration-300"
+                  onClick={() => {
+                    onLogout();
+                    setMenuOpen(false);
+                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + (nav.length + 1) * 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  Logout
+                </motion.button>
+              ) : (
+                <motion.button
+                  className="mt-6 px-10 py-4 text-[var(--text-sm)] text-center self-start shadow-[0_0_20px_rgba(0,255,136,0.2)] bg-brand text-brand-ink uppercase font-body font-bold tracking-wider rounded"
+                  onClick={() => {
+                    onNavigate?.("login");
+                    setMenuOpen(false);
+                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + (nav.length + 1) * 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  Login
+                </motion.button>
+              )}
+            </div>
+          </motion.nav>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
